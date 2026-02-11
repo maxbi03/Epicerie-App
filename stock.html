@@ -57,11 +57,15 @@
     </main>
 
     <script src="header.js"></script>
-    <script src="shop.js"></script> <script>
+    <script src="shop.js"></script> 
+
+    <script>
         window.addEventListener('load', () => {
+            // On vérifie si les fonctions existent avant de les lancer
             if (typeof initAppShell === 'function') initAppShell();
-            // Au chargement, on lance l'affichage des produits
-            if (typeof displayProducts === 'function') displayProducts('Tous');
+            if (typeof displayProducts === 'function') {
+                displayProducts('Tous');
+            }
         });
     </script>
 </body>
