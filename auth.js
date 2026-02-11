@@ -1,19 +1,33 @@
 // --- 1. LE DÉTECTEUR (S'exécute au chargement de chaque page) ---
 document.addEventListener('DOMContentLoaded', () => {
+    // On vérifie s'il y a une session active
     const session = localStorage.getItem('user_session');
+    
+    // On cherche l'endroit où afficher le nom (dans home.html)
+    const greetingElement = document.getElementById('user-greeting');
+    const nameElement = document.getElementById('user-name'); // Pour profil.html
 
     if (session) {
         const user = JSON.parse(session);
-        const greetingElement = document.getElementById('user-greeting');
-        const nameElement = document.getElementById('user-name');
-
+        
+        // Si on est connecté, on affiche le prénom
         if (greetingElement) {
-            // Affiche le premier mot du prénom
+            // On récupère le prénom (premier mot du nom complet)
             const firstName = user.name.split(' ')[0];
             greetingElement.textContent = firstName;
         }
+
+        // Sur la page profil, on affiche le nom complet
         if (nameElement) {
             nameElement.textContent = user.name;
+        }
+    } else {
+        // SI PAS DE SESSION (Mode Visiteur)
+        if (greetingElement) {
+            greetingElement.textContent = "Visiteur";
+        }
+        if (nameElement) {
+            nameElement.textContent = "Invité";
         }
     }
 });
@@ -29,39 +43,39 @@ function toggleModal(show) {
     }
 }
 
-// --- 3. FONCTION D'INSCRIPTION ---
+// --- 3. FONCTION D'INSCRIPTION MODIFIÉE ---
 function handleRegister() {
-    // On récupère toutes les infos pro
+    // ... tes variables (firstName, lastName, etc.) restent les mêmes ...
     const firstName = document.getElementById('reg-firstname').value;
     const lastName = document.getElementById('reg-lastname').value;
-    const email = document.getElementById('reg-email').value;
-    const address = document.getElementById('reg-address').value;
-    const npa = document.getElementById('reg-npa').value;
-    const city = document.getElementById('reg-city').value;
     const phone = document.getElementById('reg-phone').value;
     const password = document.getElementById('reg-password').value;
+    // ... (récupère tous les autres champs comme avant)
 
-    // Validation de base
-    if (!firstName || !lastName || !phone || !password) {
-        alert("Attention : Le nom, le prénom, le téléphone et le code sont obligatoires !");
+    if (!firstName || !phone || !password) {
+        alert("Le prénom, le téléphone et le code sont obligatoires !");
         return;
     }
 
     const newUser = {
         name: `${firstName} ${lastName}`,
-        email: email,
-        address: `${address}, ${npa} ${city}`,
         phone: phone,
         password: password,
         points: 0,
         level: "Nouveau Membre"
+        // ... ajoute les autres champs (email, adresse) ici
     };
 
-    // On stocke le compte de façon permanente sur l'ordi
     localStorage.setItem('registered_user', JSON.stringify(newUser));
     
-    alert("Compte créé avec succès ! Vous pouvez maintenant vous connecter.");
-    toggleModal(false); // On ferme la fenêtre
+    // --- ON ENLÈVE L'ALERT ET ON FERME JUSTE LA MODALE ---
+    toggleModal(false); 
+    
+    // Optionnel : on peut vider les champs de la modale pour la prochaine fois
+    document.querySelectorAll('#register-modal input').forEach(input => input.value = '');
+
+    document.getElementById('login-phone').value = phone;
+    document.getElementById('login-password').focus(); // Place le curseur directement sur le code secret
 }
 
 // --- 4. FONCTION DE CONNEXION ---
