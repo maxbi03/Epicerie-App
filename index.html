@@ -44,15 +44,15 @@
                 <div class="space-y-4">
                     <div class="relative">
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400">smartphone</span>
-                        <input type="tel" placeholder="Numéro de téléphone" class="w-full pl-12 pr-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 focus:ring-primary focus:border-primary text-gray-900 dark:text-white text-sm">
+                        <input id="login-phone" type="tel" placeholder="Numéro de téléphone" class="w-full pl-12 pr-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 focus:ring-primary focus:border-primary text-gray-900 dark:text-white text-sm">
                     </div>
                     
                     <div class="relative">
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400">lock</span>
-                        <input type="password" placeholder="Code secret" class="w-full pl-12 pr-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 focus:ring-primary focus:border-primary text-gray-900 dark:text-white text-sm">
+                        <input id="login-password" type="password" placeholder="Code secret" class="w-full pl-12 pr-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 focus:ring-primary focus:border-primary text-gray-900 dark:text-white text-sm">
                     </div>
 
-                    <button class="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/20 hover:brightness-105 active:scale-95 transition-all">
+                    <button onclick="handleLogin()" class="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/20 hover:brightness-105 active:scale-95 transition-all">
                         Se connecter
                     </button>
                 </div>
@@ -68,7 +68,7 @@
                     </p>
                 </div>
 
-                <button class="w-full border-2 border-primary text-primary font-bold py-4 rounded-2xl hover:bg-primary/5 active:scale-95 transition-all">
+                <button onclick="handleSignup()" class="w-full border-2 border-primary text-primary font-bold py-4 rounded-2xl hover:bg-primary/5 active:scale-95 transition-all">
                     S'inscrire
                 </button>
             </div>
@@ -79,5 +79,7 @@
             Vérification d'identité requise pour la sécurité de l'épicerie autonome.
         </p>
     </div>
+
+    <script src="auth.js"></script>
 </body>
 </html>
