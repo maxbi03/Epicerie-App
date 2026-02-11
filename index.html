@@ -44,12 +44,12 @@
                 <div class="space-y-4">
                     <div class="relative">
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400">smartphone</span>
-                        <input id="login-phone" type="tel" placeholder="Numéro de téléphone" class="w-full pl-12 pr-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 focus:ring-primary focus:border-primary text-gray-900 dark:text-white text-sm">
+                        <input id="login-phone" type="tel" autocomplete="off" placeholder="Numéro de téléphone" class="w-full pl-12 pr-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 focus:ring-primary focus:border-primary text-gray-900 dark:text-white text-sm">
                     </div>
                     
                     <div class="relative">
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400">lock</span>
-                        <input id="login-password" type="password" placeholder="Code secret" class="w-full pl-12 pr-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 focus:ring-primary focus:border-primary text-gray-900 dark:text-white text-sm">
+                        <input id="login-password" type="password" autocomplete="off" placeholder="Code secret" class="w-full pl-12 pr-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 focus:ring-primary focus:border-primary text-gray-900 dark:text-white text-sm">
                     </div>
 
                     <button onclick="handleLogin()" class="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/20 hover:brightness-105 active:scale-95 transition-all">
@@ -63,14 +63,47 @@
             <div class="space-y-6 text-center">
                 <div class="space-y-2">
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white">Nouveau ici ?</h2>
-                    <p class="text-sm text-gray-500 px-4">
-                        Si vous n'avez pas encore de compte, inscrivez-vous pour profiter de notre épicerie !
-                    </p>
+                    <p class="text-sm text-gray-500 px-4">Créez votre compte pour accéder à l'épicerie autonome.</p>
                 </div>
-
-                <button onclick="window.location.href='inscription.html'" class="w-full border-2 border-primary text-primary font-bold py-4 rounded-2xl ...">
+                <button onclick="toggleModal(true)" class="w-full border-2 border-primary text-primary font-bold py-4 rounded-2xl hover:bg-primary/5 active:scale-95 transition-all">
                     S'inscrire
                 </button>
+            </div>
+
+            <div id="register-modal" class="fixed inset-0 z-[150] hidden bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+                <div class="bg-white dark:bg-background-dark w-full max-w-md rounded-[2.5rem] p-8 space-y-6 shadow-2xl overflow-y-auto max-h-[90vh]">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold dark:text-white">Création de compte</h2>
+                        <button onclick="toggleModal(false)" class="material-symbols-outlined text-gray-400">close</button>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-3">
+                            <input id="reg-firstname" type="text" placeholder="Prénom" class="w-full px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+                            <input id="reg-lastname" type="text" placeholder="Nom" class="w-full px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+                        </div>
+
+                        <input id="reg-email" type="email" placeholder="Adresse Email" class="w-full px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+                        
+                        <input id="reg-address" type="text" placeholder="Rue et n°" class="w-full px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+                        <div class="grid grid-cols-3 gap-3">
+                            <input id="reg-npa" type="number" placeholder="NPA" class="w-full px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+                            <input id="reg-city" type="text" placeholder="Localité" class="col-span-2 w-full px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+                        </div>
+
+                        <div class="h-px bg-gray-100 dark:bg-white/5 my-2"></div>
+
+                        <div class="space-y-2">
+                            <p class="text-[10px] font-bold text-primary uppercase ml-2">Futurs identifiants</p>
+                            <input id="reg-phone" type="tel" placeholder="N° de téléphone" class="w-full px-4 py-4 rounded-2xl border-primary/30 border-2 dark:bg-white/5 dark:text-white text-sm">
+                            <input id="reg-password" type="password" placeholder="Code secret (4 chiffres)" class="w-full px-4 py-4 rounded-2xl border-primary/30 border-2 dark:bg-white/5 dark:text-white text-sm">
+                        </div>
+
+                        <button onclick="handleRegister()" class="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/20 hover:brightness-105 active:scale-95 transition-all">
+                            Confirmer l'inscription
+                        </button>
+                    </div>
+                </div>
             </div>
 
         </div>
