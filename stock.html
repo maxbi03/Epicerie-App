@@ -40,98 +40,28 @@
                     <p class="text-sm text-gray-500 dark:text-gray-400">Disponibilité en temps réel</p>
                 </div>
                 <span class="text-[9px] bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 px-2 py-1 rounded-lg font-black text-gray-400 uppercase tracking-widest shadow-sm">
-                    Màj : il y a 5 min
+                    Màj : En direct
                 </span>
             </div>
 
-            <div class="space-y-3">
-                
-                <div class="bg-white dark:bg-white/5 p-4 rounded-3xl border border-gray-100 dark:border-white/5 flex items-center justify-between shadow-sm">
-                    <div class="flex items-center gap-4">
-                        <div class="size-10 bg-gray-50 dark:bg-gray-800 rounded-xl flex items-center justify-center border border-gray-100 dark:border-white/10">
-                            <span class="material-symbols-outlined text-gray-400">egg</span>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-sm text-forest-green dark:text-gray-200">Œufs de Semsales (x6)</h4>
-                            <p class="text-[10px] text-gray-400 font-medium">Ferme du Crêt</p>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-sm font-black text-leaf-green dark:text-primary">12</span>
-                        <p class="text-[8px] text-gray-400 uppercase font-black tracking-tighter">En stock</p>
-                    </div>
-                </div>
+            <div class="flex gap-2 overflow-x-auto pb-4 mb-4 no-scrollbar">
+                <button onclick="displayProducts('Tous')" class="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl whitespace-nowrap">Tous</button>
+                <button onclick="displayProducts('Crèmerie')" class="px-4 py-2 bg-white dark:bg-white/5 text-gray-500 text-xs font-bold rounded-xl whitespace-nowrap border border-gray-100 dark:border-white/5">Crèmerie</button>
+                <button onclick="displayProducts('Boulangerie')" class="px-4 py-2 bg-white dark:bg-white/5 text-gray-500 text-xs font-bold rounded-xl whitespace-nowrap border border-gray-100 dark:border-white/5">Boulangerie</button>
+            </div>
 
-                <div class="bg-white dark:bg-white/5 p-4 rounded-3xl border border-gray-100 dark:border-white/5 flex items-center justify-between shadow-sm">
-                    <div class="flex items-center gap-4">
-                        <div class="size-10 bg-gray-50 dark:bg-gray-800 rounded-xl flex items-center justify-center border border-gray-100 dark:border-white/10">
-                            <span class="material-symbols-outlined text-gray-400">water_full</span>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-sm text-forest-green dark:text-gray-200">Lait Cru (1L)</h4>
-                            <p class="text-[10px] text-gray-400 font-medium">Laiterie locale</p>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-sm font-black text-orange-500">4</span>
-                        <p class="text-[8px] text-orange-400/60 uppercase font-black tracking-tighter">Faible</p>
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-white/5 p-4 rounded-3xl border border-gray-100 dark:border-white/5 flex items-center justify-between shadow-sm border-l-4 border-l-red-500">
-                    <div class="flex items-center gap-4">
-                        <div class="size-10 bg-gray-50 dark:bg-gray-800 rounded-xl flex items-center justify-center border border-gray-100 dark:border-white/10">
-                            <span class="material-symbols-outlined text-gray-400">bakery_dining</span>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-sm text-forest-green dark:text-gray-200">Tresse au beurre</h4>
-                            <p class="text-[10px] text-gray-400 font-medium">Boulangerie du Village</p>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-sm font-black text-red-500">1</span>
-                        <p class="text-[8px] text-red-400 uppercase font-black tracking-tighter">Dernier !</p>
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-white/5 p-4 rounded-3xl border border-gray-100 dark:border-white/5 flex items-center justify-between shadow-sm">
-                    <div class="flex items-center gap-4">
-                        <div class="size-10 bg-gray-50 dark:bg-gray-800 rounded-xl flex items-center justify-center border border-gray-100 dark:border-white/10">
-                            <span class="material-symbols-outlined text-gray-400">nutrition</span>
-                        </div>
-                        <h4 class="font-bold text-sm text-forest-green dark:text-gray-200">Le Gruyère AOP</h4>
-                    </div>
-                    <span class="text-sm font-black text-leaf-green dark:text-primary">8</span>
-                </div>
-
-                <div class="bg-white dark:bg-white/5 p-4 rounded-3xl border border-gray-100 dark:border-white/5 flex items-center justify-between shadow-sm">
-                    <div class="flex items-center gap-4">
-                        <div class="size-10 bg-gray-50 dark:bg-gray-800 rounded-xl flex items-center justify-center border border-gray-100 dark:border-white/10">
-                            <span class="material-symbols-outlined text-gray-400">coffee</span>
-                        </div>
-                        <h4 class="font-bold text-sm text-forest-green dark:text-gray-200">Café de Fribourg</h4>
-                    </div>
-                    <span class="text-sm font-black text-leaf-green dark:text-primary">15</span>
-                </div>
-
-                <div class="bg-white dark:bg-white/5 p-4 rounded-3xl border border-gray-100 dark:border-white/5 flex items-center justify-between shadow-sm">
-                    <div class="flex items-center gap-4">
-                        <div class="size-10 bg-gray-50 dark:bg-gray-800 rounded-xl flex items-center justify-center border border-gray-100 dark:border-white/10">
-                            <span class="material-symbols-outlined text-gray-400">icecream</span>
-                        </div>
-                        <h4 class="font-bold text-sm text-forest-green dark:text-gray-200">Glace Artisanale</h4>
-                    </div>
-                    <span class="text-sm font-black text-leaf-green dark:text-primary">10</span>
-                </div>
-
+            <div id="products-grid" class="space-y-3">
+                <p class="text-center text-gray-400 text-xs py-10">Chargement des stocks...</p>
             </div>
         </div>
     </main>
 
     <script src="header.js"></script>
-    <script>
+    <script src="shop.js"></script> <script>
         window.addEventListener('load', () => {
             if (typeof initAppShell === 'function') initAppShell();
+            // Au chargement, on lance l'affichage des produits
+            if (typeof displayProducts === 'function') displayProducts('Tous');
         });
     </script>
 </body>
