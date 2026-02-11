@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html class="light" lang="fr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>L'Épicerie du Village - Accueil</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "forest-green": "#1B4332",
+                        "leaf-green": "#2D6A4F",
+                        "tech-white": "#F8FAF9",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102215",
+                        "primary": "#13ec49",
+                    },
+                    fontFamily: { "display": ["Space Grotesk", "sans-serif"] }
+                },
+            },
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .key-btn-disabled {
+                background: linear-gradient(145deg, #e5e7eb, #d1d5db);
+                box-shadow: 0 4px 0px #9ca3af;
+                cursor: not-allowed;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark font-display text-[#111813] antialiased">
+
+    <div id="header-container" class="relative z-[100] max-w-md mx-auto"></div>
+
+    <main class="relative flex min-h-screen max-w-md mx-auto flex-col overflow-x-hidden">
+        
+        <div class="flex-1 overflow-y-auto pb-10">
+            
+            <div class="px-5 pt-4 pb-2">
+                <h1 class="text-2xl font-bold text-forest-green dark:text-white">Bonjour, Max 👋</h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Heureux de vous revoir !</p>
+            </div>
+
+            <div class="p-5">
+                <div class="bg-white dark:bg-white/5 rounded-3xl p-6 flex flex-col items-center text-center relative border border-gray-100 dark:border-white/5 shadow-sm">
+                    <div class="mb-6">
+                        <div class="size-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center border border-gray-200 dark:border-white/10">
+                            <span class="material-symbols-outlined text-gray-400 text-3xl">location_off</span>
+                        </div>
+                    </div>
+                    <div class="mb-8">
+                        <h2 class="text-forest-green dark:text-white text-xl font-bold mb-1">Aucun magasin détecté</h2>
+                        <p class="text-gray-400 text-sm font-medium">Approchez-vous d'une borne Bluetooth</p>
+                    </div>
+                    <button class="key-btn-disabled w-full py-5 rounded-2xl flex items-center justify-center gap-3 opacity-60">
+                        <span class="material-symbols-outlined text-gray-500 font-bold text-2xl">lock</span>
+                        <span class="text-gray-500 font-bold text-lg uppercase tracking-wider">Porte verrouillée</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="px-5 mb-6">
+                <div class="bg-leaf-green/5 dark:bg-primary/5 border border-leaf-green/10 dark:border-primary/10 rounded-2xl p-4 flex items-center justify-between">
+                    <div class="flex flex-col">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="material-symbols-outlined text-leaf-green dark:text-primary text-sm font-bold">location_on</span>
+                            <span class="text-[10px] font-black text-leaf-green dark:text-primary uppercase tracking-widest">Semsales</span>
+                        </div>
+                        <span class="text-sm font-bold text-forest-green dark:text-gray-200">Affluence : 3 personnes</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-5">
+                <a href="news.html" class="block bg-white dark:bg-white/5 rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-white/5 active:scale-[0.98] transition-all">
+                    <div class="h-32 bg-gray-200 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1550989460-0adf9ea622e2?q=80&w=500&auto=format&fit=crop')"></div>
+                    <div class="p-4">
+                        <h3 class="font-bold text-forest-green dark:text-white text-base">Arrivage de fraises de pays 🍓</h3>
+                    </div>
+                </a>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="header.js"></script>
+    <script>
+        // Initialise le header une fois la page chargée
+        window.addEventListener('load', initAppShell);
+    </script>
+</body>
+</html>

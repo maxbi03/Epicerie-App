@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html class="light" lang="fr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Le Fil Rouge - L'Épicerie du Village</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#11d442",
+                        "forest-green": "#1B4332",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102215",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"],
+                        "sans": ["Noto Sans", "sans-serif"]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .filter-btn.active { border-color: #11d442 !important; }
+    </style>
+</head>
+
+<body class="bg-gray-100 font-display text-[#111813] antialiased">
+
+    <div id="header-container" class="relative z-[100] max-w-md mx-auto w-full"></div>
+
+    <main class="relative flex min-h-screen max-w-md mx-auto flex-col bg-background-light dark:bg-background-dark shadow-2xl overflow-x-hidden border-x border-gray-200 dark:border-white/10">
+        
+        <div class="flex-1 overflow-y-auto pb-32">
+            
+            <div class="px-4 pt-6 pb-2">
+                <h2 class="text-2xl font-bold flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">newspaper</span>
+                    Le Fil Rouge
+                </h2>
+                <p class="text-xs text-gray-500 mt-1">L'actualité de votre épicerie locale</p>
+            </div>
+
+            <div id="category-bar" class="flex gap-2 p-4 overflow-x-auto no-scrollbar sticky top-0 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md z-20">
+                <button onclick="filterNews('all')" class="filter-btn active shrink-0 flex h-9 items-center justify-center rounded-xl px-5 border border-gray-200 dark:border-gray-700 text-sm font-bold transition-all">Tout</button>
+                <button onclick="filterNews('offres')" class="filter-btn shrink-0 flex h-9 items-center justify-center rounded-xl bg-white dark:bg-gray-800 px-5 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-300 transition-all">Offres</button>
+                <button onclick="filterNews('evenements')" class="filter-btn shrink-0 flex h-9 items-center justify-center rounded-xl bg-white dark:bg-gray-800 px-5 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-300 transition-all">Événements</button>
+                <button onclick="filterNews('partenaires')" class="filter-btn shrink-0 flex h-9 items-center justify-center rounded-xl bg-white dark:bg-gray-800 px-5 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-300 transition-all">Partenaires</button>
+                <button onclick="filterNews('com')" class="filter-btn shrink-0 flex h-9 items-center justify-center rounded-xl bg-white dark:bg-gray-800 px-5 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-300 transition-all">Infos</button>
+            </div>
+
+            <div id="news-container" class="flex flex-col gap-6 px-4 pb-10 mt-2">
+
+                <div class="news-item offres bg-gradient-to-br from-forest-green to-leaf-green rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
+                    <span class="bg-white/20 backdrop-blur-md px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest">Offre</span>
+                    <h3 class="text-xl font-bold mt-3">-20% sur tout le rayon Vrac</h3>
+                    <p class="text-white/80 text-xs mt-2 italic">Valable jusqu'à dimanche soir.</p>
+                    <span class="material-symbols-outlined absolute -right-4 -bottom-4 text-white/10 text-9xl">eco</span>
+                </div>
+
+                <div class="news-item offres group flex flex-col rounded-2xl overflow-hidden shadow-sm bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-4 flex-row items-center gap-4">
+                    <div class="size-12 bg-primary/10 rounded-full flex items-center justify-center text-primary shrink-0">
+                        <span class="material-symbols-outlined">loyalty</span>
+                    </div>
+                    <div>
+                        <h3 class="font-bold dark:text-white">Points doublés !</h3>
+                        <p class="text-xs text-gray-500">Aujourd'hui, chaque achat local vous rapporte 2x plus de points score.</p>
+                    </div>
+                </div>
+
+                <div class="news-item evenements group flex flex-col rounded-2xl overflow-hidden shadow-sm bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
+                    <div class="w-full h-32 bg-amber-500 flex items-center justify-center text-white">
+                        <span class="material-symbols-outlined text-5xl">bakery_dining</span>
+                    </div>
+                    <div class="p-4">
+                        <span class="text-amber-500 text-[10px] font-bold uppercase">Samedi 14h</span>
+                        <h3 class="font-bold dark:text-white">Atelier Fabrication de Pain</h3>
+                        <p class="text-xs text-gray-500 mt-1">Venez apprendre à faire votre propre levain avec Frédéric.</p>
+                    </div>
+                </div>
+
+                <div class="news-item partenaires flex flex-col rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 overflow-hidden p-4">
+                    <div class="flex gap-4">
+                        <div class="size-14 rounded-full border-2 border-primary overflow-hidden shrink-0">
+                            <img src="https://images.unsplash.com/photo-1595273670150-bd0c3c392e46?q=80&w=200&auto=format&fit=crop" class="w-full h-full object-cover">
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-bold text-primary uppercase">Nouveau Partenaire</span>
+                            <h3 class="font-bold dark:text-white">La Ferme de l'Ours</h3>
+                            <p class="text-xs text-gray-500 mt-1">Yaourts bio au lait de brebis chaque mardi.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="news-item com flex items-center gap-4 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-2xl border border-blue-100 dark:border-blue-800">
+                    <div class="size-12 rounded-full bg-blue-500 flex items-center justify-center text-white shrink-0">
+                        <span class="material-symbols-outlined">info</span>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-blue-900 dark:text-blue-200 text-sm">Inventaire Annuel</h3>
+                        <p class="text-[11px] text-blue-700/70 dark:text-blue-300/60">L'épicerie sera exceptionnellement fermée lundi matin de 8h à 12h.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script src="header.js"></script>
+    <script>
+    function filterNews(category, btnElement = null) {
+        const items = document.querySelectorAll('.news-item');
+        const buttons = document.querySelectorAll('.filter-btn');
+
+        // 1. Réinitialiser le style de TOUS les boutons
+        buttons.forEach(btn => {
+            btn.classList.remove('active', 'bg-primary', 'text-white');
+            btn.classList.add('bg-white', 'dark:bg-gray-800', 'text-gray-600', 'dark:text-gray-300');
+        });
+
+        // 2. Identifier le bouton à activer
+        const activeBtn = btnElement || (event ? event.currentTarget : document.querySelector(`button[onclick="filterNews('${category}')"]`));
+
+        // 3. Appliquer le style au bouton actif
+        if(activeBtn) {
+            activeBtn.classList.add('active', 'bg-primary', 'text-white');
+            activeBtn.classList.remove('bg-white', 'dark:bg-gray-800', 'text-gray-600', 'dark:text-gray-300');
+        }
+
+        // 4. Filtrer les news
+        items.forEach(item => {
+            if (category === 'all') {
+                item.style.display = 'flex';
+            } else {
+                if (item.classList.contains(category)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            }
+        });
+    }
+
+    // Initialisation au chargement
+    window.addEventListener('load', () => {
+        filterNews('all');
+    });
+    </script>
+</body>
+</html>

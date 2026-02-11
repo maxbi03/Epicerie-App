@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html class="light" lang="fr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Connexion - L'Épicerie du Village</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#11d442",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102215",
+                    },
+                    fontFamily: { "display": ["Space Grotesk"] }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display antialiased">
+    <div class="min-h-screen flex flex-col p-6 max-w-md mx-auto">
+        
+        <div class="flex justify-end mt-4">
+            <a href="home.html" class="text-sm font-bold text-primary px-4 py-2 rounded-full border border-primary/20 hover:bg-primary/5 transition-colors flex items-center gap-2">
+                Mode Visiteur
+                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </a>
+        </div>
+
+        <div class="flex-1 flex flex-col justify-center space-y-10">
+            
+            <div class="space-y-6">
+                <div class="text-center space-y-2">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Déjà client ?</h2>
+                    <p class="text-sm text-gray-500">Connectez-vous pour accéder au magasin</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400">smartphone</span>
+                        <input type="tel" placeholder="Numéro de téléphone" class="w-full pl-12 pr-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 focus:ring-primary focus:border-primary text-gray-900 dark:text-white text-sm">
+                    </div>
+                    
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400">lock</span>
+                        <input type="password" placeholder="Code secret" class="w-full pl-12 pr-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 focus:ring-primary focus:border-primary text-gray-900 dark:text-white text-sm">
+                    </div>
+
+                    <button class="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/20 hover:brightness-105 active:scale-95 transition-all">
+                        Se connecter
+                    </button>
+                </div>
+            </div>
+
+            <div class="w-full h-[1px] bg-gray-200 dark:bg-white/10"></div>
+
+            <div class="space-y-6 text-center">
+                <div class="space-y-2">
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">Nouveau ici ?</h2>
+                    <p class="text-sm text-gray-500 px-4">
+                        Si vous n'avez pas encore de compte, inscrivez-vous pour profiter de notre épicerie !
+                    </p>
+                </div>
+
+                <button class="w-full border-2 border-primary text-primary font-bold py-4 rounded-2xl hover:bg-primary/5 active:scale-95 transition-all">
+                    S'inscrire
+                </button>
+            </div>
+
+        </div>
+
+        <p class="text-[10px] text-center text-gray-400 pb-4 mt-8">
+            Vérification d'identité requise pour la sécurité de l'épicerie autonome.
+        </p>
+    </div>
+</body>
+</html>

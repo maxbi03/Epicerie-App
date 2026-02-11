@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html class="light" lang="fr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Carte - L'Épicerie du Village</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: { 
+                        "primary": "#11d442", 
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102215" 
+                    },
+                    fontFamily: { "display": ["Space Grotesk", "sans-serif"] }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-gray-100 font-display text-[#111813] antialiased overflow-hidden flex flex-col h-screen">
+
+    <div id="header-container" class="relative z-[100] max-w-md mx-auto w-full"></div>
+
+    <main class="flex-1 relative max-w-md mx-auto w-full bg-white shadow-2xl border-x border-gray-200 overflow-hidden">
+        
+        <iframe 
+            class="w-full h-full border-none grayscale-[0.2] dark:invert-[0.9] dark:hue-rotate-180"
+            src="https://www.openstreetmap.org/export/embed.html?bbox=6.9200,46.5680,6.9350,46.5780&layer=mapnik&marker=46.57316,6.92736">
+        </iframe>
+
+        <div class="absolute bottom-10 left-4 right-4 bg-white dark:bg-gray-900 p-5 rounded-3xl shadow-2xl border border-gray-100 dark:border-white/10 z-20">
+            <div class="flex items-start gap-4">
+                <div class="size-12 bg-primary rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-primary/20">
+                    <span class="material-symbols-outlined">location_on</span>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg dark:text-white">Épicerie de Semsales</h3>
+                    <p class="text-sm text-gray-500 italic">Place de la Gare, 1623 Semsales</p>
+                    <div class="flex items-center gap-2 mt-2">
+                        <span class="size-2 bg-primary rounded-full animate-pulse"></span>
+                        <span class="text-[10px] font-black text-primary uppercase tracking-widest">Ouvert 24h/24</span>
+                    </div>
+                </div>
+            </div>
+            
+            <a href="https://www.google.com/maps/dir/?api=1&destination=Semsales+Gare" target="_blank" class="w-full mt-4 bg-gray-100 dark:bg-white/5 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-primary hover:text-white transition-all active:scale-95">
+                <span class="material-symbols-outlined text-sm">directions</span>
+                Y aller avec Google Maps
+            </a>
+        </div>
+    </main>
+
+    <script src="header.js"></script>
+    <script>
+        window.addEventListener('load', () => {
+            if (typeof initAppShell === 'function') initAppShell();
+        });
+    </script>
+</body>
+</html>

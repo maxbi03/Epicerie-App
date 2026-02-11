@@ -1,0 +1,70 @@
+<header class="sticky top-0 z-[100] max-w-md mx-auto flex items-center justify-between px-4 py-4 bg-background-light dark:bg-background-dark border-b border-gray-100 dark:border-white/5">
+    <div class="flex items-center gap-3">
+        <button onclick="toggleMenu()" class="size-10 flex items-center justify-center rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-white/10 active:scale-90 transition-all">
+            <span class="material-symbols-outlined text-forest-green dark:text-primary">menu</span>
+        </button>
+        <div>
+            <h1 id="page-title" class="text-lg font-bold leading-none tracking-tight dark:text-white">L'Épicerie</h1>
+            <p class="text-[10px] text-gray-500 font-medium italic uppercase tracking-tighter">Village Connecté</p>
+        </div>
+    </div>
+    <a href="profil.html" class="size-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+        <span class="material-symbols-outlined text-primary text-xl">person</span>
+    </a>
+</header>
+
+<div id="menu-overlay" onclick="toggleMenu()" class="fixed inset-0 bg-black/60 z-[110] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm"></div>
+
+<nav id="side-menu" class="fixed top-0 left-0 bottom-0 w-[280px] bg-white dark:bg-[#102215] z-[120] -translate-x-full transition-transform duration-300 ease-out shadow-2xl flex flex-col">
+    <div class="p-6 border-b border-gray-100 dark:border-white/5">
+        <div class="text-primary font-black tracking-tighter text-xl mb-1">L'ÉPICERIE</div>
+        <div class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Menu de navigation</div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto py-4 px-2 space-y-1">
+        <a href="home.html" class="flex items-center gap-4 p-4 rounded-2xl hover:bg-primary/10 text-gray-700 dark:text-gray-200 transition-colors">
+            <span class="material-symbols-outlined text-gray-400">home</span>
+            <span class="font-bold text-sm">Accueil</span>
+        </a>
+
+        <a href="news.html" class="flex items-center gap-4 p-4 rounded-2xl hover:bg-primary/10 text-gray-700 dark:text-gray-200 transition-colors">
+            <span class="material-symbols-outlined text-gray-400">news</span>
+            <span class="font-bold text-sm">Le Fil Rouge</span>
+        </a>
+
+        <a href="scanner.html" class="flex items-center gap-4 p-4 rounded-2xl hover:bg-primary/10 text-gray-700 dark:text-gray-200 transition-colors">
+            <span class="material-symbols-outlined text-gray-400">qr_code_scanner</span>
+            <span class="font-bold text-sm">Scanner un produit</span>
+        </a>
+
+        <a href="panier.html" class="flex items-center gap-4 p-4 rounded-2xl hover:bg-primary/10 text-gray-700 dark:text-gray-200 transition-colors">
+            <span class="material-symbols-outlined text-gray-400">shopping_basket</span>
+            <span class="font-bold text-sm">Mon Panier</span>
+        </a>
+
+        <div class="py-4 px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Informations</div>
+
+        <a href="map.html" class="flex items-center gap-4 p-4 rounded-2xl hover:bg-primary/10 text-gray-700 dark:text-gray-200 transition-colors">
+            <span class="material-symbols-outlined text-gray-400">map</span>
+            <span class="font-bold text-sm">Carte & Localisation</span>
+        </a>
+
+        <a href="stock.html" class="flex items-center gap-4 p-4 rounded-2xl hover:bg-primary/10 text-gray-700 dark:text-gray-200 transition-colors">
+            <span class="material-symbols-outlined text-gray-400">inventory_2</span>
+            <span class="font-bold text-sm">État des stocks</span>
+        </a>
+
+        <div class="py-4 px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Compte</div>
+
+        <a href="profil.html" class="flex items-center gap-4 p-4 rounded-2xl hover:bg-primary/10 text-gray-700 dark:text-gray-200 transition-colors">
+            <span class="material-symbols-outlined text-gray-400">person</span>
+            <span class="font-bold text-sm">Mon Profil</span>
+        </a>
+    </div>
+
+    <div class="p-6 border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-black/20">
+        <button class="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl bg-red-50 text-red-600 font-bold text-xs uppercase tracking-widest">
+            <span class="material-symbols-outlined text-sm">logout</span> Déconnexion
+        </button>
+    </div>
+</nav>

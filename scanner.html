@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html class="light" lang="fr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Scanner - L'Épicerie du Village</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec49",
+                        "forest-green": "#1B4332",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102215",
+                    },
+                    fontFamily: { "display": ["Space Grotesk", "sans-serif"] }
+                },
+            },
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer components {
+            .scan-bracket {
+                @apply absolute w-10 h-10 border-primary border-t-4 border-l-4;
+            }
+        }
+        #video-preview {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .scan-overlay {
+            background: rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark font-display antialiased overflow-hidden">
+
+    <div id="header-container" class="relative z-[100] max-w-md mx-auto"></div>
+
+    <div class="relative h-screen max-w-md mx-auto bg-black shadow-2xl overflow-hidden">
+        
+        <div class="absolute inset-0 z-0">
+            <video id="video-preview" autoplay playsinline class="opacity-90"></video>
+        </div>
+
+        <div class="absolute inset-0 z-10 flex flex-col">
+            
+            <div class="flex-1 scan-overlay"></div>
+
+            <div class="relative h-64 w-full flex justify-center items-center bg-transparent">
+                <div class="absolute inset-y-0 left-0 w-10 scan-overlay"></div>
+                <div class="absolute inset-y-0 right-0 w-10 scan-overlay"></div>
+                
+                <div class="relative w-full h-full mx-10">
+                    <div class="scan-bracket top-0 left-0"></div>
+                    <div class="scan-bracket top-0 right-0 rotate-90"></div>
+                    <div class="scan-bracket bottom-0 right-0 rotate-180"></div>
+                    <div class="scan-bracket bottom-0 left-0 -rotate-90"></div>
+                </div>
+            </div>
+
+            <div class="flex-[1.5] scan-overlay flex flex-col items-center px-10 text-center">
+                
+                <p class="text-white text-sm font-medium leading-relaxed mt-8">
+                    Alignez le code-barres de l'article dans le rectangle vert.
+                </p>
+
+                <button class="mt-8 flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/20 rounded-xl text-white text-xs font-bold uppercase tracking-widest active:scale-95 transition-all">
+                    <span class="material-symbols-outlined text-sm">keyboard</span>
+                    Saisie manuelle
+                </button>
+
+                <div class="mt-12 mb-32 w-full">
+                    <a href="panier.html" class="flex items-center justify-between bg-primary p-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all">
+                        <div class="flex items-center gap-3 text-forest-green">
+                            <div class="relative">
+                                <span class="material-symbols-outlined font-bold">shopping_basket</span>
+                                <span class="absolute -top-2 -right-2 bg-white text-[10px] font-black px-1.5 rounded-full border border-primary">2</span>
+                            </div>
+                            <span class="font-bold text-sm">Voir mon panier</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-black text-forest-green/60 uppercase">Total:</span>
+                            <span class="font-black text-forest-green">14.50 CHF</span>
+                            <span class="material-symbols-outlined text-forest-green">chevron_right</span>
+                        </div>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="header.js"></script>
+    <script>
+        window.addEventListener('load', () => {
+            if (typeof initAppShell === 'function') initAppShell();
+            startCamera();
+        });
+
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: "environment",
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                });
+                const videoElement = document.getElementById('video-preview');
+                if (videoElement) {
+                    videoElement.srcObject = stream;
+                }
+            } catch (err) {
+                console.error("Erreur caméra: ", err);
+            }
+        }
+    </script>
+</body>
+</html>
