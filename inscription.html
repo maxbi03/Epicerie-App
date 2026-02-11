@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html class="light" lang="fr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Inscription - L'Épicerie</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: { "primary": "#11d442", "background-light": "#f6f8f6", "background-dark": "#102215" },
+                    fontFamily: { "display": ["Space Grotesk"] }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display antialiased">
+    <div class="min-h-screen flex flex-col p-6 max-w-md mx-auto">
+        
+        <div class="flex items-center gap-4 mt-4">
+            <a href="index.html" class="p-2 rounded-full bg-white dark:bg-white/5 text-gray-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </a>
+            <h1 class="text-xl font-bold dark:text-white">Créer mon compte</h1>
+        </div>
+
+        <div class="flex-1 flex flex-col justify-center space-y-6">
+            <div class="space-y-4">
+                <input id="reg-name" type="text" placeholder="Prénom et Nom" class="w-full px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 text-gray-900 dark:text-white text-sm">
+                
+                <input id="reg-phone" type="tel" placeholder="Numéro de téléphone" class="w-full px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 text-gray-900 dark:text-white text-sm">
+                
+                <input id="reg-password" type="password" placeholder="Choisir un code secret (4 chiffres)" class="w-full px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 text-gray-900 dark:text-white text-sm">
+                
+                <button onclick="handleRegister()" class="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/20 hover:brightness-105 active:scale-95 transition-all">
+                    Finaliser l'inscription
+                </button>
+            </div>
+        </div>
+    </div>
+    <script src="auth.js"></script>
+</body>
+</html>
