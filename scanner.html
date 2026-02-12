@@ -56,9 +56,6 @@
             <div class="flex-1 scan-overlay"></div>
 
             <div class="relative h-64 w-full flex justify-center items-center bg-transparent">
-                <div class="absolute inset-y-0 left-0 w-10 scan-overlay"></div>
-                <div class="absolute inset-y-0 right-0 w-10 scan-overlay"></div>
-
                 <div class="relative w-full h-full mx-10">
                     <div class="scan-bracket top-0 left-0"></div>
                     <div class="scan-bracket top-0 right-0 rotate-90"></div>
@@ -83,13 +80,13 @@
                         <div class="flex items-center gap-3 text-forest-green">
                             <div class="relative">
                                 <span class="material-symbols-outlined font-bold">shopping_basket</span>
-                                <span class="absolute -top-2 -right-2 bg-white text-[10px] font-black px-1.5 rounded-full border border-primary">2</span>
+                                <span id="cart-item-count" class="absolute -top-2 -right-2 bg-white text-[10px] font-black px-1.5 rounded-full border border-primary">0</span>
                             </div>
                             <span class="font-bold text-sm">Voir mon panier</span>
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="text-xs font-black text-forest-green/60 uppercase">Total:</span>
-                            <span class="font-black text-forest-green">14.50 CHF</span>
+                            <span id="cart-total" class="font-black text-forest-green">0.00 CHF</span>
                             <span class="material-symbols-outlined text-forest-green">chevron_right</span>
                         </div>
                     </a>
@@ -136,11 +133,12 @@
     <script>
         let html5QrCode;
         let isScanning = false;
-        let currentProduct = null; // Produit actuellement affiché
+        let currentProduct = null;
 
         window.addEventListener('load', () => {
             if (typeof initAppShell === 'function') initAppShell();
             startScanner();
+            updateCartDisplay();
         });
 
         function startScanner() {
@@ -175,14 +173,11 @@
             if (product) {
                 console.log("✅ Produit trouvé:", product.name);
 
-                // Vibration pour confirmer
                 if (navigator.vibrate) navigator.vibrate(100);
 
-                // Afficher la fiche produit
                 currentProduct = product;
                 showProductModal(product);
 
-                // Débloquer après 3 secondes (temps de regarder la fiche)
                 setTimeout(() => {
                     isScanning = false;
                 }, 3000);
@@ -200,12 +195,10 @@
             // Silencieux - le scanner essaie constamment
         }
 
-        // Afficher la fiche produit
         function showProductModal(product) {
             const modal = document.getElementById('product-modal');
             const content = document.getElementById('modal-content');
 
-            // Utiliser la fonction du fichier fiche_produit.js
             content.innerHTML = generateProductSheet(product);
 
             modal.classList.remove('hidden');
@@ -215,39 +208,32 @@
             }, 10);
         }
 
-        // Fermer la fiche produit
         function closeProductModal() {
             const modal = document.getElementById('product-modal');
             modal.classList.add('hidden');
             currentProduct = null;
         }
 
-        // Ajouter au panier depuis le modal
         function addProductToBasket() {
             if (!currentProduct) return;
 
-            // Récupérer le panier existant
             let basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
 
-            // Ajouter le produit
             basket.push(currentProduct);
 
-            // Sauvegarder
             localStorage.setItem('user_basket', JSON.stringify(basket));
 
             console.log("🛒 Produit ajouté au panier:", currentProduct.name);
 
-            // Feedback visuel
             if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
 
-            // Fermer le modal
             closeProductModal();
 
-            // Message de confirmation
             showConfirmation();
+
+            updateCartDisplay();
         }
 
-        // Afficher une confirmation rapide
         function showConfirmation() {
             const confirmMsg = document.createElement('div');
             confirmMsg.className = 'fixed top-20 left-1/2 -translate-x-1/2 bg-primary text-forest-green font-bold px-6 py-3 rounded-full shadow-lg z-[300] flex items-center gap-2';
@@ -260,6 +246,21 @@
             setTimeout(() => {
                 confirmMsg.remove();
             }, 2000);
+        }
+
+        function updateCartDisplay() {
+            const basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
+            const cartItemCount = document.getElementById('cart-item-count');
+            const cartTotal = document.getElementById('cart-total');
+
+            let total = 0;
+
+            basket.forEach(product => {
+                total += product.price;
+            });
+
+            cartItemCount.textContent = basket.length;
+            cartTotal.textContent = `${total.toFixed(2)} CHF`;
         }
     </script>
 </body>
