@@ -95,10 +95,21 @@
                 cartEmptyMessage.style.display = 'none';
                 cartItemsContainer.innerHTML = '';
 
+                // Regrouper les produits identiques
+                const groupedProducts = {};
+                basket.forEach(product => {
+                    if (!groupedProducts[product.id]) {
+                        groupedProducts[product.id] = { ...product, quantity: 0 };
+                    }
+                    groupedProducts[product.id].quantity += 1;
+                });
+
                 let total = 0;
 
-                basket.forEach((product, index) => {
-                    total += product.price;
+                // Afficher les produits regroupés
+                Object.values(groupedProducts).forEach(product => {
+                    const productTotalPrice = product.price * product.quantity;
+                    total += productTotalPrice;
 
                     const productHTML = `
                         <div class="bg-white dark:bg-white/5 rounded-2xl p-4 border border-gray-100 dark:border-white/5 mb-3">
@@ -111,8 +122,22 @@
                                     <p class="text-[10px] text-gray-400 font-medium">${product.origin}</p>
                                 </div>
                                 <div class="text-right">
-                                    <span class="text-sm font-black text-forest-green dark:text-white">${product.price.toFixed(2)} CHF</span>
+                                    <span class="text-sm font-black text-forest-green dark:text-white">${productTotalPrice.toFixed(2)} CHF</span>
                                 </div>
+                            </div>
+                            <div class="flex items-center justify-between mt-3">
+                                <div class="flex items-center gap-3">
+                                    <button onclick="decreaseQuantity(${product.id})" class="size-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                                        <span class="material-symbols-outlined text-forest-green text-sm">remove</span>
+                                    </button>
+                                    <span class="text-sm font-bold text-forest-green dark:text-white">${product.quantity}</span>
+                                    <button onclick="increaseQuantity(${product.id})" class="size-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                                        <span class="material-symbols-outlined text-forest-green text-sm">add</span>
+                                    </button>
+                                </div>
+                                <button onclick="removeProduct(${product.id})" class="text-red-500 text-xs font-bold uppercase tracking-widest">
+                                    Supprimer
+                                </button>
                             </div>
                         </div>
                     `;
@@ -127,6 +152,34 @@
                 checkoutButton.classList.remove('bg-gray-200', 'dark:bg-gray-800', 'text-gray-400', 'cursor-not-allowed');
                 checkoutButton.classList.add('bg-primary', 'text-forest-green');
             }
+        }
+
+        // Augmenter la quantité d'un produit
+        function increaseQuantity(productId) {
+            const basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
+            const product = JSON.parse(localStorage.getItem('user_basket')).find(p => p.id === productId);
+            basket.push(product);
+            localStorage.setItem('user_basket', JSON.stringify(basket));
+            loadCartItems();
+        }
+
+        // Diminuer la quantité d'un produit
+        function decreaseQuantity(productId) {
+            const basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
+            const index = basket.findIndex(p => p.id === productId);
+            if (index !== -1) {
+                basket.splice(index, 1);
+                localStorage.setItem('user_basket', JSON.stringify(basket));
+                loadCartItems();
+            }
+        }
+
+        // Supprimer un produit du panier
+        function removeProduct(productId) {
+            let basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
+            basket = basket.filter(p => p.id !== productId);
+            localStorage.setItem('user_basket', JSON.stringify(basket));
+            loadCartItems();
         }
 
         // Charger les produits au démarrage

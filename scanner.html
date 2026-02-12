@@ -38,6 +38,23 @@
         .scan-overlay {
             background: rgba(0, 0, 0, 0.5);
         }
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 16px;
+        }
+        .numpad button {
+            padding: 12px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 8px;
+            background-color: white;
+            color: #1B4332;
+        }
+        .numpad button:active {
+            background-color: #13ec49;
+        }
     </style>
 </head>
 
@@ -70,10 +87,31 @@
                     Alignez le code-barres de l'article dans le rectangle vert.
                 </p>
 
-                <button class="mt-8 flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/20 rounded-xl text-white text-xs font-bold uppercase tracking-widest active:scale-95 transition-all">
+                <button onclick="toggleManualEntry()" class="mt-8 flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/20 rounded-xl text-white text-xs font-bold uppercase tracking-widest active:scale-95 transition-all">
                     <span class="material-symbols-outlined text-sm">keyboard</span>
                     Saisie manuelle
                 </button>
+
+                <div id="manual-entry" class="hidden mt-4 w-full max-w-xs bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/20">
+                    <p class="text-white text-sm mb-2">Entrez le code-barres (13 chiffres) :</p>
+                    <input id="barcode-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="13"
+                           class="w-full p-2 rounded-lg text-center text-lg font-bold bg-white/20 border border-white/30 text-white placeholder-white/50"
+                           placeholder="1234567890123" autofocus>
+                    <div class="numpad">
+                        <button onclick="appendNumber('1')">1</button>
+                        <button onclick="appendNumber('2')">2</button>
+                        <button onclick="appendNumber('3')">3</button>
+                        <button onclick="appendNumber('4')">4</button>
+                        <button onclick="appendNumber('5')">5</button>
+                        <button onclick="appendNumber('6')">6</button>
+                        <button onclick="appendNumber('7')">7</button>
+                        <button onclick="appendNumber('8')">8</button>
+                        <button onclick="appendNumber('9')">9</button>
+                        <button onclick="appendNumber('0')">0</button>
+                        <button onclick="clearInput()">⌫</button>
+                        <button onclick="submitManualBarcode()" class="col-span-2 bg-primary text-forest-green">OK</button>
+                    </div>
+                </div>
 
                 <div class="mt-12 mb-32 w-full">
                     <a href="panier.html" class="flex items-center justify-between bg-primary p-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all">
@@ -119,10 +157,21 @@
 
             <!-- Bouton d'action fixe en bas -->
             <div class="sticky bottom-0 bg-white dark:bg-background-dark p-4 border-t border-gray-100 dark:border-white/10">
-                <button onclick="addProductToBasket()" class="w-full bg-primary text-forest-green font-black py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all">
-                    <span class="material-symbols-outlined">add_shopping_cart</span>
-                    <span>Ajouter au panier</span>
-                </button>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-4">
+                        <button onclick="decreaseQuantity()" class="size-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                            <span class="material-symbols-outlined text-forest-green">remove</span>
+                        </button>
+                        <span id="product-quantity" class="text-lg font-bold text-forest-green dark:text-white">1</span>
+                        <button onclick="increaseQuantity()" class="size-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                            <span class="material-symbols-outlined text-forest-green">add</span>
+                        </button>
+                    </div>
+                    <button onclick="addProductToBasket()" class="w-[70%] bg-primary text-forest-green font-black py-3 rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all">
+                        <span class="material-symbols-outlined">add_shopping_cart</span>
+                        <span>Ajouter</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -214,16 +263,33 @@
             currentProduct = null;
         }
 
+        let productQuantity = 1;
+
+        function increaseQuantity() {
+            productQuantity++;
+            document.getElementById('product-quantity').textContent = productQuantity;
+        }
+
+        function decreaseQuantity() {
+            if (productQuantity > 1) {
+                productQuantity--;
+                document.getElementById('product-quantity').textContent = productQuantity;
+            }
+        }
+
         function addProductToBasket() {
             if (!currentProduct) return;
 
             let basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
 
-            basket.push(currentProduct);
+            // Ajouter le produit autant de fois que la quantité choisie
+            for (let i = 0; i < productQuantity; i++) {
+                basket.push(currentProduct);
+            }
 
             localStorage.setItem('user_basket', JSON.stringify(basket));
 
-            console.log("🛒 Produit ajouté au panier:", currentProduct.name);
+            console.log(`🛒 ${productQuantity} x ${currentProduct.name} ajouté(s) au panier`);
 
             if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
 
@@ -232,6 +298,10 @@
             showConfirmation();
 
             updateCartDisplay();
+
+            // Réinitialiser la quantité à 1 pour le prochain produit
+            productQuantity = 1;
+            document.getElementById('product-quantity').textContent = productQuantity;
         }
 
         function showConfirmation() {
@@ -261,6 +331,40 @@
 
             cartItemCount.textContent = basket.length;
             cartTotal.textContent = `${total.toFixed(2)} CHF`;
+        }
+
+        // Fonctions pour la saisie manuelle
+        function toggleManualEntry() {
+            const manualEntry = document.getElementById('manual-entry');
+            manualEntry.classList.toggle('hidden');
+            if (!manualEntry.classList.contains('hidden')) {
+                document.getElementById('barcode-input').focus();
+            }
+        }
+
+        function appendNumber(number) {
+            const input = document.getElementById('barcode-input');
+            if (input.value.length < 13) {
+                input.value += number;
+            }
+        }
+
+        function clearInput() {
+            const input = document.getElementById('barcode-input');
+            input.value = input.value.slice(0, -1);
+        }
+
+        function submitManualBarcode() {
+            const input = document.getElementById('barcode-input');
+            const barcode = input.value;
+
+            if (barcode.length === 13) {
+                onScanSuccess(barcode, null);
+                input.value = '';
+                toggleManualEntry();
+            } else {
+                alert("Le code-barres doit contenir exactement 13 chiffres.");
+            }
         }
     </script>
 </body>
