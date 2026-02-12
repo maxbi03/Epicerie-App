@@ -23,6 +23,7 @@
             },
         }
     </script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style type="text/tailwindcss">
         @layer components {
             .scan-bracket {
@@ -47,7 +48,7 @@
     <div class="relative h-screen max-w-md mx-auto bg-black shadow-2xl overflow-hidden">
         
         <div class="absolute inset-0 z-0">
-            <video id="video-preview" autoplay playsinline class="opacity-90"></video>
+            <div id="reader" class="opacity-90"></div>
         </div>
 
         <div class="absolute inset-0 z-10 flex flex-col">
@@ -100,28 +101,70 @@
 
     <script src="header.js"></script>
     <script>
-        window.addEventListener('load', () => {
-            if (typeof initAppShell === 'function') initAppShell();
-            startCamera();
-        });
+        let html5QrCode;
 
-        async function startCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: "environment",
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    } 
-                });
-                const videoElement = document.getElementById('video-preview');
-                if (videoElement) {
-                    videoElement.srcObject = stream;
-                }
-            } catch (err) {
-                console.error("Erreur caméra: ", err);
-            }
-        }
+    window.addEventListener('load', () => {
+    if (typeof initAppShell === 'function') initAppShell();
+    startScanner();
+    });
+
+    function startScanner() {
+    // Configuration du scanner
+    html5QrCode = new Html5Qrcode("reader");
+
+    const config = { 
+        fps: 10, // 10 images analysées par seconde
+        qrbox: { width: 250, height: 150 }, // Zone de détection
+        aspectRatio: 1.0
+    };
+
+    // Lancement de la caméra arrière (environment)
+    html5QrCode.start(
+        { facingMode: "environment" }, 
+        config,
+        onScanSuccess
+    ).catch(err => console.error("Erreur Scanner: ", err));
+    }
+
+    // L'ACTION : Ce qui se passe quand un code est détecté
+    function onScanSuccess(decodedText) {
+    console.log("Code détecté : " + decodedText);
+
+    // 1. Liaison avec shop.js : On cherche le produit par son code-barres
+    // (Assure-toi que tes produits dans shop.js ont une propriété 'barcode')
+    const product = products.find(p => p.barcode === decodedText);
+
+    if (product) {
+        // Bloquer le scanner un instant pour éviter les scans multiples
+        html5QrCode.pause();
+        
+        // 2. Action : Ajouter au panier
+        addToBasket(product);
+        
+        // Vibration (sur mobile) pour confirmer
+        if (navigator.vibrate) navigator.vibrate(100);
+        
+        alert("Ajouté : " + product.name);
+        
+        // Relancer après 2 secondes
+        setTimeout(() => html5QrCode.resume(), 2000);
+    }
+    }
+
+    // Gestion simplifiée du panier (en attendant la page panier)
+    function addToBasket(product) {
+    let basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
+    basket.push(product);
+    localStorage.setItem('user_basket', JSON.stringify(basket));
+
+    // Mise à jour visuelle du total (si tes éléments ont ces IDs)
+    updateBasketUI();
+    }
+
+    function updateBasketUI() {
+    // Ici tu peux ajouter le code pour mettre à jour le petit badge 
+    // et le prix total dans ton bandeau vert en bas.
+    }
     </script>
 </body>
 </html>

@@ -4,6 +4,7 @@ const products = [
     {
         id: 1,
         name: "Gruyère AOP Semsales",
+        barcode : 2000000000000,
         price: 5.80,
         unit: "200g",
         origin: "Laiterie de Semsales",
@@ -15,6 +16,7 @@ const products = [
     {
         id: 2,
         name: "Pain de Campagne",
+        barcode : 2000000000001,
         price: 4.20,
         unit: "pce",
         origin: "Boulangerie du Village",
@@ -26,6 +28,7 @@ const products = [
     {
         id: 3,
         name: "Œufs de la Ferme",
+        barcode : 2000000000002,
         price: 0.90,
         unit: "pce",
         origin: "Ferme des Biolles",
