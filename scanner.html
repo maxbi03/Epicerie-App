@@ -99,72 +99,168 @@
         </div>
     </div>
 
+    <!-- Pop-up Fiche Produit -->
+    <div id="product-modal" class="fixed inset-0 z-[200] hidden">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity" onclick="closeProductModal()"></div>
+        
+        <!-- Modal Content -->
+        <div class="absolute inset-x-0 bottom-0 max-w-md mx-auto bg-white dark:bg-background-dark rounded-t-3xl shadow-2xl transform transition-transform duration-300 max-h-[85vh] overflow-y-auto">
+            
+            <!-- Header avec bouton fermer -->
+            <div class="sticky top-0 bg-white/95 dark:bg-background-dark/95 backdrop-blur-md z-10 px-4 py-3 flex items-center justify-between border-b border-gray-100 dark:border-white/10">
+                <h2 class="text-lg font-bold text-forest-green dark:text-white">Détails du produit</h2>
+                <button onclick="closeProductModal()" class="size-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
+                    <span class="material-symbols-outlined text-gray-600 dark:text-gray-400">close</span>
+                </button>
+            </div>
+
+            <!-- Contenu dynamique -->
+            <div id="modal-content" class="pb-6">
+                <!-- Le contenu sera injecté ici -->
+            </div>
+
+            <!-- Bouton d'action fixe en bas -->
+            <div class="sticky bottom-0 bg-white dark:bg-background-dark p-4 border-t border-gray-100 dark:border-white/10">
+                <button onclick="addProductToBasket()" class="w-full bg-primary text-forest-green font-black py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all">
+                    <span class="material-symbols-outlined">add_shopping_cart</span>
+                    <span>Ajouter au panier</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="header.js"></script>
+    <script src="shop.js"></script>
+    <script src="fiche_produit.js"></script>
     <script>
         let html5QrCode;
+        let isScanning = false;
+        let currentProduct = null; // Produit actuellement affiché
 
-    window.addEventListener('load', () => {
-    if (typeof initAppShell === 'function') initAppShell();
-    startScanner();
-    });
+        window.addEventListener('load', () => {
+            if (typeof initAppShell === 'function') initAppShell();
+            startScanner();
+        });
 
-    function startScanner() {
-    // Configuration du scanner
-    html5QrCode = new Html5Qrcode("reader");
+        function startScanner() {
+            html5QrCode = new Html5Qrcode("reader");
 
-    const config = { 
-        fps: 10, // 10 images analysées par seconde
-        qrbox: { width: 250, height: 150 }, // Zone de détection
-        aspectRatio: 1.0
-    };
+            const config = { 
+                fps: 10,
+                qrbox: { width: 250, height: 150 },
+                aspectRatio: 1.0,
+                formatsToSupport: [Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8, Html5QrcodeSupportedFormats.CODE_128]
+            };
 
-    // Lancement de la caméra arrière (environment)
-    html5QrCode.start(
-        { facingMode: "environment" }, 
-        config,
-        onScanSuccess
-    ).catch(err => console.error("Erreur Scanner: ", err));
-    }
+            html5QrCode.start(
+                { facingMode: "environment" }, 
+                config,
+                onScanSuccess,
+                onScanError
+            ).catch(err => {
+                console.error("Erreur Scanner: ", err);
+                alert("Impossible d'accéder à la caméra. Vérifiez les permissions.");
+            });
+        }
 
-    // L'ACTION : Ce qui se passe quand un code est détecté
-    function onScanSuccess(decodedText) {
-    console.log("Code détecté : " + decodedText);
+        function onScanSuccess(decodedText, decodedResult) {
+            if (isScanning) return;
+            isScanning = true;
 
-    // 1. Liaison avec shop.js : On cherche le produit par son code-barres
-    // (Assure-toi que tes produits dans shop.js ont une propriété 'barcode')
-    const product = products.find(p => p.barcode === decodedText);
+            console.log("📱 Code-barres scanné:", decodedText);
 
-    if (product) {
-        // Bloquer le scanner un instant pour éviter les scans multiples
-        html5QrCode.pause();
-        
-        // 2. Action : Ajouter au panier
-        addToBasket(product);
-        
-        // Vibration (sur mobile) pour confirmer
-        if (navigator.vibrate) navigator.vibrate(100);
-        
-        alert("Ajouté : " + product.name);
-        
-        // Relancer après 2 secondes
-        setTimeout(() => html5QrCode.resume(), 2000);
-    }
-    }
+            const product = products.find(p => p.barcode == decodedText);
 
-    // Gestion simplifiée du panier (en attendant la page panier)
-    function addToBasket(product) {
-    let basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
-    basket.push(product);
-    localStorage.setItem('user_basket', JSON.stringify(basket));
+            if (product) {
+                console.log("✅ Produit trouvé:", product.name);
+                
+                // Vibration pour confirmer
+                if (navigator.vibrate) navigator.vibrate(100);
 
-    // Mise à jour visuelle du total (si tes éléments ont ces IDs)
-    updateBasketUI();
-    }
+                // Afficher la fiche produit
+                currentProduct = product;
+                showProductModal(product);
 
-    function updateBasketUI() {
-    // Ici tu peux ajouter le code pour mettre à jour le petit badge 
-    // et le prix total dans ton bandeau vert en bas.
-    }
+                // Débloquer après 3 secondes (temps de regarder la fiche)
+                setTimeout(() => {
+                    isScanning = false;
+                }, 3000);
+            } else {
+                console.warn("❌ Code-barres non reconnu:", decodedText);
+                alert("⚠️ Produit non trouvé dans la base de données.");
+                
+                setTimeout(() => {
+                    isScanning = false;
+                }, 500);
+            }
+        }
+
+        function onScanError(error) {
+            // Silencieux - le scanner essaie constamment
+        }
+
+        // Afficher la fiche produit
+        function showProductModal(product) {
+            const modal = document.getElementById('product-modal');
+            const content = document.getElementById('modal-content');
+            
+            // Utiliser la fonction du fichier fiche_produit.js
+            content.innerHTML = generateProductSheet(product);
+            
+            modal.classList.remove('hidden');
+            
+            setTimeout(() => {
+                modal.querySelector('.absolute.inset-x-0').classList.add('translate-y-0');
+            }, 10);
+        }
+
+        // Fermer la fiche produit
+        function closeProductModal() {
+            const modal = document.getElementById('product-modal');
+            modal.classList.add('hidden');
+            currentProduct = null;
+        }
+
+        // Ajouter au panier depuis le modal
+        function addProductToBasket() {
+            if (!currentProduct) return;
+            
+            // Récupérer le panier existant
+            let basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
+            
+            // Ajouter le produit
+            basket.push(currentProduct);
+            
+            // Sauvegarder
+            localStorage.setItem('user_basket', JSON.stringify(basket));
+            
+            console.log("🛒 Produit ajouté au panier:", currentProduct.name);
+            
+            // Feedback visuel
+            if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
+            
+            // Fermer le modal
+            closeProductModal();
+            
+            // Message de confirmation
+            showConfirmation();
+        }
+
+        // Afficher une confirmation rapide
+        function showConfirmation() {
+            const confirmMsg = document.createElement('div');
+            confirmMsg.className = 'fixed top-20 left-1/2 -translate-x-1/2 bg-primary text-forest-green font-bold px-6 py-3 rounded-full shadow-lg z-[300] flex items-center gap-2';
+            confirmMsg.innerHTML = `
+                <span class="material-symbols-outlined">check_circle</span>
+                <span>Ajouté au panier !</span>
+            `;
+            document.body.appendChild(confirmMsg);
+            
+            setTimeout(() => {
+                confirmMsg.remove();
+            }, 2000);
+        }
     </script>
 </body>
 </html>

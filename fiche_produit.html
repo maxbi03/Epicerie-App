@@ -1,147 +1,588 @@
-<!DOCTYPE html>
+// fiche_produit.js - Templates de fiches produit par famille
 
-<html class="light" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Product Details - L'Épicerie du Village</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#13ec49",
-                        "background-light": "#f6f8f6",
-                        "background-dark": "#102215",
-                    },
-                    fontFamily: {
-                        "display": ["Space Grotesk"]
-                    },
-                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
-                },
-            },
-        }
-    </script>
-<style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        body {
-            font-family: 'Space Grotesk', sans-serif;
-        }
-    </style>
-<style>
-    body {
-      min-height: max(884px, 100dvh);
+/**
+ * Génère le contenu HTML de la fiche produit selon sa catégorie
+ * @param {Object} product - Objet produit depuis shop.js
+ * @returns {string} HTML de la fiche produit
+ */
+function generateProductSheet(product) {
+    const category = product.category.toLowerCase();
+    
+    // Déterminer quelle template utiliser
+    if (category.includes('crèm') || category.includes('lait') || category.includes('fromage')) {
+        return generateDairySheet(product);
+    } else if (category.includes('boulang') || category.includes('pain')) {
+        return generateBakerySheet(product);
+    } else if (category.includes('frais') || category.includes('œuf') || category.includes('légume')) {
+        return generateFreshSheet(product);
+    } else if (category.includes('viande') || category.includes('charcuterie')) {
+        return generateMeatSheet(product);
+    } else if (category.includes('fruit')) {
+        return generateFruitSheet(product);
+    } else {
+        return generateDefaultSheet(product);
     }
-  </style>
-  </head>
-<body class="bg-background-light dark:bg-background-dark text-[#111813] dark:text-white transition-colors duration-300">
-<!-- Top App Bar -->
-<div class="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md">
-<div class="flex items-center p-4 pb-2 justify-between">
-<div class="text-[#111813] dark:text-white flex size-12 shrink-0 items-center">
-<span class="material-symbols-outlined">arrow_back_ios</span>
-</div>
-<h2 class="text-[#111813] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Product Details</h2>
-<div class="flex w-12 items-center justify-end">
-<button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 bg-transparent text-[#111813] dark:text-white gap-2 text-base font-bold leading-normal tracking-[0.015em] min-w-0 p-0">
-<span class="material-symbols-outlined">share</span>
-</button>
-</div>
-</div>
-</div>
-<main class="pt-16 pb-32">
-<!-- Hero Product Image -->
-<div class="@container">
-<div class="@[480px]:px-4 @[480px]:py-3">
-<div class="w-full bg-center bg-no-repeat bg-cover flex flex-col justify-end overflow-hidden bg-white @[480px]:rounded-lg min-h-80" data-alt="Close up of artisanal organic goat cheese on a wooden board" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDSO_fFaFgoSgomeX6yThnSQO91FBd6ukSX2NaFs3AWEu8faw0EaWw5bSeIzv-rLLV4f8DsobuDI6AM2ew1CHBxXtMOY8yrTgEifxl_4eJSwCuqCkj-CZBgu-SRN7IlievOJVrMx4gFIytpZD2SHayC1hE1bUsRGmNbIAEg8F5WMgxdkj_AxioQBBjbkPl-tu0y8b-8F43ML51uvj9xIrvzOnQvWdcZXBc3NEVs7aWL9tT0hQlSFexb9N0lSUIXxkwr43uhTRMNr_fI");'>
-</div>
-</div>
-</div>
-<!-- Headline & Price -->
-<div class="flex flex-col">
-<h1 class="text-[#111813] dark:text-white tracking-light text-[32px] font-bold leading-tight px-4 text-left pb-1 pt-6">Organic Goat Cheese</h1>
-<p class="text-[#61896b] dark:text-primary text-xl font-bold leading-normal pb-3 px-4">€4.50 / unit</p>
-</div>
-<!-- Chips / Tags -->
-<div class="flex gap-3 p-3 flex-wrap px-4">
-<div class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-primary/20 dark:bg-primary/10 pl-2 pr-4">
-<span class="material-symbols-outlined text-[#111813] dark:text-primary text-[20px]">location_on</span>
-<p class="text-[#111813] dark:text-white text-sm font-medium leading-normal">12km from here</p>
-</div>
-<div class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-primary/20 dark:bg-primary/10 pl-2 pr-4">
-<span class="material-symbols-outlined text-[#111813] dark:text-primary text-[20px]">eco</span>
-<p class="text-[#111813] dark:text-white text-sm font-medium leading-normal">Organic Certified</p>
-</div>
-<div class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-primary/20 dark:bg-primary/10 pl-2 pr-4">
-<span class="material-symbols-outlined text-[#111813] dark:text-primary text-[20px]">schedule</span>
-<p class="text-[#111813] dark:text-white text-sm font-medium leading-normal">Harvested 24h ago</p>
-</div>
-</div>
-<!-- Local Origin Section -->
-<div class="px-4 py-6 mt-4">
-<h3 class="text-[#111813] dark:text-white text-lg font-bold mb-4">Meet the Producer</h3>
-<div class="flex items-center gap-4 bg-white dark:bg-background-dark p-4 rounded-xl border border-gray-100 dark:border-white/10 shadow-sm">
-<div class="size-16 rounded-full bg-cover bg-center shrink-0 border-2 border-primary" data-alt="Portrait of Jean-Pierre the local goat cheese producer" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBQdaFede0w9CYNaEVLwTpgz968ql_mzrQjI-Bzpq2LoeNxtqQub3GLTRgnakJJmsA7LxfUbb-sK8YpYnG-WUORlE7vyF3igZMytG_rs3l1gAoGtMV4nLRNeIfl0aG1mchJIHPl-2-qSkM_vWo35vyzkq3EdDvG5_UK7CCm-aQAV4geWSXpngdPD-tZifQkc86lUJq_99toaEk5wT6FNfAq0GnxW1luoa95brZ04wzdLYWNq3rdE42sSRifB0M2l1H67Lbd8cTx3QnI");'>
-</div>
-<div class="flex flex-col">
-<div class="flex items-center gap-1">
-<span class="text-[#111813] dark:text-white font-bold text-lg">Jean-Pierre</span>
-<span class="material-symbols-outlined text-primary text-[18px]">verified</span>
-</div>
-<p class="text-sm text-gray-500 dark:text-gray-400">La Ferme du Vallon, Val-de-Marne</p>
-</div>
-</div>
-<p class="text-[#111813] dark:text-gray-300 text-sm leading-relaxed mt-4">
-                "Jean-Pierre has been refining his traditional goat cheese recipe for over 20 years. His goats graze freely in the neighboring valley, producing milk of exceptional quality. Every batch is handmade using local spring water."
-            </p>
-</div>
-<!-- Nutritional & Details Accordion -->
-<div class="px-4 py-2">
-<div class="border-t border-gray-100 dark:border-white/10 py-4 flex justify-between items-center">
-<div class="flex items-center gap-3">
-<span class="material-symbols-outlined text-gray-600 dark:text-gray-400">nutrition</span>
-<span class="font-medium">Nutritional Info</span>
-</div>
-<span class="material-symbols-outlined">expand_more</span>
-</div>
-<div class="border-t border-gray-100 dark:border-white/10 py-4 flex justify-between items-center">
-<div class="flex items-center gap-3">
-<span class="material-symbols-outlined text-gray-600 dark:text-gray-400">receipt_long</span>
-<span class="font-medium">Ingredients &amp; Allergens</span>
-</div>
-<span class="material-symbols-outlined">expand_more</span>
-</div>
-<div class="border-t border-gray-100 dark:border-white/10 py-4 flex justify-between items-center">
-<div class="flex items-center gap-3">
-<span class="material-symbols-outlined text-gray-600 dark:text-gray-400">co2</span>
-<span class="font-medium">Environmental Impact</span>
-</div>
-<div class="flex items-center gap-1">
-<span class="text-xs font-bold text-primary">LOW</span>
-<span class="material-symbols-outlined">expand_more</span>
-</div>
-</div>
-</div>
-<!-- Location Map Placeholder -->
-<div class="px-4 py-6">
-<h3 class="text-[#111813] dark:text-white text-lg font-bold mb-4">Farm Location</h3>
-<div class="w-full h-40 rounded-xl bg-gray-200 dark:bg-gray-800 relative overflow-hidden">
-<div class="absolute inset-0 bg-cover bg-center" data-alt="A map showing the location of La Ferme du Vallon" data-location="Saint-Maur-des-Fossés, France" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCjzM3t3zetjoB7Q08wHuTOQAwJFwHN8FYQCJMs0Z_5hzJON6YXG-0eUQ6IMZ4rZZga6_C934FjoYrtSQih2UKUGWexa9h-WaXMxlR0_iPoV0rzeBfn2nlWYIba1i81nCP81a0e_pu0EjIpGCD3R_JFxz27dSYPv6I0BR6UWT7wTHgCS3g_AvyT668OPjacjlRylylixtPRSth3WF0VzldHeKXNDyE_oBfuwwOqGkJqOQ_lsvHbR9IiSGXTvCE1-LrZUxG3xDlVMC3B");'>
-</div>
-<div class="absolute inset-0 flex items-center justify-center">
-<div class="bg-primary p-2 rounded-full shadow-lg">
-<span class="material-symbols-outlined text-white">location_on</span>
-</div>
-</div>
-</div>
-</div>
-</main>
-<script src="menu.js"></script>
-</body>
-</html>
+}
+
+/**
+ * Template pour CRÈMERIE / PRODUITS LAITIERS / FROMAGES
+ */
+function generateDairySheet(product) {
+    return `
+        <!-- Image principale -->
+        <div class="relative h-64 bg-cover bg-center" style="background-image: url('${product.image}')">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+            <div class="absolute top-4 right-4">
+                <div class="bg-primary px-3 py-1 rounded-full">
+                    <span class="text-xs font-black text-forest-green">🧀 FROMAGE</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Titre & Prix -->
+        <div class="px-4 pt-6">
+            <h1 class="text-2xl font-black text-forest-green dark:text-white leading-tight">${product.name}</h1>
+            <p class="text-3xl font-black text-primary mt-2">${product.price} CHF <span class="text-sm font-medium text-gray-500">/ ${product.unit}</span></p>
+        </div>
+
+        <!-- Badges -->
+        <div class="flex gap-2 px-4 mt-4 flex-wrap">
+            ${generateBadges(product)}
+        </div>
+
+        <!-- Origine / Producteur -->
+        <div class="px-4 mt-6">
+            <h3 class="text-sm font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Producteur</h3>
+            <div class="flex items-center gap-3 bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-gray-100 dark:border-white/10">
+                <span class="material-symbols-outlined text-primary text-2xl">location_on</span>
+                <div>
+                    <p class="font-bold text-forest-green dark:text-white">${product.origin}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Producteur laitier local</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informations nutritionnelles -->
+        <div class="px-4 mt-6">
+            <h3 class="text-sm font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Valeurs nutritionnelles</h3>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/10">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="material-symbols-outlined text-primary text-sm">water_drop</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Matières grasses</span>
+                    </div>
+                    <p class="font-black text-forest-green dark:text-white">~30g/100g</p>
+                </div>
+                <div class="bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/10">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="material-symbols-outlined text-primary text-sm">fitness_center</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Protéines</span>
+                    </div>
+                    <p class="font-black text-forest-green dark:text-white">~25g/100g</p>
+                </div>
+                <div class="bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/10">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="material-symbols-outlined text-primary text-sm">bone</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Calcium</span>
+                    </div>
+                    <p class="font-black text-forest-green dark:text-white">Riche</p>
+                </div>
+                <div class="bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/10">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="material-symbols-outlined text-primary text-sm">local_fire_department</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Calories</span>
+                    </div>
+                    <p class="font-black text-forest-green dark:text-white">~400 kcal</p>
+                </div>
+            </div>
+            <div class="mt-4 bg-primary/10 dark:bg-primary/5 p-3 rounded-xl border border-primary/20">
+                <p class="text-xs text-gray-600 dark:text-gray-400 italic">
+                    <span class="material-symbols-outlined text-primary text-sm align-middle">info</span>
+                    Produit au lait de vache, affiné selon la tradition suisse. Contient du lactose.
+                </p>
+            </div>
+        </div>
+
+        <!-- Conservation -->
+        <div class="px-4 mt-6">
+            <h3 class="text-sm font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Conservation</h3>
+            <div class="bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-gray-100 dark:border-white/10">
+                <div class="flex items-start gap-3">
+                    <span class="material-symbols-outlined text-primary">ac_unit</span>
+                    <div>
+                        <p class="font-bold text-forest-green dark:text-white">À conserver entre 4°C et 8°C</p>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Consommer dans les 7 jours après ouverture.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        ${generateStockSection(product)}
+    `;
+}
+
+/**
+ * Template pour BOULANGERIE / PAIN
+ */
+function generateBakerySheet(product) {
+    return `
+        <!-- Image principale -->
+        <div class="relative h-64 bg-cover bg-center" style="background-image: url('${product.image}')">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+            <div class="absolute top-4 right-4">
+                <div class="bg-primary px-3 py-1 rounded-full">
+                    <span class="text-xs font-black text-forest-green">🥖 BOULANGERIE</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Titre & Prix -->
+        <div class="px-4 pt-6">
+            <h1 class="text-2xl font-black text-forest-green dark:text-white leading-tight">${product.name}</h1>
+            <p class="text-3xl font-black text-primary mt-2">${product.price} CHF <span class="text-sm font-medium text-gray-500">/ ${product.unit}</span></p>
+        </div>
+
+        <!-- Badges -->
+        <div class="flex gap-2 px-4 mt-4 flex-wrap">
+            ${generateBadges(product)}
+        </div>
+
+        <!-- Origine / Artisan -->
+        <div class="px-4 mt-6">
+            <h3 class="text-sm font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Artisan boulanger</h3>
+            <div class="flex items-center gap-3 bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-gray-100 dark:border-white/10">
+                <span class="material-symbols-outlined text-primary text-2xl">store</span>
+                <div>
+                    <p class="font-bold text-forest-green dark:text-white">${product.origin}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Fabrication artisanale</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Caractéristiques de fabrication -->
+        <div class="px-4 mt-6">
+            <h3 class="text-sm font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Savoir-faire</h3>
+            <div class="space-y-3">
+                <div class="flex items-start gap-3 bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/10">
+                    <span class="material-symbols-outlined text-primary">bakery_dining</span>
+                    <div class="flex-1">
+                        <p class="font-bold text-forest-green dark:text-white text-sm">Pétrissage artisanal</p>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Façonné à la main chaque matin</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3 bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/10">
+                    <span class="material-symbols-outlined text-primary">eco</span>
+                    <div class="flex-1">
+                        <p class="font-bold text-forest-green dark:text-white text-sm">Farine locale bio</p>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Moulue sur meule de pierre</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3 bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/10">
+                    <span class="material-symbols-outlined text-primary">schedule</span>
+                    <div class="flex-1">
+                        <p class="font-bold text-forest-green dark:text-white text-sm">Levain naturel</p>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Fermentation longue de 12h</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3 bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/10">
+                    <span class="material-symbols-outlined text-primary">local_fire_department</span>
+                    <div class="flex-1">
+                        <p class="font-bold text-forest-green dark:text-white text-sm">Cuisson au feu de bois</p>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Four traditionnel à 250°C</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ingrédients -->
+        <div class="px-4 mt-6">
+            <h3 class="text-sm font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Ingrédients</h3>
+            <div class="bg-primary/10 dark:bg-primary/5 p-4 rounded-xl border border-primary/20">
+                <p class="text-sm text-gray-700 dark:text-gray-300">
+                    Farine de blé bio (origine Suisse), eau, levain naturel, sel de mer.
+                </p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 italic">
+                    Contient du gluten. Sans additifs ni conservateurs.
+                </p>
+            </div>
+        </div>
+
+        ${generateStockSection(product)}
+    `;
+}
+
+/**
+ * Template pour FRAIS / ŒUFS / LÉGUMES
+ */
+function generateFreshSheet(product) {
+    return `
+        <!-- Image principale -->
+        <div class="relative h-64 bg-cover bg-center" style="background-image: url('${product.image}')">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+            <div class="absolute top-4 right-4">
+                <div class="bg-primary px-3 py-1 rounded-full">
+                    <span class="text-xs font-black text-forest-green">🥬 FRAIS</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Titre & Prix -->
+        <div class="px-4 pt-6">
+            <h1 class="text-2xl font-black text-forest-green dark:text-white leading-tight">${product.name}</h1>
+            <p class="text-3xl font-black text-primary mt-2">${product.price} CHF <span class="text-sm font-medium text-gray-500">/ ${product.unit}</span></p>
+        </div>
+
+        <!-- Badges -->
+        <div class="flex gap-2 px-4 mt-4 flex-wrap">
+            ${generateBadges(product)}
+        </div>
+
+        <!-- Origine / Ferme -->
+        <div class="px-4 mt-6">
+            <h3 class="text-sm font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Provenance</h3>
+            <div class="flex items-center gap-3 bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-gray-100 dark:border-white/10">
+                <span class="material-symbols-outlined text-primary text-2xl">agriculture</span>
+                <div>
+                    <p class="font-bold text-forest-green dark:text-white">${product.origin}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Production locale et bio</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fraîcheur -->
+        <div class="px-4 mt-6">
+            <h3 class="text-sm font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Garantie fraîcheur</h3>
+            <div class="bg-gradient-to-r from-primary/20 to-primary/10 dark:from-primary/10 dark:to-primary/5 p-4 rounded-xl border border-primary/30">
+                <div class="flex items-start gap-3">
+                    <span class="material-symbols-outlined text-primary text-3xl">schedule</span>
+                    <div>
+                        <p class="font-black text-forest-green dark:text-white text-lg">Récolté il y a moins de 24h</p>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                            Produit frais du jour, cueilli à maturité optimale pour vous garantir saveur et qualité nutritionnelle.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mode de production -->
+        <div class="px-4 mt-6">
+            <h3 class="text-sm font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Mode de production</h3>
+            <div class="space-y-3">
+                <div class="flex items-start gap-3 bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/10">
+                    <span class="material-symbols-outlined text-primary">sunny</span>
+                    <div class="flex-1">
+                        <p class="font-bold text-forest-green dark:text-white text-sm">Élevage en plein air</p>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Les poules profitent de vastes parcours herbeux</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3 bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/10">
+                    <span class="material-symbols-outlined text-primary">grass</span>
+                    <div class="flex-1">
+                        <p class="font-bold text-forest-green dark:text-white text-sm">Alimentation naturelle</p>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Grains bio sans OGM, complément végétal</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3 bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/10">
+                    <span class="material-symbols-outlined text-primary">health_and_safety</span>
+                    <div class="flex-1">
+                        <p class="font-bold text-forest-green dark:text-white text-sm">Sans antibiotiques</p>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Élevage respectueux du bien-être animal</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        ${generateStockSection(product)}
+    `;
+}
+
+/**
+ * Template pour VIANDE / CHARCUTERIE
+ */
+function generateMeatSheet(product) {
+    return `
+        <!-- Image principale -->
+        <div class="relative h-64 bg-cover bg-center" style="background-image: url('${product.image}')">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+            <div class="absolute top-4 right-4">
+                <div class="bg-primary px-3 py-1 rounded-full">
+                    <span class="text-xs font-black text-forest-green">🥩 BOUCHERIE</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Titre & Prix -->
+        <div class="px-4 pt-6">
+            <h1 class="text-2xl font-black text-forest-green dark:text-white leading-tight">${product.name}</h1>
+            <p class="text-3xl font-black text-primary mt-2">${product.price} CHF <span class="text-sm font-medium text-gray-500">/ ${product.unit}</span></p>
+        </div>
+
+        <!-- Badges -->
+        <div class="flex gap-2 px-4 mt-4 flex-wrap">
+            ${generateBadges(product)}
+        </div>
+
+        <!-- Origine / Éleveur -->
+        <div class="px-4 mt-6">
+            <h3 class="text-sm font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Éleveur partenaire</h3>
+            <div class="flex items-center gap-3 bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-gray-100 dark:border-white/10">
+                <span class="material-symbols-outlined text-primary text-2xl">agriculture</span>
+                <div>
+                    <p class="font-bold text-forest-green dark:text-white">${product.origin}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Élevage traditionnel suisse</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Traçabilité -->
+        <div class="px-4 mt-6">
+            <h3 class="text-sm font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Traçabilité & Qualité</h3>
+            <div class="space-y-3">
+                <div class="flex items-start gap-3 bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/10">
+                    <span class="material-symbols-outlined text-primary">verified</span>
+                    <div class="flex-1">
+                        <p class="font-bold text-forest-green dark:text-white text-sm">Label Viande Suisse</p>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">100% suisse de la naissance à l'abattage</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3 bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/10">
+                    <span class="material-symbols-outlined text-primary">grass</span>
+                    <div class="flex-1">
+                        <p class="font-bold text-forest-green dark:text-white text-sm">Pâturage extensif</p>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Élevé en plein air dans les alpages</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3 bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/10">
+                    <span class="material-symbols-outlined text-primary">cut</span>
+                    <div class="flex-1">
+                        <p class="font-bold text-forest-green dark:text-white text-sm">Découpe fraîche</p>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Préparé par notre boucher le jour même</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conseils de préparation -->
+        <div class="px-4 mt-6">
+            <h3 class="text-sm font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Conseils du boucher</h3>
+            <div class="bg-primary/10 dark:bg-primary/5 p-4 rounded-xl border border-primary/20">
+                <p class="text-sm text-gray-700 dark:text-gray-300">
+                    <span class="material-symbols-outlined text-primary text-sm align-middle">restaurant</span>
+                    Sortir 30 min avant cuisson. Cuire à feu vif pour saisir, puis à température moyenne. Laisser reposer 5 min avant de servir.
+                </p>
+            </div>
+        </div>
+
+        ${generateStockSection(product)}
+    `;
+}
+
+/**
+ * Template pour FRUITS
+ */
+function generateFruitSheet(product) {
+    return `
+        <!-- Image principale -->
+        <div class="relative h-64 bg-cover bg-center" style="background-image: url('${product.image}')">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+            <div class="absolute top-4 right-4">
+                <div class="bg-primary px-3 py-1 rounded-full">
+                    <span class="text-xs font-black text-forest-green">🍎 FRUITS</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Titre & Prix -->
+        <div class="px-4 pt-6">
+            <h1 class="text-2xl font-black text-forest-green dark:text-white leading-tight">${product.name}</h1>
+            <p class="text-3xl font-black text-primary mt-2">${product.price} CHF <span class="text-sm font-medium text-gray-500">/ ${product.unit}</span></p>
+        </div>
+
+        <!-- Badges -->
+        <div class="flex gap-2 px-4 mt-4 flex-wrap">
+            ${generateBadges(product)}
+        </div>
+
+        <!-- Origine / Verger -->
+        <div class="px-4 mt-6">
+            <h3 class="text-sm font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Verger</h3>
+            <div class="flex items-center gap-3 bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-gray-100 dark:border-white/10">
+                <span class="material-symbols-outlined text-primary text-2xl">park</span>
+                <div>
+                    <p class="font-bold text-forest-green dark:text-white">${product.origin}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Arboriculture locale</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fraîcheur & Saison -->
+        <div class="px-4 mt-6">
+            <h3 class="text-sm font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Fraîcheur</h3>
+            <div class="bg-gradient-to-r from-primary/20 to-primary/10 dark:from-primary/10 dark:to-primary/5 p-4 rounded-xl border border-primary/30">
+                <div class="flex items-start gap-3">
+                    <span class="material-symbols-outlined text-primary text-3xl">calendar_today</span>
+                    <div>
+                        <p class="font-black text-forest-green dark:text-white text-lg">De saison</p>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                            Cueilli à maturité optimale, ces fruits gorgés de soleil vous offrent toutes leurs saveurs et nutriments.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bienfaits -->
+        <div class="px-4 mt-6">
+            <h3 class="text-sm font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Bienfaits nutritionnels</h3>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/10">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="material-symbols-outlined text-primary text-sm">nutrition</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Vitamines</span>
+                    </div>
+                    <p class="font-black text-forest-green dark:text-white">C, A, B</p>
+                </div>
+                <div class="bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/10">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="material-symbols-outlined text-primary text-sm">spa</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Fibres</span>
+                    </div>
+                    <p class="font-black text-forest-green dark:text-white">Riche</p>
+                </div>
+                <div class="bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/10">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="material-symbols-outlined text-primary text-sm">shield</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Antioxydants</span>
+                    </div>
+                    <p class="font-black text-forest-green dark:text-white">++</p>
+                </div>
+                <div class="bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/10">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="material-symbols-outlined text-primary text-sm">water_drop</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Hydratation</span>
+                    </div>
+                    <p class="font-black text-forest-green dark:text-white">85%</p>
+                </div>
+            </div>
+        </div>
+
+        ${generateStockSection(product)}
+    `;
+}
+
+/**
+ * Template par DÉFAUT (pour autres catégories)
+ */
+function generateDefaultSheet(product) {
+    return `
+        <!-- Image principale -->
+        <div class="relative h-64 bg-cover bg-center" style="background-image: url('${product.image}')">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+        </div>
+
+        <!-- Titre & Prix -->
+        <div class="px-4 pt-6">
+            <h1 class="text-2xl font-black text-forest-green dark:text-white leading-tight">${product.name}</h1>
+            <p class="text-3xl font-black text-primary mt-2">${product.price} CHF <span class="text-sm font-medium text-gray-500">/ ${product.unit}</span></p>
+        </div>
+
+        <!-- Badges -->
+        <div class="flex gap-2 px-4 mt-4 flex-wrap">
+            ${generateBadges(product)}
+        </div>
+
+        <!-- Origine -->
+        <div class="px-4 mt-6">
+            <h3 class="text-sm font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Origine</h3>
+            <div class="flex items-center gap-3 bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-gray-100 dark:border-white/10">
+                <span class="material-symbols-outlined text-primary text-2xl">location_on</span>
+                <span class="font-bold text-forest-green dark:text-white">${product.origin}</span>
+            </div>
+        </div>
+
+        <!-- Description -->
+        <div class="px-4 mt-6">
+            <h3 class="text-sm font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Description</h3>
+            <div class="bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-gray-100 dark:border-white/10">
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Produit de qualité, sélectionné avec soin pour notre épicerie. 
+                    Découvrez ${product.name} et profitez de sa fraîcheur garantie.
+                </p>
+            </div>
+        </div>
+
+        ${generateStockSection(product)}
+    `;
+}
+
+/**
+ * Génère les badges pour tous les templates
+ */
+function generateBadges(product) {
+    let badges = '';
+    
+    // Badge catégorie
+    badges += `
+        <div class="flex items-center gap-2 px-3 py-2 bg-primary/20 dark:bg-primary/10 rounded-lg">
+            <span class="material-symbols-outlined text-primary text-sm">category</span>
+            <span class="text-xs font-bold text-forest-green dark:text-white">${product.category}</span>
+        </div>
+    `;
+    
+    // Badge spécial (Local, Bio, Frais...)
+    if (product.badge) {
+        const badgeIcon = getBadgeIcon(product.badge);
+        badges += `
+            <div class="flex items-center gap-2 px-3 py-2 bg-primary/20 dark:bg-primary/10 rounded-lg">
+                <span class="material-symbols-outlined text-primary text-sm">${badgeIcon}</span>
+                <span class="text-xs font-bold text-forest-green dark:text-white">${product.badge}</span>
+            </div>
+        `;
+    }
+    
+    return badges;
+}
+
+/**
+ * Icône selon le badge
+ */
+function getBadgeIcon(badge) {
+    const icons = {
+        'Local': 'home',
+        'Bio': 'eco',
+        'Frais': 'schedule',
+        'Artisanal': 'handyman',
+        'AOP': 'verified',
+        'IGP': 'workspace_premium'
+    };
+    return icons[badge] || 'label';
+}
+
+/**
+ * Génère la section stock (commune à tous les templates)
+ */
+function generateStockSection(product) {
+    return `
+        <!-- Stock disponible -->
+        <div class="px-4 mt-6">
+            <h3 class="text-sm font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Disponibilité</h3>
+            <div class="flex items-center gap-3 bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-gray-100 dark:border-white/10">
+                <span class="material-symbols-outlined text-primary text-2xl">inventory_2</span>
+                <div>
+                    <span class="font-black text-forest-green dark:text-white text-lg">${product.stock} en stock</span>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">${getStockMessage(product.stock)}</p>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Message de stock
+ */
+function getStockMessage(stock) {
+    if (stock <= 2) return "🔴 Dernières pièces disponibles !";
+    if (stock <= 5) return "🟠 Stock limité";
+    return "🟢 Bien approvisionné";
+}
