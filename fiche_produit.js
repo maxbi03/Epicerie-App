@@ -7,7 +7,7 @@
  */
 function generateProductSheet(product) {
     const category = product.category.toLowerCase();
-    
+
     // Déterminer quelle template utiliser
     if (category.includes('crèm') || category.includes('lait') || category.includes('fromage')) {
         return generateDairySheet(product);
@@ -506,7 +506,7 @@ function generateDefaultSheet(product) {
             <h3 class="text-sm font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Description</h3>
             <div class="bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-gray-100 dark:border-white/10">
                 <p class="text-sm text-gray-600 dark:text-gray-400">
-                    Produit de qualité, sélectionné avec soin pour notre épicerie. 
+                    Produit de qualité, sélectionné avec soin pour notre épicerie.
                     Découvrez ${product.name} et profitez de sa fraîcheur garantie.
                 </p>
             </div>
@@ -521,7 +521,7 @@ function generateDefaultSheet(product) {
  */
 function generateBadges(product) {
     let badges = '';
-    
+
     // Badge catégorie
     badges += `
         <div class="flex items-center gap-2 px-3 py-2 bg-primary/20 dark:bg-primary/10 rounded-lg">
@@ -529,7 +529,7 @@ function generateBadges(product) {
             <span class="text-xs font-bold text-forest-green dark:text-white">${product.category}</span>
         </div>
     `;
-    
+
     // Badge spécial (Local, Bio, Frais...)
     if (product.badge) {
         const badgeIcon = getBadgeIcon(product.badge);
@@ -540,7 +540,7 @@ function generateBadges(product) {
             </div>
         `;
     }
-    
+
     return badges;
 }
 

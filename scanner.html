@@ -46,19 +46,19 @@
     <div id="header-container" class="relative z-[100] max-w-md mx-auto"></div>
 
     <div class="relative h-screen max-w-md mx-auto bg-black shadow-2xl overflow-hidden">
-        
+
         <div class="absolute inset-0 z-0">
             <div id="reader" class="opacity-90"></div>
         </div>
 
         <div class="absolute inset-0 z-10 flex flex-col">
-            
+
             <div class="flex-1 scan-overlay"></div>
 
             <div class="relative h-64 w-full flex justify-center items-center bg-transparent">
                 <div class="absolute inset-y-0 left-0 w-10 scan-overlay"></div>
                 <div class="absolute inset-y-0 right-0 w-10 scan-overlay"></div>
-                
+
                 <div class="relative w-full h-full mx-10">
                     <div class="scan-bracket top-0 left-0"></div>
                     <div class="scan-bracket top-0 right-0 rotate-90"></div>
@@ -68,7 +68,7 @@
             </div>
 
             <div class="flex-[1.5] scan-overlay flex flex-col items-center px-10 text-center">
-                
+
                 <p class="text-white text-sm font-medium leading-relaxed mt-8">
                     Alignez le code-barres de l'article dans le rectangle vert.
                 </p>
@@ -103,10 +103,10 @@
     <div id="product-modal" class="fixed inset-0 z-[200] hidden">
         <!-- Backdrop -->
         <div class="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity" onclick="closeProductModal()"></div>
-        
+
         <!-- Modal Content -->
         <div class="absolute inset-x-0 bottom-0 max-w-md mx-auto bg-white dark:bg-background-dark rounded-t-3xl shadow-2xl transform transition-transform duration-300 max-h-[85vh] overflow-y-auto">
-            
+
             <!-- Header avec bouton fermer -->
             <div class="sticky top-0 bg-white/95 dark:bg-background-dark/95 backdrop-blur-md z-10 px-4 py-3 flex items-center justify-between border-b border-gray-100 dark:border-white/10">
                 <h2 class="text-lg font-bold text-forest-green dark:text-white">Détails du produit</h2>
@@ -146,7 +146,7 @@
         function startScanner() {
             html5QrCode = new Html5Qrcode("reader");
 
-            const config = { 
+            const config = {
                 fps: 10,
                 qrbox: { width: 250, height: 150 },
                 aspectRatio: 1.0,
@@ -154,7 +154,7 @@
             };
 
             html5QrCode.start(
-                { facingMode: "environment" }, 
+                { facingMode: "environment" },
                 config,
                 onScanSuccess,
                 onScanError
@@ -174,7 +174,7 @@
 
             if (product) {
                 console.log("✅ Produit trouvé:", product.name);
-                
+
                 // Vibration pour confirmer
                 if (navigator.vibrate) navigator.vibrate(100);
 
@@ -189,7 +189,7 @@
             } else {
                 console.warn("❌ Code-barres non reconnu:", decodedText);
                 alert("⚠️ Produit non trouvé dans la base de données.");
-                
+
                 setTimeout(() => {
                     isScanning = false;
                 }, 500);
@@ -204,12 +204,12 @@
         function showProductModal(product) {
             const modal = document.getElementById('product-modal');
             const content = document.getElementById('modal-content');
-            
+
             // Utiliser la fonction du fichier fiche_produit.js
             content.innerHTML = generateProductSheet(product);
-            
+
             modal.classList.remove('hidden');
-            
+
             setTimeout(() => {
                 modal.querySelector('.absolute.inset-x-0').classList.add('translate-y-0');
             }, 10);
@@ -225,24 +225,24 @@
         // Ajouter au panier depuis le modal
         function addProductToBasket() {
             if (!currentProduct) return;
-            
+
             // Récupérer le panier existant
             let basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
-            
+
             // Ajouter le produit
             basket.push(currentProduct);
-            
+
             // Sauvegarder
             localStorage.setItem('user_basket', JSON.stringify(basket));
-            
+
             console.log("🛒 Produit ajouté au panier:", currentProduct.name);
-            
+
             // Feedback visuel
             if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
-            
+
             // Fermer le modal
             closeProductModal();
-            
+
             // Message de confirmation
             showConfirmation();
         }
@@ -256,7 +256,7 @@
                 <span>Ajouté au panier !</span>
             `;
             document.body.appendChild(confirmMsg);
-            
+
             setTimeout(() => {
                 confirmMsg.remove();
             }, 2000);
