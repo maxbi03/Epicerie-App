@@ -79,12 +79,8 @@
     </div>
 
     <script>
-        // Initialiser Supabase
-        const supabaseUrl = 'https://jykfgstmcmhhhluzojxb.supabase.co';
-        const supabaseKey = 'sb_publishable_aE4PA7Vz2K3R4Btw-mAm8g_M_7ONE7_';
-        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-        async function handleRegister() {
+                // Inscription
+        function handleRegister() {
             const name = document.getElementById('reg-name').value;
             const email = document.getElementById('reg-email').value;
             const address = document.getElementById('reg-address').value;
@@ -93,7 +89,7 @@
             const confirmPassword = document.getElementById('reg-confirm-password').value;
             const acceptTerms = document.getElementById('accept-terms').checked;
 
-            if (!name || !email || !address || !phone || !password || !confirmPassword) {
+            if (!name || !email || !address ||!phone || !password || !confirmPassword) {
                 alert("Veuillez remplir tous les champs.");
                 return;
             }
@@ -108,26 +104,31 @@
                 return;
             }
 
-            try {
-                // Inscrire l'utilisateur avec Supabase
-                const { user, error } = await _supabase.auth.signUp({
-                    email: email,
-                    password: password
-                });
+            // Enregistrer l'utilisateur dans localStorage
+            const user = { name, email, address, phone, password };
+            localStorage.setItem('user_session', JSON.stringify(user));
 
-                if (error) throw error;
+            alert("Inscription réussie ! Vous allez être redirigé vers la page de connexion.");
+            window.location.href = "connexion.html";
+        }
 
-                // Ajouter des informations supplémentaires dans la table users
-                const { data, insertError } = await _supabase
-                    .from('users')
-                    .insert([{ id: user.id, name: name, email: email, address: address, phone: phone}]);
+        // Connexion
+        function handleLogin() {
+            const phone = document.getElementById('login-phone').value;
+            const password = document.getElementById('login-password').value;
 
-                if (insertError) throw insertError;
+            const user = JSON.parse(localStorage.getItem('user_session'));
 
-                alert("Inscription réussie ! Un email de confirmation vous a été envoyé.");
-                window.location.href = "connexion.html";
-            } catch (error) {
-                alert(error.error_description || error.message);
+            if (!user) {
+                alert("Aucun utilisateur trouvé. Veuillez vous inscrire.");
+                return;
+            }
+
+            if (user.phone === phone && user.password === password) {
+                alert("Connexion réussie !");
+                window.location.href = "index.html";
+            } else {
+                alert("Numéro de téléphone ou mot de passe incorrect.");
             }
         }
     </script>
