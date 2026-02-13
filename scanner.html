@@ -366,18 +366,6 @@
                 alert("Le code-barres doit contenir exactement 13 chiffres.");
             }
         }
-
-        // Ajouter un son de confirmation
-        function playScanSound() {
-            const audio = new Audio('path/to/scan-sound.mp3');
-            audio.play();
-        }
-
-        // Appeler cette fonction après un scan réussi
-        function onScanSuccess(decodedText, decodedResult) {
-            playScanSound();
-            // Le reste de votre logique
-        }
     </script>
 </body>
 </html>
