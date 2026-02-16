@@ -6,19 +6,18 @@ const supabaseUrl = 'https://jykfgstmcmhhhluzojxb.supabase.co';
 const supabaseKey = 'sb_publishable_aE4PA7Vz2K3R4Btw-mAm8g_M_7ONE7_';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-
 // --- 1. LE DÉTECTEUR (S'exécute au chargement de chaque page) ---
 document.addEventListener('DOMContentLoaded', () => {
     // On vérifie s'il y a une session active
     const session = localStorage.getItem('user_session');
-    
+
     // On cherche l'endroit où afficher le nom (dans home.html)
     const greetingElement = document.getElementById('user-greeting');
     const nameElement = document.getElementById('user-name'); // Pour profil.html
 
     if (session) {
         const user = JSON.parse(session);
-        
+
         // Si on est connecté, on affiche le prénom
         if (greetingElement) {
             // On récupère le prénom (premier mot du nom complet)
@@ -53,9 +52,27 @@ function toggleModal(show) {
 }
 
 // --- 3. FONCTION D'INSCRIPTION MODIFIÉE ---
-async function handleRegister(name, email, address, phone, password) {
+async function handleRegister() {
+    // Récupérer les valeurs des champs du formulaire
+    const firstname = document.getElementById('reg-firstname').value;
+    const lastname = document.getElementById('reg-lastname').value;
+    const name = `${firstname} ${lastname}`;
+    const email = document.getElementById('reg-email').value;
+    const address = document.getElementById('reg-address').value;
+    const npa = document.getElementById('reg-npa').value;
+    const city = document.getElementById('reg-city').value;
+    const fullAddress = `${address}, ${npa} ${city}`;
+    const phone = document.getElementById('reg-phone').value;
+    const password = document.getElementById('reg-password').value;
+
+    // Vérifier que tous les champs sont remplis
+    if (!firstname || !lastname || !email || !address || !npa || !city || !phone || !password) {
+        alert("Veuillez remplir tous les champs.");
+        return;
+    }
+
     try {
-        // 1. Inscription via Supabase Auth (le mot de passe est haché et stocké automatiquement)
+        // 1. Inscription via Supabase Auth
         const { user, error } = await supabase.auth.signUp({
             email: email,
             password: password,
@@ -63,10 +80,11 @@ async function handleRegister(name, email, address, phone, password) {
 
         if (error) {
             console.error("Erreur lors de l'inscription :", error.message);
-            return { success: false, error: error.message };
+            alert("Erreur lors de l'inscription : " + error.message);
+            return;
         }
 
-        // 2. Insérer les données supplémentaires dans ta table "users"
+        // 2. Insérer les données supplémentaires dans la table "users"
         if (user) {
             const { error: insertError } = await supabase
                 .from('users')
@@ -75,45 +93,93 @@ async function handleRegister(name, email, address, phone, password) {
                         id: user.id, // ID généré par Supabase Auth
                         name: name,
                         email: email,
-                        address: address,
+                        address: fullAddress,
                         phone: phone,
                     }
                 ]);
 
             if (insertError) {
                 console.error("Erreur lors de l'insertion des données utilisateur :", insertError.message);
-                return { success: false, error: insertError.message };
+                alert("Erreur lors de l'insertion des données utilisateur : " + insertError.message);
+                return;
             }
         }
 
-        return { success: true, user: user };
+        // 3. Stocker la session utilisateur
+        const userSession = {
+            id: user.id,
+            name: name,
+            email: email,
+            address: fullAddress,
+            phone: phone,
+        };
+        localStorage.setItem('user_session', JSON.stringify(userSession));
+
+        // 4. Rediriger vers la page d'accueil
+        alert("Inscription réussie ! Vous allez être redirigé.");
+        window.location.href = "home.html";
+
     } catch (error) {
         console.error("Erreur inattendue :", error);
-        return { success: false, error: error.message };
+        alert("Erreur inattendue : " + error.message);
     }
 }
 
+// --- 4. FONCTION DE CONNEXION MODIFIÉE ---
+async function handleLogin() {
+    const phone = document.getElementById('login-phone').value;
+    const password = document.getElementById('login-password').value;
 
-// --- 4. FONCTION DE CONNEXION ---
-async function handleLogin(email, password) {
+    if (!phone || !password) {
+        alert("Veuillez remplir tous les champs.");
+        return;
+    }
+
     try {
+        // 1. Connexion via Supabase Auth
         const { user, error } = await supabase.auth.signIn({
-            email: email,
+            email: phone + "@epicerie.com", // Utilise le téléphone comme email (à adapter selon ta logique)
             password: password,
         });
 
         if (error) {
             console.error("Erreur lors de la connexion :", error.message);
-            return { success: false, error: error.message };
+            alert("Erreur lors de la connexion : " + error.message);
+            return;
         }
 
-        return { success: true, user: user };
+        // 2. Récupérer les données utilisateur depuis la table "users"
+        const { data, error: fetchError } = await supabase
+            .from('users')
+            .select()
+            .eq('id', user.id)
+            .single();
+
+        if (fetchError) {
+            console.error("Erreur lors de la récupération des données utilisateur :", fetchError.message);
+            alert("Erreur lors de la récupération des données utilisateur : " + fetchError.message);
+            return;
+        }
+
+        // 3. Stocker la session utilisateur
+        const userSession = {
+            id: user.id,
+            name: data.name,
+            email: data.email,
+            address: data.address,
+            phone: data.phone,
+        };
+        localStorage.setItem('user_session', JSON.stringify(userSession));
+
+        // 4. Rediriger vers la page d'accueil
+        alert("Connexion réussie ! Vous allez être redirigé.");
+        window.location.href = "home.html";
+
     } catch (error) {
         console.error("Erreur inattendue :", error);
-        return { success: false, error: error.message };
+        alert("Erreur inattendue : " + error.message);
     }
 }
-
 
 // --- 5. FONCTION DE DÉCONNEXION ---
 function logout() {
