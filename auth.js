@@ -68,9 +68,17 @@ window.handleRegister = async function() {
     const city = document.getElementById('reg-city').value.trim();
     const phone = document.getElementById('reg-phone').value.trim();
     const password = document.getElementById('reg-password').value.trim();
+    const passwordConfirm = document.getElementById('reg-password-confirm').value.trim();
 
-    if (!firstname || !lastname || !email || !address || !npa || !city || !phone || !password) {
-        alert("Veuillez remplir tous les champs.");
+    // Vérification que tous les champs sont remplis
+    if (!firstname || !lastname || !email || !address || !npa || !city || !phone || !password || !passwordConfirm) {
+        console.error("Veuillez remplir tous les champs.");
+        return;
+    }
+
+    // Vérification que les mots de passe correspondent
+    if (password !== passwordConfirm) {
+        console.error("Les mots de passe ne correspondent pas !");
         return;
     }
 
@@ -84,7 +92,7 @@ window.handleRegister = async function() {
     });
 
     if (error) {
-        alert(error.message);
+        console.error(error.message);
         return;
     }
 
@@ -102,11 +110,12 @@ window.handleRegister = async function() {
         });
 
     if (insertError) {
-        alert(insertError.message);
+        console.error(insertError.message);
         return;
     }
 
-    alert("Inscription réussie !");
+    // FERMER MODAL et REDIRECTION sans message alert
+    toggleModal(false);
     window.location.href = "home.html";
 };
 
@@ -120,7 +129,7 @@ window.handleLogin = async function() {
     const password = document.getElementById('login-password').value.trim();
 
     if (!phone || !password) {
-        alert("Veuillez remplir tous les champs.");
+        console.error("Veuillez remplir tous les champs.");
         return;
     }
 
@@ -132,7 +141,7 @@ window.handleLogin = async function() {
         .single();
 
     if (error || !profile) {
-        alert("Téléphone inconnu");
+        console.error("Téléphone inconnu");
         return;
     }
 
@@ -142,11 +151,11 @@ window.handleLogin = async function() {
     });
 
     if (loginError) {
-        alert(loginError.message);
+        console.error(loginError.message);
         return;
     }
 
-    alert("Connexion réussie !");
+    // REDIRECTION après connexion sans alert
     window.location.href = "home.html";
 };
 
