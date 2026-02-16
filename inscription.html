@@ -2,135 +2,118 @@
 <html class="light" lang="fr">
 <head>
     <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Inscription - L'Épicerie</title>
+
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
     <script>
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
-                    colors: { "primary": "#11d442", "background-light": "#f6f8f6", "background-dark": "#102215" },
-                    fontFamily: { "display": ["Space Grotesk"] }
+                    colors: {
+                        primary: "#11d442",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102215"
+                    },
+                    fontFamily: { display: ["Space Grotesk"] }
                 },
             },
         }
     </script>
 </head>
+
 <body class="bg-background-light dark:bg-background-dark font-display antialiased">
-    <div class="min-h-screen flex flex-col p-6 max-w-md mx-auto">
 
-        <div class="flex items-center gap-4 mt-4">
-            <a href="index.html" class="p-2 rounded-full bg-white dark:bg-white/5 text-gray-900 dark:text-white">
-                <span class="material-symbols-outlined">arrow_back</span>
-            </a>
-            <h1 class="text-xl font-bold dark:text-white">Créer mon compte</h1>
-        </div>
+<div class="min-h-screen flex flex-col p-6 max-w-md mx-auto">
 
-        <div class="flex-1 flex flex-col justify-center space-y-6">
-            <div class="space-y-4">
-                <div class="relative">
-                    <span class="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">person</span>
-                    <input id="reg-name" type="text" placeholder="Prénom et Nom" class="w-full pl-10 px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 text-gray-900 dark:text-white text-sm">
-                </div>
-
-                <div class="relative">
-                    <span class="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">mail</span>
-                    <input id="reg-email" type="email" placeholder="Email" class="w-full pl-10 px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 text-gray-900 dark:text-white text-sm">
-                </div>
-
-                <div class="relative">
-                    <span class="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">home</span>
-                    <input id="reg-address" type="text" placeholder="Adresse" class="w-full pl-10 px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 text-gray-900 dark:text-white text-sm">
-                </div>
-
-                <div class="relative">
-                    <span class="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">phone</span>
-                    <input id="reg-phone" type="tel" placeholder="Numéro de téléphone" class="w-full pl-10 px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 text-gray-900 dark:text-white text-sm">
-                </div>
-
-                <div class="relative">
-                    <span class="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">lock</span>
-                    <input id="reg-password" type="password" placeholder="Choisir un mot de passe" class="w-full pl-10 px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 text-gray-900 dark:text-white text-sm">
-                </div>
-
-                <div class="relative">
-                    <span class="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">lock</span>
-                    <input id="reg-confirm-password" type="password" placeholder="Confirmer le mot de passe" class="w-full pl-10 px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 text-gray-900 dark:text-white text-sm">
-                </div>
-
-                <div class="flex items-center gap-2">
-                    <input id="accept-terms" type="checkbox" class="h-4 w-4 text-primary rounded focus:ring-primary">
-                    <label for="accept-terms" class="text-xs text-gray-600 dark:text-gray-300">J'accepte les <a href="#" class="text-primary">conditions d'utilisation</a> et la <a href="#" class="text-primary">politique de confidentialité</a>.</label>
-                </div>
-
-                <button onclick="handleRegister()" class="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/20 hover:brightness-105 active:scale-95 transition-all">
-                    Finaliser l'inscription
-                </button>
-            </div>
-
-            <div class="text-center mt-4">
-                <p class="text-xs text-gray-600 dark:text-gray-300">Déjà inscrit ? <a href="connexion.html" class="text-primary font-bold">Se connecter</a></p>
-            </div>
-        </div>
+    <!-- HEADER -->
+    <div class="flex items-center gap-4 mt-4">
+        <a href="index.html" class="p-2 rounded-full bg-white dark:bg-white/5 text-gray-900 dark:text-white">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <h1 class="text-xl font-bold dark:text-white">Créer mon compte</h1>
     </div>
 
-    <script>
-                // Inscription
-        function handleRegister() {
-            const name = document.getElementById('reg-name').value;
-            const email = document.getElementById('reg-email').value;
-            const address = document.getElementById('reg-address').value;
-            const phone = document.getElementById('reg-phone').value;
-            const password = document.getElementById('reg-password').value;
-            const confirmPassword = document.getElementById('reg-confirm-password').value;
-            const acceptTerms = document.getElementById('accept-terms').checked;
+    <!-- FORM -->
+    <div class="flex-1 flex flex-col justify-center space-y-6">
 
-            if (!name || !email || !address ||!phone || !password || !confirmPassword) {
-                alert("Veuillez remplir tous les champs.");
-                return;
-            }
+        <div class="space-y-4">
 
-            if (password !== confirmPassword) {
-                alert("Les mots de passe ne correspondent pas.");
-                return;
-            }
+            <!-- NOM COMPLET -->
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">person</span>
+                <input id="reg-name" type="text" placeholder="Prénom et Nom"
+                       class="w-full pl-10 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+            </div>
 
-            if (!acceptTerms) {
-                alert("Veuillez accepter les conditions d'utilisation et la politique de confidentialité.");
-                return;
-            }
+            <!-- EMAIL -->
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">mail</span>
+                <input id="reg-email" type="email" placeholder="Email"
+                       class="w-full pl-10 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+            </div>
 
-            // Enregistrer l'utilisateur dans localStorage
-            const user = { name, email, address, phone, password };
-            localStorage.setItem('user_session', JSON.stringify(user));
+            <!-- ADRESSE -->
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">home</span>
+                <input id="reg-address" type="text" placeholder="Adresse"
+                       class="w-full pl-10 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+            </div>
 
-            alert("Inscription réussie ! Vous allez être redirigé vers la page de connexion.");
-            window.location.href = "connexion.html";
-        }
+            <!-- TELEPHONE -->
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">phone</span>
+                <input id="reg-phone" type="tel" placeholder="Numéro de téléphone"
+                       class="w-full pl-10 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+            </div>
 
-        // Connexion
-        function handleLogin() {
-            const phone = document.getElementById('login-phone').value;
-            const password = document.getElementById('login-password').value;
+            <!-- PASSWORD -->
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">lock</span>
+                <input id="reg-password" type="password" placeholder="Mot de passe"
+                       class="w-full pl-10 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+            </div>
 
-            const user = JSON.parse(localStorage.getItem('user_session'));
+            <!-- CONFIRM -->
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">lock</span>
+                <input id="reg-confirm-password" type="password" placeholder="Confirmer le mot de passe"
+                       class="w-full pl-10 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+            </div>
 
-            if (!user) {
-                alert("Aucun utilisateur trouvé. Veuillez vous inscrire.");
-                return;
-            }
+            <!-- TERMS -->
+            <div class="flex items-center gap-2">
+                <input id="accept-terms" type="checkbox" class="h-4 w-4 text-primary rounded">
+                <label class="text-xs text-gray-600 dark:text-gray-300">
+                    J'accepte les conditions d'utilisation
+                </label>
+            </div>
 
-            if (user.phone === phone && user.password === password) {
-                alert("Connexion réussie !");
-                window.location.href = "index.html";
-            } else {
-                alert("Numéro de téléphone ou mot de passe incorrect.");
-            }
-        }
-    </script>
+            <!-- BUTTON -->
+            <button onclick="handleRegister()"
+                    class="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg hover:brightness-105 active:scale-95 transition-all">
+                Finaliser l'inscription
+            </button>
+
+        </div>
+
+        <div class="text-center mt-4">
+            <p class="text-xs text-gray-600 dark:text-gray-300">
+                Déjà inscrit ?
+                <a href="index.html" class="text-primary font-bold">Se connecter</a>
+            </p>
+        </div>
+
+    </div>
+</div>
+
+<!-- AUTH SUPABASE -->
+<script type="module" src="auth.js"></script>
+
 </body>
 </html>
