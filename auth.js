@@ -1,3 +1,12 @@
+// Importation de la bibliothèque Supabase
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+// Initialisation de Supabase
+const supabaseUrl = 'https://jykfgstmcmhhhluzojxb.supabase.co';
+const supabaseKey = 'sb_publishable_aE4PA7Vz2K3R4Btw-mAm8g_M_7ONE7_';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+
 // --- 1. LE DÉTECTEUR (S'exécute au chargement de chaque page) ---
 document.addEventListener('DOMContentLoaded', () => {
     // On vérifie s'il y a une session active
@@ -44,56 +53,67 @@ function toggleModal(show) {
 }
 
 // --- 3. FONCTION D'INSCRIPTION MODIFIÉE ---
-function handleRegister() {
-    // ... tes variables (firstName, lastName, etc.) restent les mêmes ...
-    const firstName = document.getElementById('reg-firstname').value;
-    const lastName = document.getElementById('reg-lastname').value;
-    const phone = document.getElementById('reg-phone').value;
-    const password = document.getElementById('reg-password').value;
-    // ... (récupère tous les autres champs comme avant)
+async function handleRegister(name, email, address, phone, password) {
+    try {
+        // 1. Inscription via Supabase Auth (le mot de passe est haché et stocké automatiquement)
+        const { user, error } = await supabase.auth.signUp({
+            email: email,
+            password: password,
+        });
 
-    if (!firstName || !phone || !password) {
-        alert("Le prénom, le téléphone et le code sont obligatoires !");
-        return;
+        if (error) {
+            console.error("Erreur lors de l'inscription :", error.message);
+            return { success: false, error: error.message };
+        }
+
+        // 2. Insérer les données supplémentaires dans ta table "users"
+        if (user) {
+            const { error: insertError } = await supabase
+                .from('users')
+                .insert([
+                    {
+                        id: user.id, // ID généré par Supabase Auth
+                        name: name,
+                        email: email,
+                        address: address,
+                        phone: phone,
+                    }
+                ]);
+
+            if (insertError) {
+                console.error("Erreur lors de l'insertion des données utilisateur :", insertError.message);
+                return { success: false, error: insertError.message };
+            }
+        }
+
+        return { success: true, user: user };
+    } catch (error) {
+        console.error("Erreur inattendue :", error);
+        return { success: false, error: error.message };
     }
-
-    const newUser = {
-        name: `${firstName} ${lastName}`,
-        phone: phone,
-        password: password,
-        points: 0,
-        level: "Nouveau Membre"
-        // ... ajoute les autres champs (email, adresse) ici
-    };
-
-    localStorage.setItem('registered_user', JSON.stringify(newUser));
-    
-    // --- ON ENLÈVE L'ALERT ET ON FERME JUSTE LA MODALE ---
-    toggleModal(false); 
-    
-    // Optionnel : on peut vider les champs de la modale pour la prochaine fois
-    document.querySelectorAll('#register-modal input').forEach(input => input.value = '');
-
-    document.getElementById('login-phone').value = phone;
-    document.getElementById('login-password').focus(); // Place le curseur directement sur le code secret
 }
+
 
 // --- 4. FONCTION DE CONNEXION ---
-function handleLogin() {
-    const inputPhone = document.getElementById('login-phone').value;
-    const inputPass = document.getElementById('login-password').value;
+async function handleLogin(email, password) {
+    try {
+        const { user, error } = await supabase.auth.signIn({
+            email: email,
+            password: password,
+        });
 
-    // On va chercher le compte qu'on a créé à l'inscription
-    const savedUser = JSON.parse(localStorage.getItem('registered_user'));
+        if (error) {
+            console.error("Erreur lors de la connexion :", error.message);
+            return { success: false, error: error.message };
+        }
 
-    if (savedUser && inputPhone === savedUser.phone && inputPass === savedUser.password) {
-        // Si ça match, on crée la session active
-        localStorage.setItem('user_session', JSON.stringify(savedUser));
-        window.location.href = "home.html";
-    } else {
-        alert("Identifiants incorrects. Avez-vous créé un compte ?");
+        return { success: true, user: user };
+    } catch (error) {
+        console.error("Erreur inattendue :", error);
+        return { success: false, error: error.message };
     }
 }
+
 
 // --- 5. FONCTION DE DÉCONNEXION ---
 function logout() {
