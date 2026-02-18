@@ -3,10 +3,12 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>L'Épicerie du Village - Accueil</title>
+    <title>L'Épicerie du Village - Accueil (TEST)</title>
+
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -15,7 +17,6 @@
                     colors: {
                         "forest-green": "#1B4332",
                         "leaf-green": "#2D6A4F",
-                        "tech-white": "#F8FAF9",
                         "background-light": "#f6f8f6",
                         "background-dark": "#102215",
                         "primary": "#13ec49",
@@ -25,6 +26,7 @@
             },
         }
     </script>
+
     <style type="text/tailwindcss">
         @layer utilities {
             .key-btn-disabled {
@@ -41,14 +43,21 @@
     <div id="header-container" class="relative z-[100] max-w-md mx-auto"></div>
 
     <main class="relative flex min-h-screen max-w-md mx-auto flex-col overflow-x-hidden">
-
         <div class="flex-1 overflow-y-auto pb-10">
+
+            <!-- ✅ BADGE TEST ULTRA VISIBLE -->
+            <div class="px-5 pt-4">
+                <div class="inline-flex items-center gap-2 bg-primary/15 text-forest-green border border-primary/30 px-3 py-2 rounded-full text-xs font-black tracking-widest">
+                    <span class="material-symbols-outlined text-[18px]">science</span>
+                    MODE TEST — SANS SUPABASE
+                </div>
+            </div>
 
             <div class="px-5 pt-4 pb-2">
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-                    Bonjour, <span id="user-greeting">Visiteur</span> !
+                    Bonjour, <span id="user-greeting">TEST</span> !
                 </h1>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Heureux de vous revoir !</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Si tu vois ce badge, ton fichier home.html est bien chargé.</p>
             </div>
 
             <div class="p-5">
@@ -93,16 +102,12 @@
         </div>
     </main>
 
-    <!-- header dynamique -->
     <script src="header.js"></script>
     <script>
         window.addEventListener('load', () => {
             if (typeof initAppShell === 'function') initAppShell();
         });
     </script>
-
-    <!-- ✅ Auth centralisé : remplace l'ancien script Supabase inline -->
-    <script type="module" src="auth.js"></script>
 
 </body>
 </html>
