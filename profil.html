@@ -33,7 +33,7 @@
 <div id="header-container" class="max-w-md mx-auto relative z-[100]"></div>
 
 <main class="max-w-md mx-auto px-5 pt-6 pb-24 min-h-screen">
-        
+
     <div class="flex flex-col items-center mb-8">
         <div class="relative group">
             <div class="size-28 rounded-[2rem] bg-white dark:bg-white/5 flex items-center justify-center border-2 border-primary shadow-xl overflow-hidden">
@@ -52,7 +52,6 @@
     </div>
 
     <div class="grid grid-cols-2 gap-3 mb-8">
-
         <div class="bg-white dark:bg-white/5 p-5 rounded-3xl border shadow-sm text-center">
             <span class="text-[10px] font-black uppercase text-gray-400 tracking-widest block mb-1">
                 Points Fidélité
@@ -68,29 +67,59 @@
                 0.00 <span class="text-xs">CHF</span>
             </span>
         </div>
-
     </div>
 
     <div class="space-y-6">
-            
         <div>
             <h3 class="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-4 mb-3">
                 Compte & Sécurité
             </h3>
 
-            <div class="bg-white dark:bg-white/5 rounded-[2rem] border overflow-hidden shadow-sm">
+            <div class="bg-white dark:bg-white/5 rounded-[2rem] border overflow-hidden shadow-sm p-4">
 
-                <div class="w-full p-4 flex items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <span class="material-symbols-outlined text-gray-400">person_outline</span>
-                        <div class="text-left">
-                            <p class="text-sm font-bold text-forest-green dark:text-gray-200">
-                                Informations personnelles
-                            </p>
-                            <p id="user-phone-display" class="text-[10px] text-gray-400">
-                                Chargement...
-                            </p>
-                        </div>
+                <!-- Affichage Nom / Prénom / Téléphone -->
+                <div id="profile-display">
+                    <div class="mb-4">
+                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Prénom</p>
+                        <p id="user-firstname" class="text-sm font-bold text-forest-green dark:text-gray-200">Chargement...</p>
+                    </div>
+
+                    <div class="mb-4">
+                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Nom</p>
+                        <p id="user-lastname" class="text-sm font-bold text-forest-green dark:text-gray-200">Chargement...</p>
+                    </div>
+
+                    <div class="mb-4">
+                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Téléphone</p>
+                        <p id="user-phone-display" class="text-sm font-bold text-forest-green dark:text-gray-200">Chargement...</p>
+                    </div>
+
+                    <button id="edit-profile-btn"
+                        class="w-full py-3 mt-2 rounded-2xl bg-primary text-white font-bold text-sm hover:brightness-105 transition-all">
+                        Modifier mes informations
+                    </button>
+                </div>
+
+                <!-- Formulaire modification (inline / modal) -->
+                <div id="profile-edit-form" class="hidden space-y-4">
+                    <input id="edit-firstname" type="text" placeholder="Prénom"
+                           class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+
+                    <input id="edit-lastname" type="text" placeholder="Nom"
+                           class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+
+                    <input id="edit-phone" type="tel" placeholder="Téléphone"
+                           class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+
+                    <div class="flex gap-3">
+                        <button id="save-profile-btn"
+                            class="flex-1 py-3 rounded-2xl bg-primary text-white font-bold text-sm hover:brightness-105 transition-all">
+                            Sauvegarder
+                        </button>
+                        <button id="cancel-profile-btn"
+                            class="flex-1 py-3 rounded-2xl bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-white font-bold text-sm hover:brightness-105 transition-all">
+                            Annuler
+                        </button>
                     </div>
                 </div>
 
@@ -102,17 +131,10 @@
             class="w-full py-4 rounded-3xl bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 font-black text-xs uppercase tracking-widest active:scale-[0.98] transition-all">
             Se déconnecter de l'application
         </button>
-
     </div>
 </main>
 
-
-<!-- SCRIPTS -->
-<script type="module" src="auth.js"></script>
-<script src="header.js"></script>
-
 <script type="module">
-
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 const supabase = createClient(
@@ -121,15 +143,10 @@ const supabase = createClient(
 );
 
 window.addEventListener('DOMContentLoaded', async () => {
-
     if (typeof initAppShell === 'function') initAppShell();
 
     const { data: { session } } = await supabase.auth.getSession();
-
-    if (!session) {
-        window.location.href = "index.html";
-        return;
-    }
+    if (!session) return;
 
     const { data } = await supabase
         .from('users')
@@ -139,13 +156,74 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     if (!data) return;
 
-    document.getElementById('user-name').textContent = data.name;
+    // Split nom complet en prénom / nom
+    const [firstName, ...lastNameParts] = data.name.split(' ');
+    const lastName = lastNameParts.join(' ');
+
+    document.getElementById('user-firstname').textContent = firstName || '';
+    document.getElementById('user-lastname').textContent = lastName || '';
     document.getElementById('user-phone-display').textContent =
         data.phone || data.email || "Compte actif";
+    document.getElementById('user-name').textContent = data.name;
 
+    // FORMULAIRE MODIFICATION
+    const editBtn = document.getElementById('edit-profile-btn');
+    const profileDisplay = document.getElementById('profile-display');
+    const editForm = document.getElementById('profile-edit-form');
+    const saveBtn = document.getElementById('save-profile-btn');
+    const cancelBtn = document.getElementById('cancel-profile-btn');
+
+    editBtn.addEventListener('click', () => {
+        profileDisplay.classList.add('hidden');
+        editForm.classList.remove('hidden');
+
+        // Remplir champs avec valeurs actuelles
+        document.getElementById('edit-firstname').value = firstName;
+        document.getElementById('edit-lastname').value = lastName;
+        document.getElementById('edit-phone').value = data.phone || '';
+    });
+
+    cancelBtn.addEventListener('click', () => {
+        editForm.classList.add('hidden');
+        profileDisplay.classList.remove('hidden');
+    });
+
+    saveBtn.addEventListener('click', async () => {
+        const newFirstName = document.getElementById('edit-firstname').value.trim();
+        const newLastName = document.getElementById('edit-lastname').value.trim();
+        const newPhone = document.getElementById('edit-phone').value.trim();
+
+        if (!newFirstName || !newLastName) {
+            alert("Le prénom et le nom sont obligatoires");
+            return;
+        }
+
+        const fullName = `${newFirstName} ${newLastName}`;
+
+        const { error } = await supabase
+            .from('users')
+            .update({ name: fullName, phone: newPhone })
+            .eq('id', session.user.id);
+
+        if (error) {
+            alert("Erreur lors de la mise à jour : " + error.message);
+            return;
+        }
+
+        // Mettre à jour l'affichage
+        document.getElementById('user-firstname').textContent = newFirstName;
+        document.getElementById('user-lastname').textContent = newLastName;
+        document.getElementById('user-phone-display').textContent = newPhone || data.email;
+        document.getElementById('user-name').textContent = fullName;
+
+        editForm.classList.add('hidden');
+        profileDisplay.classList.remove('hidden');
+        alert("Informations mises à jour !");
+    });
 });
-
 </script>
 
+<script src="header.js"></script>
+<script type="module" src="auth.js"></script>
 </body>
 </html>
