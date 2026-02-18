@@ -1,25 +1,14 @@
 // services/userService.js
-// Toutes les opérations sur la table `users` sont centralisées ici.
-
 import { supabase } from '../supabaseClient.js';
 
-// --------------------
-// Session helpers
-// --------------------
+// Session
 export async function getSession() {
   const { data, error } = await supabase.auth.getSession();
   if (error) throw error;
   return data.session ?? null;
 }
 
-export async function getUserIdOrNull() {
-  const session = await getSession();
-  return session?.user?.id ?? null;
-}
-
-// --------------------
-// users table helpers
-// --------------------
+// Profil utilisateur
 export async function fetchUserProfile(userId) {
   if (!userId) return null;
 
@@ -29,9 +18,8 @@ export async function fetchUserProfile(userId) {
     .eq('id', userId)
     .single();
 
-  // PGRST116 = "No rows found" (selon configuration)
   if (error) {
-    // Si aucun profil n'existe, on renvoie null proprement
+    // Si aucun profil n'existe, on renvoie null
     if (error.code === 'PGRST116') return null;
     throw error;
   }
@@ -40,22 +28,13 @@ export async function fetchUserProfile(userId) {
 }
 
 export async function createUserProfile(profile) {
-  // profile attendu: { id, name, email, address, phone }
-  const { error } = await supabase
-    .from('users')
-    .insert(profile);
-
+  const { error } = await supabase.from('users').insert(profile);
   if (error) throw error;
   return true;
 }
 
 export async function updateUserProfile(userId, patch) {
-  // patch = { name?, phone?, address?, ... }
-  const { error } = await supabase
-    .from('users')
-    .update(patch)
-    .eq('id', userId);
-
+  const { error } = await supabase.from('users').update(patch).eq('id', userId);
   if (error) throw error;
   return true;
 }

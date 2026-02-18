@@ -5,7 +5,7 @@
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>L'Épicerie du Village - Accueil</title>
 
-  <!-- IMPORTANT: config AVANT tailwind CDN -->
+  <!-- IMPORTANT: config avant Tailwind CDN -->
   <script>
     window.tailwind = window.tailwind || {};
     tailwind.config = {
@@ -31,13 +31,11 @@
 </head>
 
 <body class="bg-background-light dark:bg-background-dark font-display text-[#111813] antialiased">
-  <!-- Header injecté -->
   <div id="header-container" class="relative z-[100] max-w-md mx-auto"></div>
 
   <main class="relative flex min-h-screen max-w-md mx-auto flex-col overflow-x-hidden">
     <div class="flex-1 overflow-y-auto pb-10">
 
-      <!-- Header page -->
       <div class="px-5 pt-4 pb-2">
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
           Bonjour, <span id="user-greeting">Visiteur</span> 👋
@@ -47,34 +45,26 @@
         </p>
       </div>
 
-      <!-- CARTE PRINCIPALE : Accès magasin -->
       <div class="p-5">
         <div class="relative overflow-hidden rounded-3xl p-6
                     bg-white/80 dark:bg-white/5 backdrop-blur
                     border border-gray-100 dark:border-white/10 shadow-sm">
 
-          <!-- Ornements doux -->
           <div class="pointer-events-none absolute -top-12 -right-12 h-40 w-40 rounded-full bg-primary/10 blur-2xl"></div>
           <div class="pointer-events-none absolute -bottom-14 -left-14 h-48 w-48 rounded-full bg-forest-green/10 blur-2xl"></div>
 
-          <!-- Ligne magasin -->
           <div class="flex items-center justify-between gap-3">
             <div class="flex items-center gap-3 min-w-0">
               <div class="h-11 w-11 rounded-2xl
                           bg-gray-100 dark:bg-white/10
                           border border-gray-200/60 dark:border-white/10
                           flex items-center justify-center">
-                <span id="door-status-icon"
-                      class="material-symbols-outlined text-forest-green dark:text-white text-[22px]">store</span>
+                <span class="material-symbols-outlined text-forest-green dark:text-white text-[22px]">store</span>
               </div>
 
               <div class="min-w-0">
-                <p class="text-[11px] font-black text-gray-400 uppercase tracking-[0.22em]">
-                  Magasin
-                </p>
-                <p id="store-name" class="text-base font-bold text-forest-green dark:text-white truncate">
-                  Épicerie de Semsales
-                </p>
+                <p class="text-[11px] font-black text-gray-400 uppercase tracking-[0.22em]">Magasin</p>
+                <p class="text-base font-bold text-forest-green dark:text-white truncate">Épicerie de Semsales</p>
               </div>
             </div>
 
@@ -82,45 +72,26 @@
                          bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-200
                          border border-gray-200/60 dark:border-white/10">
               <span class="h-2 w-2 rounded-full bg-primary"></span>
-              <span id="store-live-label">En direct</span>
+              En direct
             </span>
           </div>
 
-          <!-- 2 mini-cartes : Affluence / Accès -->
           <div class="mt-5 grid grid-cols-2 gap-3">
-            <div class="rounded-2xl p-4
-                        bg-gray-50 dark:bg-white/5
-                        border border-gray-100 dark:border-white/10">
-              <p class="text-[11px] font-black text-gray-400 uppercase tracking-[0.18em]">
-                Affluence
-              </p>
-              <p id="store-people" class="mt-1 text-lg font-black text-forest-green dark:text-white">
-                3 personnes
-              </p>
-              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                (valeur indicative)
-              </p>
+            <div class="rounded-2xl p-4 bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10">
+              <p class="text-[11px] font-black text-gray-400 uppercase tracking-[0.18em]">Affluence</p>
+              <p class="mt-1 text-lg font-black text-forest-green dark:text-white">3 personnes</p>
+              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">(valeur indicative)</p>
             </div>
 
-            <div class="rounded-2xl p-4
-                        bg-gray-50 dark:bg-white/5
-                        border border-gray-100 dark:border-white/10">
-              <p class="text-[11px] font-black text-gray-400 uppercase tracking-[0.18em]">
-                Accès
-              </p>
-              <p id="store-detection-title" class="mt-1 text-lg font-black text-forest-green dark:text-white">
-                Non détecté
-              </p>
-              <p id="store-detection-subtitle" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Approchez-vous de l’entrée
-              </p>
+            <div class="rounded-2xl p-4 bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10">
+              <p class="text-[11px] font-black text-gray-400 uppercase tracking-[0.18em]">Accès</p>
+              <p class="mt-1 text-lg font-black text-forest-green dark:text-white">Non détecté</p>
+              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Approchez-vous de l’entrée</p>
             </div>
           </div>
 
-          <!-- Bouton porte -->
           <div class="mt-6">
-            <button id="open-door-btn"
-                    class="w-full py-4 rounded-2xl font-bold
+            <button class="w-full py-4 rounded-2xl font-bold
                            bg-gray-100 dark:bg-white/10 text-gray-400
                            cursor-not-allowed
                            flex items-center justify-center gap-3
@@ -141,22 +112,17 @@
         </div>
       </div>
 
-      <!-- CARTE INFO : parcours -->
       <div class="px-5 pb-8">
-        <div class="rounded-3xl p-5
-                    bg-white/80 dark:bg-white/5 backdrop-blur
+        <div class="rounded-3xl p-5 bg-white/80 dark:bg-white/5 backdrop-blur
                     border border-gray-100 dark:border-white/10 shadow-sm">
           <div class="flex items-start gap-3">
-            <div class="h-11 w-11 rounded-2xl
-                        bg-gray-100 dark:bg-white/10
+            <div class="h-11 w-11 rounded-2xl bg-gray-100 dark:bg-white/10
                         border border-gray-200/60 dark:border-white/10
                         flex items-center justify-center">
               <span class="material-symbols-outlined text-primary text-[22px]">info</span>
             </div>
             <div>
-              <h3 class="font-bold text-forest-green dark:text-white">
-                Parcours rapide
-              </h3>
+              <h3 class="font-bold text-forest-green dark:text-white">Parcours rapide</h3>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
                 1) Ouvrir la porte • 2) Scanner • 3) Payer • 4) Sortir
               </p>
@@ -171,7 +137,6 @@
     </div>
   </main>
 
-  <!-- Header dynamique -->
   <script src="header.js"></script>
   <script>
     window.addEventListener('load', () => {
@@ -179,7 +144,7 @@
     });
   </script>
 
-  <!-- Auth (salutation / logout) -->
+  <!-- Auth = met à jour #user-greeting -->
   <script type="module" src="auth.js"></script>
 </body>
 </html>
