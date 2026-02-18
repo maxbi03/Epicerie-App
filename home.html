@@ -1,167 +1,183 @@
 <!DOCTYPE html>
 <html class="light" lang="fr">
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>L'Épicerie du Village - Accueil</title>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>L'Épicerie du Village - Accueil</title>
 
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap" rel="stylesheet"/>
 
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "forest-green": "#1B4332",
-                        "leaf-green": "#2D6A4F",
-                        "tech-white": "#F8FAF9",
-                        "background-light": "#f6f8f6",
-                        "background-dark": "#102215",
-                        "primary": "#13ec49",
-                    },
-                    fontFamily: { "display": ["Space Grotesk", "sans-serif"] }
-                },
-            },
-        }
-    </script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec49",
+            "forest-green": "#1B4332",
+            "leaf-green": "#2D6A4F",
+            "background-light": "#f6f8f6",
+            "background-dark": "#102215",
+          },
+          fontFamily: { display: ["Space Grotesk", "sans-serif"] },
+        },
+      },
+    }
+  </script>
 
-    <style type="text/tailwindcss">
-        @layer utilities {
-            .key-btn-disabled {
-                background: linear-gradient(145deg, #e5e7eb, #d1d5db);
-                box-shadow: 0 4px 0px #9ca3af;
-                cursor: not-allowed;
-            }
-        }
-    </style>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .glass-card {
+        @apply bg-white/80 dark:bg-white/5 backdrop-blur border border-gray-100 dark:border-white/10 shadow-sm;
+      }
+      .soft-btn {
+        @apply w-full py-4 rounded-2xl font-bold transition-all active:scale-[0.99];
+      }
+      .disabled-btn {
+        @apply bg-gray-100 dark:bg-white/10 text-gray-400 cursor-not-allowed;
+      }
+      .primary-btn {
+        @apply bg-primary text-white hover:brightness-105 shadow-lg;
+      }
+      .pill {
+        @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold;
+      }
+    }
+  </style>
 </head>
 
 <body class="bg-background-light dark:bg-background-dark font-display text-[#111813] antialiased">
 
-    <!-- Header injecté -->
-    <div id="header-container" class="relative z-[100] max-w-md mx-auto"></div>
+  <!-- Header injecté -->
+  <div id="header-container" class="relative z-[100] max-w-md mx-auto"></div>
 
-    <main class="relative flex min-h-screen max-w-md mx-auto flex-col overflow-x-hidden">
-        <div class="flex-1 overflow-y-auto pb-10">
+  <main class="relative flex min-h-screen max-w-md mx-auto flex-col overflow-x-hidden">
+    <div class="flex-1 overflow-y-auto pb-10">
 
-            <!-- Bonjour -->
-            <div class="px-5 pt-4 pb-2">
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-                    Bonjour, <span id="user-greeting">Visiteur</span> !
-                </h1>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Bienvenue dans votre épicerie autonome.</p>
+      <!-- Header page -->
+      <div class="px-5 pt-4 pb-2">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+          Bonjour, <span id="user-greeting">Visiteur</span> 👋
+        </h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Prêt(e) à entrer ? Scannez et payez en toute simplicité.
+        </p>
+      </div>
+
+      <!-- CARTE PRINCIPALE : Accès magasin -->
+      <div class="p-5">
+        <div class="glass-card rounded-3xl p-6 relative overflow-hidden">
+
+          <!-- Ornement discret -->
+          <div class="absolute -top-10 -right-10 size-32 rounded-full bg-primary/10 blur-2xl"></div>
+          <div class="absolute -bottom-12 -left-12 size-40 rounded-full bg-forest-green/10 blur-2xl"></div>
+
+          <!-- Ligne "magasin détecté" -->
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="size-11 rounded-2xl bg-gray-100 dark:bg-white/10 flex items-center justify-center border border-gray-200/60 dark:border-white/10">
+                <span id="door-status-icon" class="material-symbols-outlined text-forest-green dark:text-white text-[22px]">store</span>
+              </div>
+
+              <div class="min-w-0">
+                <p class="text-[11px] font-black text-gray-400 uppercase tracking-[0.22em]">
+                  Magasin
+                </p>
+                <p id="store-name" class="text-base font-bold text-forest-green dark:text-white truncate">
+                  Épicerie de Semsales
+                </p>
+              </div>
             </div>
 
-            <!-- SECTION : OUVRIR LA PORTE -->
-            <div class="p-5">
-                <div class="bg-white dark:bg-white/5 rounded-3xl p-6 flex flex-col items-center text-center relative border border-gray-100 dark:border-white/5 shadow-sm">
+            <span class="pill bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-200 border border-gray-200/60 dark:border-white/10">
+              <span class="size-2 rounded-full bg-primary"></span>
+              <span id="store-live-label">En direct</span>
+            </span>
+          </div>
 
-                    <!-- État détection -->
-                    <div class="mb-6">
-                        <div class="size-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center border border-gray-200 dark:border-white/10">
-                            <span id="door-status-icon" class="material-symbols-outlined text-gray-400 text-3xl">location_off</span>
-                        </div>
-                    </div>
-
-                    <div class="mb-8">
-                        <h2 id="store-detection-title" class="text-forest-green dark:text-white text-xl font-bold mb-1">
-                            Aucun magasin détecté
-                        </h2>
-                        <p id="store-detection-subtitle" class="text-gray-400 text-sm font-medium">
-                            Approchez-vous de l’entrée (future détection via localisation)
-                        </p>
-                    </div>
-
-                    <!-- Bouton porte -->
-                    <button id="open-door-btn"
-                            class="key-btn-disabled w-full py-5 rounded-2xl flex items-center justify-center gap-3 opacity-60"
-                            disabled
-                            title="La porte s'activera lorsque le magasin sera détecté">
-                        <span class="material-symbols-outlined text-gray-500 font-bold text-2xl">lock</span>
-                        <span class="text-gray-500 font-bold text-lg uppercase tracking-wider">Porte verrouillée</span>
-                    </button>
-
-                    <!-- Note UX -->
-                    <p class="mt-4 text-[11px] text-gray-400 leading-relaxed">
-                        Plus tard : le bouton demandera votre localisation, et si vous êtes à <b>3–5 mètres</b> de l’entrée,
-                        la porte s’ouvrira automatiquement.
-                    </p>
-                </div>
+          <!-- Affluence + statut -->
+          <div class="mt-5 grid grid-cols-2 gap-3">
+            <div class="rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 p-4">
+              <p class="text-[11px] font-black text-gray-400 uppercase tracking-[0.18em]">
+                Affluence
+              </p>
+              <p id="store-people" class="mt-1 text-lg font-black text-forest-green dark:text-white">
+                3 personnes
+              </p>
+              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                (valeur indicative)
+              </p>
             </div>
 
-            <!-- SECTION : MAGASIN + AFFLUENCE -->
-            <div class="px-5 mb-6">
-                <div class="bg-leaf-green/5 dark:bg-primary/5 border border-leaf-green/10 dark:border-primary/10 rounded-2xl p-4 flex items-center justify-between">
-
-                    <div class="flex flex-col">
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="material-symbols-outlined text-leaf-green dark:text-primary text-sm font-bold">store</span>
-                            <span class="text-[10px] font-black text-leaf-green dark:text-primary uppercase tracking-widest">
-                                Magasin
-                            </span>
-                        </div>
-
-                        <!-- Champ magasin (1 seul pour l’instant) -->
-                        <div class="flex items-center gap-2">
-                            <span id="store-name" class="text-sm font-bold text-forest-green dark:text-gray-200">
-                                Épicerie de Semsales
-                            </span>
-                            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                                (1 magasin)
-                            </span>
-                        </div>
-
-                        <!-- Affluence -->
-                        <span id="store-people" class="text-sm font-bold text-forest-green dark:text-gray-200 mt-1">
-                            Affluence : 3 personnes
-                        </span>
-                    </div>
-
-                    <!-- Petit indicateur -->
-                    <div class="flex items-center gap-2">
-                        <span class="size-2 bg-leaf-green dark:bg-primary rounded-full animate-pulse"></span>
-                        <span class="text-[10px] font-black text-leaf-green dark:text-primary uppercase tracking-widest">
-                            En direct
-                        </span>
-                    </div>
-
-                </div>
+            <div class="rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 p-4">
+              <p class="text-[11px] font-black text-gray-400 uppercase tracking-[0.18em]">
+                Accès
+              </p>
+              <p id="store-detection-title" class="mt-1 text-lg font-black text-forest-green dark:text-white">
+                Non détecté
+              </p>
+              <p id="store-detection-subtitle" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Approchez-vous de l’entrée
+              </p>
             </div>
+          </div>
 
-            <!-- (Optionnel) INFO / ONBOARDING -->
-            <div class="px-5 pb-8">
-                <div class="bg-white dark:bg-white/5 rounded-3xl p-5 border border-gray-100 dark:border-white/5 shadow-sm">
-                    <div class="flex items-start gap-3">
-                        <span class="material-symbols-outlined text-primary text-3xl">info</span>
-                        <div>
-                            <h3 class="font-bold text-forest-green dark:text-white">Comment ça marche ?</h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
-                                1) Ouvrez la porte • 2) Scannez vos articles • 3) Payez • 4) Sortez librement.
-                            </p>
-                            <p class="text-[11px] text-gray-400 mt-3">
-                                (Navigation : utilisez le menu ☰ en haut à gauche.)
-                            </p>
-                        </div>
-                    </div>
-                </div>
+          <!-- Bouton ouvrir la porte -->
+          <div class="mt-6">
+            <!-- Désactivé par défaut (comme avant) -->
+            <button id="open-door-btn" class="soft-btn disabled-btn flex items-center justify-center gap-3" disabled>
+              <span class="material-symbols-outlined text-[22px]">lock</span>
+              <span>Porte verrouillée</span>
+            </button>
+
+            <div class="mt-3 flex items-start gap-2 text-gray-500 dark:text-gray-400">
+              <span class="material-symbols-outlined text-[18px] mt-[1px]">my_location</span>
+              <p class="text-xs leading-relaxed">
+                Plus tard : l’app demandera votre localisation. Si vous êtes à <b>3–5 mètres</b> de l’entrée, la porte s’ouvrira.
+              </p>
             </div>
+          </div>
 
         </div>
-    </main>
+      </div>
 
-    <!-- Header dynamique -->
-    <script src="header.js"></script>
-    <script>
-        window.addEventListener('load', () => {
-            if (typeof initAppShell === 'function') initAppShell();
-        });
-    </script>
+      <!-- CARTE INFO : parcours -->
+      <div class="px-5 pb-8">
+        <div class="glass-card rounded-3xl p-5">
+          <div class="flex items-start gap-3">
+            <div class="size-11 rounded-2xl bg-gray-100 dark:bg-white/10 flex items-center justify-center border border-gray-200/60 dark:border-white/10">
+              <span class="material-symbols-outlined text-primary text-[22px]">info</span>
+            </div>
+            <div>
+              <h3 class="font-bold text-forest-green dark:text-white">
+                Parcours rapide
+              </h3>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                1) Ouvrir la porte • 2) Scanner • 3) Payer • 4) Sortir
+              </p>
+              <p class="text-[11px] text-gray-400 mt-3">
+                Navigation : utilisez le menu ☰ (en haut à gauche).
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <!-- Auth (salutation / logout) -->
-    <script type="module" src="auth.js"></script>
+    </div>
+  </main>
+
+  <!-- Header dynamique -->
+  <script src="header.js"></script>
+  <script>
+    window.addEventListener('load', () => {
+      if (typeof initAppShell === 'function') initAppShell();
+    });
+  </script>
+
+  <!-- Auth (salutation / logout) -->
+  <script type="module" src="auth.js"></script>
 
 </body>
 </html>
