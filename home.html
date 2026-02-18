@@ -4,9 +4,11 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>L'Épicerie du Village - Accueil</title>
+
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -39,110 +41,126 @@
 
 <body class="bg-background-light dark:bg-background-dark font-display text-[#111813] antialiased">
 
+    <!-- Header injecté -->
     <div id="header-container" class="relative z-[100] max-w-md mx-auto"></div>
 
     <main class="relative flex min-h-screen max-w-md mx-auto flex-col overflow-x-hidden">
-
         <div class="flex-1 overflow-y-auto pb-10">
 
+            <!-- Bonjour -->
             <div class="px-5 pt-4 pb-2">
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
                     Bonjour, <span id="user-greeting">Visiteur</span> !
                 </h1>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Heureux de vous revoir !</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Bienvenue dans votre épicerie autonome.</p>
             </div>
 
+            <!-- SECTION : OUVRIR LA PORTE -->
             <div class="p-5">
                 <div class="bg-white dark:bg-white/5 rounded-3xl p-6 flex flex-col items-center text-center relative border border-gray-100 dark:border-white/5 shadow-sm">
+
+                    <!-- État détection -->
                     <div class="mb-6">
                         <div class="size-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center border border-gray-200 dark:border-white/10">
-                            <span class="material-symbols-outlined text-forest-green dark:text-white text-3xl">person</span>
+                            <span id="door-status-icon" class="material-symbols-outlined text-gray-400 text-3xl">location_off</span>
                         </div>
                     </div>
-                    <h2 class="text-xl font-bold text-forest-green dark:text-white mb-1">
-                        Votre compte est prêt
-                    </h2>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                        Accédez à votre épicerie autonome, scannez vos produits et payez en toute simplicité.
+
+                    <div class="mb-8">
+                        <h2 id="store-detection-title" class="text-forest-green dark:text-white text-xl font-bold mb-1">
+                            Aucun magasin détecté
+                        </h2>
+                        <p id="store-detection-subtitle" class="text-gray-400 text-sm font-medium">
+                            Approchez-vous de l’entrée (future détection via localisation)
+                        </p>
+                    </div>
+
+                    <!-- Bouton porte -->
+                    <button id="open-door-btn"
+                            class="key-btn-disabled w-full py-5 rounded-2xl flex items-center justify-center gap-3 opacity-60"
+                            disabled
+                            title="La porte s'activera lorsque le magasin sera détecté">
+                        <span class="material-symbols-outlined text-gray-500 font-bold text-2xl">lock</span>
+                        <span class="text-gray-500 font-bold text-lg uppercase tracking-wider">Porte verrouillée</span>
+                    </button>
+
+                    <!-- Note UX -->
+                    <p class="mt-4 text-[11px] text-gray-400 leading-relaxed">
+                        Plus tard : le bouton demandera votre localisation, et si vous êtes à <b>3–5 mètres</b> de l’entrée,
+                        la porte s’ouvrira automatiquement.
                     </p>
                 </div>
             </div>
 
-            <div class="px-5">
-                <h2 class="text-lg font-bold text-forest-green dark:text-white mb-3">Accès rapide</h2>
-                <div class="grid grid-cols-2 gap-4">
+            <!-- SECTION : MAGASIN + AFFLUENCE -->
+            <div class="px-5 mb-6">
+                <div class="bg-leaf-green/5 dark:bg-primary/5 border border-leaf-green/10 dark:border-primary/10 rounded-2xl p-4 flex items-center justify-between">
 
-                    <a href="scanner.html" class="bg-white dark:bg-white/5 rounded-3xl p-5 flex flex-col items-start gap-2 border border-gray-100 dark:border-white/5 shadow-sm hover:scale-[1.01] transition">
-                        <span class="material-symbols-outlined text-primary text-3xl">qr_code_scanner</span>
-                        <div>
-                            <h3 class="font-bold text-forest-green dark:text-white">Scanner</h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">Ajoutez des articles</p>
+                    <div class="flex flex-col">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="material-symbols-outlined text-leaf-green dark:text-primary text-sm font-bold">store</span>
+                            <span class="text-[10px] font-black text-leaf-green dark:text-primary uppercase tracking-widest">
+                                Magasin
+                            </span>
                         </div>
-                    </a>
 
-                    <a href="panier.html" class="bg-white dark:bg-white/5 rounded-3xl p-5 flex flex-col items-start gap-2 border border-gray-100 dark:border-white/5 shadow-sm hover:scale-[1.01] transition">
-                        <span class="material-symbols-outlined text-primary text-3xl">shopping_cart</span>
-                        <div>
-                            <h3 class="font-bold text-forest-green dark:text-white">Panier</h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">Voir votre sélection</p>
+                        <!-- Champ magasin (1 seul pour l’instant) -->
+                        <div class="flex items-center gap-2">
+                            <span id="store-name" class="text-sm font-bold text-forest-green dark:text-gray-200">
+                                Épicerie de Semsales
+                            </span>
+                            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                (1 magasin)
+                            </span>
                         </div>
-                    </a>
 
-                    <a href="stock.html" class="bg-white dark:bg-white/5 rounded-3xl p-5 flex flex-col items-start gap-2 border border-gray-100 dark:border-white/5 shadow-sm hover:scale-[1.01] transition">
-                        <span class="material-symbols-outlined text-primary text-3xl">inventory_2</span>
-                        <div>
-                            <h3 class="font-bold text-forest-green dark:text-white">Stock</h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">Consulter les produits</p>
-                        </div>
-                    </a>
+                        <!-- Affluence -->
+                        <span id="store-people" class="text-sm font-bold text-forest-green dark:text-gray-200 mt-1">
+                            Affluence : 3 personnes
+                        </span>
+                    </div>
 
-                    <a href="map.html" class="bg-white dark:bg-white/5 rounded-3xl p-5 flex flex-col items-start gap-2 border border-gray-100 dark:border-white/5 shadow-sm hover:scale-[1.01] transition">
-                        <span class="material-symbols-outlined text-primary text-3xl">map</span>
-                        <div>
-                            <h3 class="font-bold text-forest-green dark:text-white">Plan</h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">Trouver l’épicerie</p>
-                        </div>
-                    </a>
+                    <!-- Petit indicateur -->
+                    <div class="flex items-center gap-2">
+                        <span class="size-2 bg-leaf-green dark:bg-primary rounded-full animate-pulse"></span>
+                        <span class="text-[10px] font-black text-leaf-green dark:text-primary uppercase tracking-widest">
+                            En direct
+                        </span>
+                    </div>
 
                 </div>
             </div>
 
-            <div class="px-5 pt-8">
-                <h2 class="text-lg font-bold text-forest-green dark:text-white mb-3">Dernières nouvelles</h2>
-
-                <a href="news.html" class="block bg-white dark:bg-white/5 rounded-3xl p-5 border border-gray-100 dark:border-white/5 shadow-sm hover:scale-[1.01] transition">
+            <!-- (Optionnel) INFO / ONBOARDING -->
+            <div class="px-5 pb-8">
+                <div class="bg-white dark:bg-white/5 rounded-3xl p-5 border border-gray-100 dark:border-white/5 shadow-sm">
                     <div class="flex items-start gap-3">
-                        <span class="material-symbols-outlined text-primary text-3xl">campaign</span>
+                        <span class="material-symbols-outlined text-primary text-3xl">info</span>
                         <div>
-                            <h3 class="font-bold text-forest-green dark:text-white text-base">Nouveau : paiement sans caisse</h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                Scannez vos produits et payez directement via l’application.
+                            <h3 class="font-bold text-forest-green dark:text-white">Comment ça marche ?</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                                1) Ouvrez la porte • 2) Scannez vos articles • 3) Payez • 4) Sortez librement.
+                            </p>
+                            <p class="text-[11px] text-gray-400 mt-3">
+                                (Navigation : utilisez le menu ☰ en haut à gauche.)
                             </p>
                         </div>
                     </div>
-                </a>
-
-                <a href="news.html" class="block bg-white dark:bg-white/5 rounded-3xl p-5 border border-gray-100 dark:border-white/5 shadow-sm hover:scale-[1.01] transition mt-4">
-                    <div class="flex items-start gap-3">
-                        <span class="material-symbols-outlined text-primary text-3xl">local_florist</span>
-                        <div>
-                            <h3 class="font-bold text-forest-green dark:text-white text-base">Arrivage de fraises de pays 🍓</h3>
-                        </div>
-                    </div>
-                </a>
+                </div>
             </div>
 
         </div>
     </main>
 
-    <!-- header dynamique -->
+    <!-- Header dynamique -->
     <script src="header.js"></script>
-
     <script>
-        window.addEventListener('load', initAppShell);
+        window.addEventListener('load', () => {
+            if (typeof initAppShell === 'function') initAppShell();
+        });
     </script>
 
-    <!-- AUTH (Supabase) : met à jour #user-greeting -->
+    <!-- Auth (salutation / logout) -->
     <script type="module" src="auth.js"></script>
 
 </body>
