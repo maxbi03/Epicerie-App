@@ -1,4 +1,6 @@
-// 1. Charger le Header et le Menu automatiquement
+// =============================
+// 1. Charger le Header + Menu
+// =============================
 async function initAppShell() {
     const headerContainer = document.getElementById('header-container');
     if (!headerContainer) return;
@@ -10,15 +12,23 @@ async function initAppShell() {
         
         // Mettre à jour le titre de la page dynamiquement
         updatePageTitle();
+
+        // Activer bouton logout si présent
+        bindLogoutButton();
+
     } catch (err) {
         console.error("Erreur chargement header.html:", err);
     }
 }
 
-// 2. Gérer l'ouverture/fermeture du menu latéral
+
+// =============================
+// 2. Menu latéral toggle
+// =============================
 function toggleMenu() {
     const menu = document.getElementById('side-menu');
     const overlay = document.getElementById('menu-overlay');
+    if (!menu || !overlay) return;
     
     if (menu.classList.contains('-translate-x-full')) {
         overlay.classList.remove('hidden');
@@ -33,7 +43,10 @@ function toggleMenu() {
     }
 }
 
-// 3. Changer le titre du Header selon le nom du fichier
+
+// =============================
+// 3. Titre dynamique header
+// =============================
 function updatePageTitle() {
     const titleElement = document.getElementById('page-title');
     const path = window.location.pathname.split("/").pop();
@@ -53,5 +66,34 @@ function updatePageTitle() {
     }
 }
 
-// Lancer le chargement au démarrage
+
+// =============================
+// 4. Bouton DECONNEXION
+// =============================
+function bindLogoutButton() {
+    const btn = document.getElementById('logout-btn');
+    if (!btn) return;
+
+    btn.addEventListener('click', async () => {
+
+        try {
+            // logout() est défini dans auth.js
+            if (window.logout) {
+                await window.logout();
+            } else {
+                // fallback sécurité
+                window.location.href = "index.html";
+            }
+        } catch (e) {
+            console.error("Erreur logout:", e);
+            window.location.href = "index.html";
+        }
+
+    });
+}
+
+
+// =============================
+// 5. Init
+// =============================
 window.addEventListener('DOMContentLoaded', initAppShell);

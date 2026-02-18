@@ -4,21 +4,24 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>Mon Profil - L'Épicerie du Village</title>
+
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    <script id="tailwind-config">
+
+    <script>
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#13ec49",
+                        primary: "#13ec49",
                         "forest-green": "#1B4332",
                         "background-light": "#f6f8f6",
                         "background-dark": "#102215",
                     },
-                    fontFamily: { "display": ["Space Grotesk", "sans-serif"] }
+                    fontFamily: { display: ["Space Grotesk", "sans-serif"] }
                 },
             },
         }
@@ -27,74 +30,122 @@
 
 <body class="bg-background-light dark:bg-background-dark font-display text-[#111813] antialiased">
 
-    <div id="header-container" class="max-w-md mx-auto relative z-[100]"></div>
+<div id="header-container" class="max-w-md mx-auto relative z-[100]"></div>
 
-    <main class="max-w-md mx-auto px-5 pt-6 pb-24 min-h-screen">
+<main class="max-w-md mx-auto px-5 pt-6 pb-24 min-h-screen">
         
-        <div class="flex flex-col items-center mb-8">
-            <div class="relative group">
-                <div class="size-28 rounded-[2rem] bg-white dark:bg-white/5 flex items-center justify-center border-2 border-primary shadow-xl overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop" alt="Photo de profil" class="w-full h-full object-cover">
-                </div>
-                <button class="absolute -bottom-2 -right-2 size-10 bg-forest-green text-white rounded-2xl flex items-center justify-center border-4 border-background-light dark:border-background-dark shadow-lg active:scale-90 transition-transform">
-                    <span class="material-symbols-outlined text-sm">photo_camera</span>
-                </button>
-            </div>
-            <h2 id="user-name" class="text-2xl font-bold mt-5 text-forest-green dark:text-white">Chargement...</h2>
-            <p id="user-level" class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Membre</p>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3 mb-8">
-            <div class="bg-white dark:bg-white/5 p-5 rounded-3xl border border-gray-100 dark:border-white/5 shadow-sm text-center">
-                <span class="text-[10px] font-black uppercase text-gray-400 tracking-widest block mb-1">Points Fidélité</span>
-                <span id="user-points" class="text-2xl font-black text-primary italic">0</span>
-            </div>
-            <div class="bg-white dark:bg-white/5 p-5 rounded-3xl border border-gray-100 dark:border-white/5 shadow-sm text-center">
-                <span class="text-[10px] font-black uppercase text-gray-400 tracking-widest block mb-1">Économies</span>
-                <span class="text-2xl font-black text-forest-green dark:text-white">0.00 <span class="text-xs">CHF</span></span>
+    <div class="flex flex-col items-center mb-8">
+        <div class="relative group">
+            <div class="size-28 rounded-[2rem] bg-white dark:bg-white/5 flex items-center justify-center border-2 border-primary shadow-xl overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop"
+                     class="w-full h-full object-cover">
             </div>
         </div>
 
-        <div class="space-y-6">
+        <h2 id="user-name" class="text-2xl font-bold mt-5 text-forest-green dark:text-white">
+            Chargement...
+        </h2>
+
+        <p id="user-level" class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+            Membre
+        </p>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3 mb-8">
+
+        <div class="bg-white dark:bg-white/5 p-5 rounded-3xl border shadow-sm text-center">
+            <span class="text-[10px] font-black uppercase text-gray-400 tracking-widest block mb-1">
+                Points Fidélité
+            </span>
+            <span id="user-points" class="text-2xl font-black text-primary italic">0</span>
+        </div>
+
+        <div class="bg-white dark:bg-white/5 p-5 rounded-3xl border shadow-sm text-center">
+            <span class="text-[10px] font-black uppercase text-gray-400 tracking-widest block mb-1">
+                Économies
+            </span>
+            <span class="text-2xl font-black text-forest-green dark:text-white">
+                0.00 <span class="text-xs">CHF</span>
+            </span>
+        </div>
+
+    </div>
+
+    <div class="space-y-6">
             
-            <div>
-                <h3 class="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-4 mb-3">Compte & Sécurité</h3>
-                <div class="bg-white dark:bg-white/5 rounded-[2rem] border border-gray-100 dark:border-white/5 overflow-hidden shadow-sm">
-                    <button class="w-full p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
-                        <div class="flex items-center gap-4">
-                            <span class="material-symbols-outlined text-gray-400">person_outline</span>
-                            <div class="text-left">
-                                <p class="text-sm font-bold text-forest-green dark:text-gray-200">Informations personnelles</p>
-                                <p id="user-phone-display" class="text-[10px] text-gray-400">Non renseigné</p>
-                            </div>
+        <div>
+            <h3 class="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-4 mb-3">
+                Compte & Sécurité
+            </h3>
+
+            <div class="bg-white dark:bg-white/5 rounded-[2rem] border overflow-hidden shadow-sm">
+
+                <div class="w-full p-4 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <span class="material-symbols-outlined text-gray-400">person_outline</span>
+                        <div class="text-left">
+                            <p class="text-sm font-bold text-forest-green dark:text-gray-200">
+                                Informations personnelles
+                            </p>
+                            <p id="user-phone-display" class="text-[10px] text-gray-400">
+                                Chargement...
+                            </p>
                         </div>
-                        <span class="material-symbols-outlined text-gray-300">chevron_right</span>
-                    </button>
                     </div>
+                </div>
+
             </div>
-
-            <button onclick="logout()" class="w-full py-4 rounded-3xl bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 font-black text-xs uppercase tracking-widest active:scale-[0.98] transition-all">
-                Se déconnecter de l'application
-            </button>
-            
         </div>
-    </main>
 
-    <script src="auth.js"></script>
-    <script src="header.js"></script>
-    <script>
-        window.addEventListener('load', () => {
-            if (typeof initAppShell === 'function') initAppShell();
-            
-            // Logique locale pour remplir les champs spécifiques de cette page
-            const session = localStorage.getItem('user_session');
-            if (session) {
-                const user = JSON.parse(session);
-                if(document.getElementById('user-points')) document.getElementById('user-points').textContent = user.points || 0;
-                if(document.getElementById('user-level')) document.getElementById('user-level').textContent = user.level || "Membre";
-                if(document.getElementById('user-phone-display')) document.getElementById('user-phone-display').textContent = user.phone || user.email || "Compte actif";
-            }
-        });
-    </script>
+        <!-- LOGOUT -->
+        <button onclick="logout()"
+            class="w-full py-4 rounded-3xl bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 font-black text-xs uppercase tracking-widest active:scale-[0.98] transition-all">
+            Se déconnecter de l'application
+        </button>
+
+    </div>
+</main>
+
+
+<!-- SCRIPTS -->
+<script type="module" src="auth.js"></script>
+<script src="header.js"></script>
+
+<script type="module">
+
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+const supabase = createClient(
+    'https://jykfgstmcmhhhluzojxb.supabase.co',
+    'sb_publishable_aE4PA7Vz2K3R4Btw-mAm8g_M_7ONE7_'
+);
+
+window.addEventListener('DOMContentLoaded', async () => {
+
+    if (typeof initAppShell === 'function') initAppShell();
+
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) {
+        window.location.href = "index.html";
+        return;
+    }
+
+    const { data } = await supabase
+        .from('users')
+        .select()
+        .eq('id', session.user.id)
+        .single();
+
+    if (!data) return;
+
+    document.getElementById('user-name').textContent = data.name;
+    document.getElementById('user-phone-display').textContent =
+        data.phone || data.email || "Compte actif";
+
+});
+
+</script>
+
 </body>
 </html>
