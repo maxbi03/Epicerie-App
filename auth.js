@@ -121,41 +121,30 @@ window.handleRegister = async function() {
 
 
 // ======================
-// LOGIN
+// LOGIN EMAIL + PASSWORD
 // ======================
 window.handleLogin = async function() {
 
-    const phone = document.getElementById('login-phone').value.trim();
+    const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value.trim();
 
-    if (!phone || !password) {
-        console.error("Veuillez remplir tous les champs.");
+    if (!email || !password) {
+        alert("Veuillez entrer email et mot de passe");
         return;
     }
 
-    // chercher email via téléphone
-    const { data: profile, error } = await supabase
-        .from('users')
-        .select('email')
-        .eq('phone', phone)
-        .single();
-
-    if (error || !profile) {
-        console.error("Téléphone inconnu");
-        return;
-    }
-
-    const { error: loginError } = await supabase.auth.signInWithPassword({
-        email: profile.email,
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email,
         password
     });
 
-    if (loginError) {
-        console.error(loginError.message);
+    if (error) {
+        alert("Identifiants incorrects");
+        console.error(error.message);
         return;
     }
 
-    // REDIRECTION après connexion sans alert
+    // login OK → redirection
     window.location.href = "home.html";
 };
 
