@@ -1,148 +1,163 @@
 <!DOCTYPE html>
 <html class="light" lang="fr">
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Mon Profil - L'Épicerie du Village</title>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Mon Profil - L'Épicerie du Village</title>
 
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        primary: "#13ec49",
-                        "forest-green": "#1B4332",
-                        "background-light": "#f6f8f6",
-                        "background-dark": "#102215",
-                    },
-                    fontFamily: { display: ["Space Grotesk", "sans-serif"] }
-                },
-            },
-        }
-    </script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec49",
+            "forest-green": "#1B4332",
+            "background-light": "#f6f8f6",
+            "background-dark": "#102215",
+          },
+          fontFamily: { display: ["Space Grotesk", "sans-serif"] }
+        },
+      },
+    }
+  </script>
 </head>
 
 <body class="bg-background-light dark:bg-background-dark font-display text-[#111813] antialiased">
 
-<div id="header-container" class="relative z-[100] max-w-md mx-auto"></div>
+<div id="header-container" class="max-w-md mx-auto relative z-[100]"></div>
 
-<main class="relative flex min-h-screen max-w-md mx-auto flex-col overflow-x-hidden">
-    <div class="flex-1 overflow-y-auto pb-10">
+<main class="max-w-md mx-auto px-5 pt-6 pb-24 min-h-screen">
 
-        <div class="px-5 pt-4 pb-2">
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-                Profil
-            </h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Gérez vos informations personnelles.</p>
-        </div>
-
-        <div class="p-5">
-
-            <!-- CARTE PROFIL -->
-            <div class="bg-white dark:bg-white/5 rounded-3xl p-6 border border-gray-100 dark:border-white/5 shadow-sm">
-
-                <div class="flex items-center gap-4 mb-4">
-                    <div class="size-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center border border-gray-200 dark:border-white/10">
-                        <span class="material-symbols-outlined text-forest-green dark:text-white text-3xl">person</span>
-                    </div>
-                    <div>
-                        <h2 class="text-lg font-bold text-forest-green dark:text-white" id="user-name">Nom Prénom</h2>
-                        <p class="text-sm text-gray-500 dark:text-gray-400" id="user-phone-display">Compte actif</p>
-                    </div>
-                </div>
-
-                <!-- AFFICHAGE -->
-                <div id="profile-display">
-                    <div class="space-y-3 text-sm text-gray-700 dark:text-gray-300">
-                        <div class="flex justify-between">
-                            <span class="font-semibold">Prénom</span>
-                            <span id="user-firstname"></span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="font-semibold">Nom</span>
-                            <span id="user-lastname"></span>
-                        </div>
-                    </div>
-
-                    <button id="edit-profile-btn"
-                            class="mt-6 w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg hover:brightness-105 active:scale-95 transition-all">
-                        Modifier mes infos
-                    </button>
-                </div>
-
-                <!-- FORM EDIT -->
-                <div id="profile-edit-form" class="hidden">
-                    <div class="space-y-3">
-                        <div>
-                            <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Prénom</label>
-                            <input id="edit-firstname" type="text"
-                                   class="w-full mt-1 rounded-xl border-gray-300 focus:ring-primary focus:border-primary"/>
-                        </div>
-                        <div>
-                            <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Nom</label>
-                            <input id="edit-lastname" type="text"
-                                   class="w-full mt-1 rounded-xl border-gray-300 focus:ring-primary focus:border-primary"/>
-                        </div>
-                        <div>
-                            <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Téléphone</label>
-                            <input id="edit-phone" type="text"
-                                   class="w-full mt-1 rounded-xl border-gray-300 focus:ring-primary focus:border-primary"/>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3 mt-6">
-                        <button id="cancel-profile-btn"
-                                class="w-full bg-gray-200 text-gray-800 font-bold py-4 rounded-2xl shadow hover:brightness-105 active:scale-95 transition-all">
-                            Annuler
-                        </button>
-                        <button id="save-profile-btn"
-                                class="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg hover:brightness-105 active:scale-95 transition-all">
-                            Enregistrer
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-
-        </div>
-
+  <div class="flex flex-col items-center mb-8">
+    <div class="relative group">
+      <div class="size-28 rounded-[2rem] bg-white dark:bg-white/5 flex items-center justify-center border-2 border-primary shadow-xl overflow-hidden">
+        <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop"
+             class="w-full h-full object-cover">
+      </div>
     </div>
+
+    <h2 id="user-name" class="text-2xl font-bold mt-5 text-forest-green dark:text-white">
+      Chargement...
+    </h2>
+
+    <p id="user-level" class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+      Membre
+    </p>
+  </div>
+
+  <div class="grid grid-cols-2 gap-3 mb-8">
+    <div class="bg-white dark:bg-white/5 p-5 rounded-3xl border shadow-sm text-center">
+      <span class="text-[10px] font-black uppercase text-gray-400 tracking-widest block mb-1">
+        Points Fidélité
+      </span>
+      <span id="user-points" class="text-2xl font-black text-primary italic">0</span>
+    </div>
+
+    <div class="bg-white dark:bg-white/5 p-5 rounded-3xl border shadow-sm text-center">
+      <span class="text-[10px] font-black uppercase text-gray-400 tracking-widest block mb-1">
+        Économies
+      </span>
+      <span class="text-2xl font-black text-forest-green dark:text-white">
+        0.00 <span class="text-xs">CHF</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="space-y-6">
+    <div>
+      <h3 class="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-4 mb-3">
+        Compte & Sécurité
+      </h3>
+
+      <div class="bg-white dark:bg-white/5 rounded-[2rem] border overflow-hidden shadow-sm p-4">
+
+        <div id="profile-display">
+          <div class="mb-4">
+            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Prénom</p>
+            <p id="user-firstname" class="text-sm font-bold text-forest-green dark:text-gray-200">Chargement...</p>
+          </div>
+
+          <div class="mb-4">
+            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Nom</p>
+            <p id="user-lastname" class="text-sm font-bold text-forest-green dark:text-gray-200">Chargement...</p>
+          </div>
+
+          <div class="mb-4">
+            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Téléphone</p>
+            <p id="user-phone-display" class="text-sm font-bold text-forest-green dark:text-gray-200">Chargement...</p>
+          </div>
+
+          <button id="edit-profile-btn"
+                  class="w-full py-3 mt-2 rounded-2xl bg-primary text-white font-bold text-sm hover:brightness-105 transition-all">
+            Modifier mes informations
+          </button>
+        </div>
+
+        <div id="profile-edit-form" class="hidden space-y-4">
+          <input id="edit-firstname" type="text" placeholder="Prénom"
+                 class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+
+          <input id="edit-lastname" type="text" placeholder="Nom"
+                 class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+
+          <input id="edit-phone" type="tel" placeholder="Téléphone"
+                 class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+
+          <div class="flex gap-3">
+            <button id="save-profile-btn"
+                    class="flex-1 py-3 rounded-2xl bg-primary text-white font-bold text-sm hover:brightness-105 transition-all">
+              Sauvegarder
+            </button>
+            <button id="cancel-profile-btn"
+                    class="flex-1 py-3 rounded-2xl bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-white font-bold text-sm hover:brightness-105 transition-all">
+              Annuler
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <button onclick="logout()"
+            class="w-full py-4 rounded-3xl bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 font-black text-xs uppercase tracking-widest active:scale-[0.98] transition-all">
+      Se déconnecter de l'application
+    </button>
+  </div>
 </main>
 
+<!-- Script profil : utilise userService -->
 <script type="module">
-import { supabase } from './supabaseClient.js';
+  import {
+    getSession,
+    fetchUserProfile,
+    updateUserProfile
+  } from './services/userService.js';
 
-window.addEventListener('DOMContentLoaded', async () => {
+  window.addEventListener('DOMContentLoaded', async () => {
     if (typeof initAppShell === 'function') initAppShell();
 
-    const { data: { session } } = await supabase.auth.getSession();
+    const session = await getSession();
     if (!session) return;
 
-    const { data } = await supabase
-        .from('users')
-        .select()
-        .eq('id', session.user.id)
-        .single();
+    const profile = await fetchUserProfile(session.user.id);
+    if (!profile) return;
 
-    if (!data) return;
-
-    // Split nom complet en prénom / nom
-    const [firstName, ...lastNameParts] = data.name.split(' ');
+    const [firstName, ...lastNameParts] = (profile.name || '').split(' ');
     const lastName = lastNameParts.join(' ');
 
     document.getElementById('user-firstname').textContent = firstName || '';
     document.getElementById('user-lastname').textContent = lastName || '';
     document.getElementById('user-phone-display').textContent =
-        data.phone || data.email || "Compte actif";
-    document.getElementById('user-name').textContent = data.name;
+      profile.phone || profile.email || "Compte actif";
+    document.getElementById('user-name').textContent = profile.name || "Utilisateur";
 
-    // FORMULAIRE MODIFICATION
+    // FORM
     const editBtn = document.getElementById('edit-profile-btn');
     const profileDisplay = document.getElementById('profile-display');
     const editForm = document.getElementById('profile-edit-form');
@@ -150,58 +165,51 @@ window.addEventListener('DOMContentLoaded', async () => {
     const cancelBtn = document.getElementById('cancel-profile-btn');
 
     editBtn.addEventListener('click', () => {
-        profileDisplay.classList.add('hidden');
-        editForm.classList.remove('hidden');
+      profileDisplay.classList.add('hidden');
+      editForm.classList.remove('hidden');
 
-        // Remplir champs avec valeurs actuelles
-        document.getElementById('edit-firstname').value = firstName;
-        document.getElementById('edit-lastname').value = lastName;
-        document.getElementById('edit-phone').value = data.phone || '';
+      document.getElementById('edit-firstname').value = firstName || '';
+      document.getElementById('edit-lastname').value = lastName || '';
+      document.getElementById('edit-phone').value = profile.phone || '';
     });
 
     cancelBtn.addEventListener('click', () => {
-        editForm.classList.add('hidden');
-        profileDisplay.classList.remove('hidden');
+      editForm.classList.add('hidden');
+      profileDisplay.classList.remove('hidden');
     });
 
     saveBtn.addEventListener('click', async () => {
-        const newFirstName = document.getElementById('edit-firstname').value.trim();
-        const newLastName = document.getElementById('edit-lastname').value.trim();
-        const newPhone = document.getElementById('edit-phone').value.trim();
+      const newFirstName = document.getElementById('edit-firstname').value.trim();
+      const newLastName = document.getElementById('edit-lastname').value.trim();
+      const newPhone = document.getElementById('edit-phone').value.trim();
 
-        if (!newFirstName || !newLastName) {
-            alert("Le prénom et le nom sont obligatoires");
-            return;
-        }
+      if (!newFirstName || !newLastName) {
+        alert("Le prénom et le nom sont obligatoires");
+        return;
+      }
 
-        const fullName = `${newFirstName} ${newLastName}`;
+      const fullName = `${newFirstName} ${newLastName}`;
 
-        const { error } = await supabase
-            .from('users')
-            .update({ name: fullName, phone: newPhone })
-            .eq('id', session.user.id);
+      try {
+        await updateUserProfile(session.user.id, { name: fullName, phone: newPhone });
+      } catch (err) {
+        alert("Erreur lors de la mise à jour : " + (err?.message || err));
+        return;
+      }
 
-        if (error) {
-            alert("Erreur lors de la mise à jour : " + error.message);
-            return;
-        }
+      document.getElementById('user-firstname').textContent = newFirstName;
+      document.getElementById('user-lastname').textContent = newLastName;
+      document.getElementById('user-phone-display').textContent = newPhone || profile.email;
+      document.getElementById('user-name').textContent = fullName;
 
-        // Mettre à jour l'affichage
-        document.getElementById('user-firstname').textContent = newFirstName;
-        document.getElementById('user-lastname').textContent = newLastName;
-        document.getElementById('user-phone-display').textContent = newPhone || data.email;
-        document.getElementById('user-name').textContent = fullName;
-
-        editForm.classList.add('hidden');
-        profileDisplay.classList.remove('hidden');
-        alert("Informations mises à jour !");
+      editForm.classList.add('hidden');
+      profileDisplay.classList.remove('hidden');
+      alert("Informations mises à jour !");
     });
-});
+  });
 </script>
 
 <script src="header.js"></script>
-
-<!-- Auth (logout global + éventuellement affichage nom) -->
 <script type="module" src="auth.js"></script>
 
 </body>
