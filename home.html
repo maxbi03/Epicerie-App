@@ -41,9 +41,9 @@
     <div id="header-container" class="relative z-[100] max-w-md mx-auto"></div>
 
     <main class="relative flex min-h-screen max-w-md mx-auto flex-col overflow-x-hidden">
-        
+
         <div class="flex-1 overflow-y-auto pb-10">
-            
+
             <div class="px-5 pt-4 pb-2">
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
                     Bonjour, <span id="user-greeting">Visiteur</span> !
@@ -93,8 +93,59 @@
         </div>
     </main>
 
-    <!-- ✅ IMPORTANT : charge l'auth -->
-    <script type="module" src="auth.js"></script>
+    <!-- Importation de la bibliothèque Supabase -->
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+        // Initialisation de Supabase
+        const supabaseUrl = 'https://jykfgstmcmhhhluzojxb.supabase.co';
+        const supabaseKey = 'sb_publishable_aE4PA7Vz2K3R4Btw-mAm8g_M_7ONE7_';
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        // Fonction pour récupérer et afficher le prénom de l'utilisateur depuis Supabase
+        async function displayUserGreeting() {
+            const greetingElement = document.getElementById('user-greeting');
+
+            // Récupérer la session active
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+            if (userError) {
+                console.error("Erreur lors de la récupération de l'utilisateur :", userError.message);
+                greetingElement.textContent = "Visiteur";
+                return;
+            }
+
+            if (user) {
+                // Récupérer les données de l'utilisateur depuis la table 'users'
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('name')
+                    .eq('id', user.id)
+                    .single();
+
+                if (error) {
+                    console.error("Erreur lors de la récupération des données utilisateur :", error.message);
+                    greetingElement.textContent = "Visiteur";
+                    return;
+                }
+
+                if (data) {
+                    // Extraire le prénom
+                    const firstName = data.name.split(' ')[0];
+                    greetingElement.textContent = firstName;
+                } else {
+                    greetingElement.textContent = "Visiteur";
+                }
+            } else {
+                greetingElement.textContent = "Visiteur";
+            }
+        }
+
+        // Appeler la fonction au chargement de la page
+        window.addEventListener('load', () => {
+            displayUserGreeting();
+        });
+    </script>
 
     <!-- header dynamique -->
     <script src="header.js"></script>
