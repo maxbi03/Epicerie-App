@@ -1,12 +1,7 @@
 // ======================
-// SUPABASE INIT
+// SUPABASE CLIENT (centralisé)
 // ======================
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-
-const supabaseUrl = 'https://jykfgstmcmhhhluzojxb.supabase.co';
-const supabaseKey = 'sb_publishable_aE4PA7Vz2K3R4Btw-mAm8g_M_7ONE7_';
-
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { supabase } from './supabaseClient.js';
 
 
 // ======================
