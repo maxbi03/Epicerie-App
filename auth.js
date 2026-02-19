@@ -1,19 +1,48 @@
 // auth.js
-// Auth + affichage prénom/nom + logout
+// Auth + affichage prénom/nom + logout + mode visiteur (sessionStorage)
 import { supabase } from './supabaseClient.js';
 import { getSession, fetchUserProfile, createUserProfile } from './services/userService.js';
+
+const VISITOR_KEY = 'app_mode';
+
+function isVisitorMode() {
+  try {
+    return sessionStorage.getItem(VISITOR_KEY) === 'visitor';
+  } catch {
+    return false;
+  }
+}
+
+function clearVisitorMode() {
+  try {
+    sessionStorage.removeItem(VISITOR_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+// Expose helpers (utile pour les prochaines étapes: scanner/porte)
+window.isVisitorMode = isVisitorMode;
+window.clearVisitorMode = clearVisitorMode;
 
 // Affiche prénom/nom si les éléments existent sur la page
 document.addEventListener('DOMContentLoaded', async () => {
   const greetingElement = document.getElementById('user-greeting');
   const nameElement = document.getElementById('user-name');
 
+  // ✅ PRIORITÉ: mode visiteur (pas de session Supabase)
+  if (isVisitorMode()) {
+    if (greetingElement) greetingElement.textContent = "Visiteur";
+    if (nameElement) nameElement.textContent = "Visiteur";
+    return;
+  }
+
   try {
     const session = await getSession();
 
     if (!session) {
       if (greetingElement) greetingElement.textContent = "Visiteur";
-      if (nameElement) nameElement.textContent = "Invité";
+      if (nameElement) nameElement.textContent = "Visiteur";
       return;
     }
 
@@ -30,7 +59,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (err) {
     console.error("Erreur session/profil:", err?.message || err);
     if (greetingElement) greetingElement.textContent = "Visiteur";
-    if (nameElement) nameElement.textContent = "Invité";
+    if (nameElement) nameElement.textContent = "Visiteur";
   }
 });
 
@@ -78,6 +107,9 @@ window.handleRegister = async function () {
     return;
   }
 
+  // ✅ si on s'inscrit, on quitte le mode visiteur
+  clearVisitorMode();
+
   window.location.href = "home.html";
 };
 
@@ -98,11 +130,15 @@ window.handleLogin = async function () {
     return;
   }
 
+  // ✅ si on se connecte, on quitte le mode visiteur
+  clearVisitorMode();
+
   window.location.href = "home.html";
 };
 
 // Logout
 window.logout = async function () {
+  clearVisitorMode();
   await supabase.auth.signOut();
   window.location.href = "index.html";
 };
