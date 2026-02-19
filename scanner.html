@@ -1,358 +1,363 @@
 <!DOCTYPE html>
 <html class="light" lang="fr">
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Scanner - L'Épicerie du Village</title>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Scanner - L'Épicerie du Village</title>
 
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="theme.js"></script>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="theme.js"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <style type="text/tailwindcss">
-        @layer components {
-            .scan-bracket {
-                @apply absolute w-10 h-10 border-primary border-t-4 border-l-4;
-            }
-        }
-        #video-preview {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .scan-overlay {
-            background: rgba(0, 0, 0, 0.5);
-        }
-        .numpad {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-top: 16px;
-        }
-        .numpad button {
-            padding: 12px;
-            font-size: 1.5rem;
-            font-weight: bold;
-            border-radius: 8px;
-            background-color: white;
-            color: #1B4332;
-        }
-        .numpad button:active {
-            background-color: #13ec49;
-        }
-    </style>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <!-- Remplacé type="text/tailwindcss" par CSS standard (plus stable) -->
+  <style>
+    .scan-bracket{
+      position:absolute;
+      width:2.5rem; /* w-10 */
+      height:2.5rem; /* h-10 */
+      border-top:4px solid #13ec49;  /* primary */
+      border-left:4px solid #13ec49; /* primary */
+    }
+    #video-preview {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .scan-overlay {
+      background: rgba(0, 0, 0, 0.5);
+    }
+    .numpad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .numpad button {
+      padding: 12px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      border-radius: 8px;
+      background-color: white;
+      color: #1B4332;
+    }
+    .numpad button:active {
+      background-color: #13ec49;
+    }
+  </style>
 </head>
 
 <body class="bg-background-light dark:bg-background-dark font-display antialiased overflow-hidden">
 
-    <div id="header-container" class="relative z-[100] max-w-md mx-auto"></div>
+  <div id="header-container" class="relative z-[100] max-w-md mx-auto"></div>
 
-    <div class="relative h-screen max-w-md mx-auto bg-black shadow-2xl overflow-hidden">
+  <div class="relative h-screen max-w-md mx-auto bg-black shadow-2xl overflow-hidden">
 
-        <div class="absolute inset-0 z-0">
-            <div id="reader" class="opacity-90"></div>
-        </div>
-
-        <div class="absolute inset-0 z-10 flex flex-col">
-
-            <div class="flex-1 scan-overlay"></div>
-
-            <div class="relative h-64 w-full flex justify-center items-center bg-transparent">
-                <div class="relative w-full h-full mx-10">
-                    <div class="scan-bracket top-0 left-0"></div>
-                    <div class="scan-bracket top-0 right-0 rotate-90"></div>
-                    <div class="scan-bracket bottom-0 right-0 rotate-180"></div>
-                    <div class="scan-bracket bottom-0 left-0 -rotate-90"></div>
-                </div>
-            </div>
-
-            <div class="flex-[1.5] scan-overlay flex flex-col items-center px-10 text-center">
-
-                <p class="text-white text-sm font-medium leading-relaxed mt-8">
-                    Alignez le code-barres de l'article dans le rectangle vert.
-                </p>
-
-                <button onclick="toggleManualEntry()" class="mt-8 flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/20 rounded-xl text-white text-xs font-bold uppercase tracking-widest active:scale-95 transition-all">
-                    <span class="material-symbols-outlined text-sm">keyboard</span>
-                    Saisie manuelle
-                </button>
-
-                <div id="manual-entry" class="hidden mt-4 w-full max-w-xs bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/20">
-                    <p class="text-white text-sm mb-2">Entrez le code-barres (13 chiffres) :</p>
-                    <input id="barcode-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="13"
-                           class="w-full p-2 rounded-lg text-center text-lg font-bold bg-white/20 border border-white/30 text-white placeholder-white/50"
-                           placeholder="1234567890123" autofocus>
-                    <div class="numpad">
-                        <button onclick="appendNumber('1')">1</button>
-                        <button onclick="appendNumber('2')">2</button>
-                        <button onclick="appendNumber('3')">3</button>
-                        <button onclick="appendNumber('4')">4</button>
-                        <button onclick="appendNumber('5')">5</button>
-                        <button onclick="appendNumber('6')">6</button>
-                        <button onclick="appendNumber('7')">7</button>
-                        <button onclick="appendNumber('8')">8</button>
-                        <button onclick="appendNumber('9')">9</button>
-                        <button onclick="appendNumber('0')">0</button>
-                        <button onclick="clearInput()">⌫</button>
-                        <button onclick="submitManualBarcode()" class="col-span-2 bg-primary text-forest-green">OK</button>
-                    </div>
-                </div>
-
-                <div class="mt-12 mb-32 w-full">
-                    <a href="panier.html" class="flex items-center justify-between bg-primary p-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all">
-                        <div class="flex items-center gap-3 text-forest-green">
-                            <div class="relative">
-                                <span class="material-symbols-outlined font-bold">shopping_basket</span>
-                                <span id="cart-item-count" class="absolute -top-2 -right-2 bg-white text-[10px] font-black px-1.5 rounded-full border border-primary">0</span>
-                            </div>
-                            <span class="font-bold text-sm">Voir mon panier</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-black text-forest-green/60 uppercase">Total:</span>
-                            <span id="cart-total" class="font-black text-forest-green">0.00 CHF</span>
-                            <span class="material-symbols-outlined text-forest-green">chevron_right</span>
-                        </div>
-                    </a>
-                </div>
-
-            </div>
-        </div>
+    <div class="absolute inset-0 z-0">
+      <div id="reader" class="opacity-90"></div>
     </div>
 
-    <!-- Pop-up Fiche Produit -->
-    <div id="product-modal" class="fixed inset-0 z-[200] hidden">
-        <!-- Backdrop -->
-        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity" onclick="closeProductModal()"></div>
+    <div class="absolute inset-0 z-10 flex flex-col">
 
-        <!-- Modal Content -->
-        <div class="absolute inset-x-0 bottom-0 max-w-md mx-auto bg-white dark:bg-background-dark rounded-t-3xl shadow-2xl transform transition-transform duration-300 max-h-[85vh] overflow-y-auto">
+      <div class="flex-1 scan-overlay"></div>
 
-            <!-- Header avec bouton fermer -->
-            <div class="sticky top-0 bg-white/95 dark:bg-background-dark/95 backdrop-blur-md z-10 px-4 py-3 flex items-center justify-between border-b border-gray-100 dark:border-white/10">
-                <h2 class="text-lg font-bold text-forest-green dark:text-white">Détails du produit</h2>
-                <button onclick="closeProductModal()" class="size-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
-                    <span class="material-symbols-outlined text-gray-600 dark:text-gray-400">close</span>
-                </button>
-            </div>
-
-            <!-- Contenu dynamique -->
-            <div id="modal-content" class="pb-6">
-                <!-- Le contenu sera injecté ici -->
-            </div>
-
-            <!-- Bouton d'action fixe en bas -->
-            <div class="sticky bottom-0 bg-white dark:bg-background-dark p-4 border-t border-gray-100 dark:border-white/10">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-4">
-                        <button onclick="decreaseQuantity()" class="size-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                            <span class="material-symbols-outlined text-forest-green">remove</span>
-                        </button>
-                        <span id="product-quantity" class="text-lg font-bold text-forest-green dark:text-white">1</span>
-                        <button onclick="increaseQuantity()" class="size-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                            <span class="material-symbols-outlined text-forest-green">add</span>
-                        </button>
-                    </div>
-                    <button onclick="addProductToBasket()" class="w-[70%] bg-primary text-forest-green font-black py-3 rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all">
-                        <span class="material-symbols-outlined">add_shopping_cart</span>
-                        <span>Ajouter</span>
-                    </button>
-                </div>
-            </div>
+      <div class="relative h-64 w-full flex justify-center items-center bg-transparent">
+        <div class="relative w-full h-full mx-10">
+          <div class="scan-bracket top-0 left-0"></div>
+          <div class="scan-bracket top-0 right-0 rotate-90"></div>
+          <div class="scan-bracket bottom-0 right-0 rotate-180"></div>
+          <div class="scan-bracket bottom-0 left-0 -rotate-90"></div>
         </div>
+      </div>
+
+      <div class="flex-[1.5] scan-overlay flex flex-col items-center px-10 text-center">
+
+        <p class="text-white text-sm font-medium leading-relaxed mt-8">
+          Alignez le code-barres de l'article dans le rectangle vert.
+        </p>
+
+        <button onclick="toggleManualEntry()" class="mt-8 flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/20 rounded-xl text-white text-xs font-bold uppercase tracking-widest active:scale-95 transition-all">
+          <span class="material-symbols-outlined text-sm">keyboard</span>
+          Saisie manuelle
+        </button>
+
+        <div id="manual-entry" class="hidden mt-4 w-full max-w-xs bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/20">
+          <p class="text-white text-sm mb-2">Entrez le code-barres (13 chiffres) :</p>
+          <input id="barcode-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="13"
+                 class="w-full p-2 rounded-lg text-center text-lg font-bold bg-white/20 border border-white/30 text-white placeholder-white/50"
+                 placeholder="1234567890123">
+          <div class="numpad">
+            <button onclick="appendNumber('1')">1</button>
+            <button onclick="appendNumber('2')">2</button>
+            <button onclick="appendNumber('3')">3</button>
+            <button onclick="appendNumber('4')">4</button>
+            <button onclick="appendNumber('5')">5</button>
+            <button onclick="appendNumber('6')">6</button>
+            <button onclick="appendNumber('7')">7</button>
+            <button onclick="appendNumber('8')">8</button>
+            <button onclick="appendNumber('9')">9</button>
+            <button onclick="appendNumber('0')">0</button>
+            <button onclick="clearInput()">⌫</button>
+            <button onclick="submitManualBarcode()" class="col-span-2 bg-primary text-forest-green">OK</button>
+          </div>
+        </div>
+
+        <div class="mt-12 mb-32 w-full">
+          <a href="panier.html" class="flex items-center justify-between bg-primary p-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all">
+            <div class="flex items-center gap-3 text-forest-green">
+              <div class="relative">
+                <span class="material-symbols-outlined font-bold">shopping_basket</span>
+                <span id="cart-item-count" class="absolute -top-2 -right-2 bg-white text-[10px] font-black px-1.5 rounded-full border border-primary">0</span>
+              </div>
+              <span class="font-bold text-sm">Voir mon panier</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-black text-forest-green/60 uppercase">Total:</span>
+              <span id="cart-total" class="font-black text-forest-green">0.00 CHF</span>
+              <span class="material-symbols-outlined text-forest-green">chevron_right</span>
+            </div>
+          </a>
+        </div>
+
+      </div>
     </div>
+  </div>
 
-    <script src="header.js"></script>
-    <script src="shop.js"></script>
-    <script src="fiche_produit.js"></script>
-    <script>
-        let html5QrCode;
-        let isScanning = false;
-        let currentProduct = null;
+  <!-- Pop-up Fiche Produit -->
+  <div id="product-modal" class="fixed inset-0 z-[200] hidden">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity" onclick="closeProductModal()"></div>
 
-        window.addEventListener('load', () => {
-            if (typeof initAppShell === 'function') initAppShell();
-            startScanner();
-            updateCartDisplay();
-        });
+    <div class="absolute inset-x-0 bottom-0 max-w-md mx-auto bg-white dark:bg-background-dark rounded-t-3xl shadow-2xl transform transition-transform duration-300 max-h-[85vh] overflow-y-auto">
+      <div class="sticky top-0 bg-white/95 dark:bg-background-dark/95 backdrop-blur-md z-10 px-4 py-3 flex items-center justify-between border-b border-gray-100 dark:border-white/10">
+        <h2 class="text-lg font-bold text-forest-green dark:text-white">Détails du produit</h2>
+        <button onclick="closeProductModal()" class="size-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
+          <span class="material-symbols-outlined text-gray-600 dark:text-gray-400">close</span>
+        </button>
+      </div>
 
-        function startScanner() {
-            html5QrCode = new Html5Qrcode("reader");
+      <div id="modal-content" class="pb-6"></div>
 
-            const config = {
-                fps: 10,
-                qrbox: { width: 250, height: 150 },
-                aspectRatio: 1.0,
-                formatsToSupport: [Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8, Html5QrcodeSupportedFormats.CODE_128]
-            };
+      <div class="sticky bottom-0 bg-white dark:bg-background-dark p-4 border-t border-gray-100 dark:border-white/10">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-4">
+            <button onclick="decreaseQuantity()" class="size-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+              <span class="material-symbols-outlined text-forest-green">remove</span>
+            </button>
+            <span id="product-quantity" class="text-lg font-bold text-forest-green dark:text-white">1</span>
+            <button onclick="increaseQuantity()" class="size-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+              <span class="material-symbols-outlined text-forest-green">add</span>
+            </button>
+          </div>
+          <button onclick="addProductToBasket()" class="w-[70%] bg-primary text-forest-green font-black py-3 rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all">
+            <span class="material-symbols-outlined">add_shopping_cart</span>
+            <span>Ajouter</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-            html5QrCode.start(
-                { facingMode: "environment" },
-                config,
-                onScanSuccess,
-                onScanError
-            ).catch(err => {
-                console.error("Erreur Scanner: ", err);
-                alert("Impossible d'accéder à la caméra. Vérifiez les permissions.");
-            });
-        }
+  <script src="header.js"></script>
+  <script src="shop.js"></script>
+  <script src="fiche_produit.js"></script>
 
-        function onScanSuccess(decodedText, decodedResult) {
-            if (isScanning) return;
-            isScanning = true;
+  <!-- Loader Supabase + Scanner (module) -->
+  <script type="module">
+    import { fetchProducts } from './services/productsService.js';
 
-            console.log("📱 Code-barres scanné:", decodedText);
+    // Catalogue global
+    window.products = window.products || [];
 
-            const product = products.find(p => p.barcode == decodedText);
+    let html5QrCode;
+    let isScanning = false;
+    let currentProduct = null;
+    let productQuantity = 1;
 
-            if (product) {
-                console.log("✅ Produit trouvé:", product.name);
+    window.addEventListener('DOMContentLoaded', async () => {
+      // Header (ok même si déjà fait dans header.js)
+      if (typeof initAppShell === 'function') initAppShell();
 
-                if (navigator.vibrate) navigator.vibrate(100);
+      // Charger produits depuis Supabase
+      try {
+        window.products = await fetchProducts();
+        console.log("✅ Produits chargés:", window.products);
+      } catch (e) {
+        console.error("❌ Erreur chargement produits Supabase:", e);
+        alert("Impossible de charger le catalogue produits (Supabase).");
+        return;
+      }
 
-                currentProduct = product;
-                showProductModal(product);
+      startScanner();
+      updateCartDisplay();
+    });
 
-                setTimeout(() => {
-                    isScanning = false;
-                }, 3000);
-            } else {
-                console.warn("❌ Code-barres non reconnu:", decodedText);
-                alert("⚠️ Produit non trouvé dans la base de données.");
+    function startScanner() {
+      html5QrCode = new Html5Qrcode("reader");
 
-                setTimeout(() => {
-                    isScanning = false;
-                }, 500);
-            }
-        }
+      const config = {
+        fps: 10,
+        qrbox: { width: 250, height: 150 },
+        aspectRatio: 1.0,
+        formatsToSupport: [
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.CODE_128
+        ]
+      };
 
-        function onScanError(error) {
-            // Silencieux - le scanner essaie constamment
-        }
+      html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+        onScanSuccess,
+        onScanError
+      ).catch(err => {
+        console.error("Erreur Scanner: ", err);
+        alert("Impossible d'accéder à la caméra. Vérifiez les permissions.");
+      });
+    }
 
-        function showProductModal(product) {
-            const modal = document.getElementById('product-modal');
-            const content = document.getElementById('modal-content');
+    function onScanSuccess(decodedText, decodedResult) {
+      if (isScanning) return;
+      isScanning = true;
 
-            content.innerHTML = generateProductSheet(product);
+      console.log("📱 Code-barres scanné:", decodedText);
 
-            modal.classList.remove('hidden');
+      const product = window.products.find(
+        p => String(p.barcode) === String(decodedText)
+      );
 
-            setTimeout(() => {
-                modal.querySelector('.absolute.inset-x-0').classList.add('translate-y-0');
-            }, 10);
-        }
+      if (product) {
+        console.log("✅ Produit trouvé:", product.name);
+        if (navigator.vibrate) navigator.vibrate(100);
 
-        function closeProductModal() {
-            const modal = document.getElementById('product-modal');
-            modal.classList.add('hidden');
-            currentProduct = null;
-        }
+        currentProduct = product;
+        showProductModal(product);
 
-        let productQuantity = 1;
+        setTimeout(() => { isScanning = false; }, 3000);
+      } else {
+        console.warn("❌ Code-barres non reconnu:", decodedText);
+        alert("⚠️ Produit non trouvé dans la base de données.");
+        setTimeout(() => { isScanning = false; }, 500);
+      }
+    }
 
-        function increaseQuantity() {
-            productQuantity++;
-            document.getElementById('product-quantity').textContent = productQuantity;
-        }
+    function onScanError(error) {
+      // silencieux
+    }
 
-        function decreaseQuantity() {
-            if (productQuantity > 1) {
-                productQuantity--;
-                document.getElementById('product-quantity').textContent = productQuantity;
-            }
-        }
+    function showProductModal(product) {
+      const modal = document.getElementById('product-modal');
+      const content = document.getElementById('modal-content');
+      content.innerHTML = generateProductSheet(product);
+      modal.classList.remove('hidden');
+    }
 
-        function addProductToBasket() {
-            if (!currentProduct) return;
+    function closeProductModal() {
+      const modal = document.getElementById('product-modal');
+      modal.classList.add('hidden');
+      currentProduct = null;
 
-            let basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
+      // Reset quantité
+      productQuantity = 1;
+      const qtyEl = document.getElementById('product-quantity');
+      if (qtyEl) qtyEl.textContent = '1';
+    }
 
-            // Ajouter le produit autant de fois que la quantité choisie
-            for (let i = 0; i < productQuantity; i++) {
-                basket.push(currentProduct);
-            }
+    function increaseQuantity() {
+      productQuantity++;
+      document.getElementById('product-quantity').textContent = productQuantity;
+    }
 
-            localStorage.setItem('user_basket', JSON.stringify(basket));
+    function decreaseQuantity() {
+      if (productQuantity > 1) {
+        productQuantity--;
+        document.getElementById('product-quantity').textContent = productQuantity;
+      }
+    }
 
-            console.log(`🛒 ${productQuantity} x ${currentProduct.name} ajouté(s) au panier`);
+    function addProductToBasket() {
+      if (!currentProduct) return;
 
-            if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
+      let basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
 
-            closeProductModal();
+      for (let i = 0; i < productQuantity; i++) basket.push(currentProduct);
 
-            showConfirmation();
+      localStorage.setItem('user_basket', JSON.stringify(basket));
 
-            updateCartDisplay();
+      if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
 
-            // Réinitialiser la quantité à 1 pour le prochain produit
-            productQuantity = 1;
-            document.getElementById('product-quantity').textContent = productQuantity;
-        }
+      closeProductModal();
+      showConfirmation();
+      updateCartDisplay();
+    }
 
-        function showConfirmation() {
-            const confirmMsg = document.createElement('div');
-            confirmMsg.className = 'fixed top-20 left-1/2 -translate-x-1/2 bg-primary text-forest-green font-bold px-6 py-3 rounded-full shadow-lg z-[300] flex items-center gap-2';
-            confirmMsg.innerHTML = `
-                <span class="material-symbols-outlined">check_circle</span>
-                <span>Ajouté au panier !</span>
-            `;
-            document.body.appendChild(confirmMsg);
+    function showConfirmation() {
+      const confirmMsg = document.createElement('div');
+      confirmMsg.className = 'fixed top-20 left-1/2 -translate-x-1/2 bg-primary text-forest-green font-bold px-6 py-3 rounded-full shadow-lg z-[300] flex items-center gap-2';
+      confirmMsg.innerHTML = `
+        <span class="material-symbols-outlined">check_circle</span>
+        <span>Ajouté au panier !</span>
+      `;
+      document.body.appendChild(confirmMsg);
+      setTimeout(() => confirmMsg.remove(), 2000);
+    }
 
-            setTimeout(() => {
-                confirmMsg.remove();
-            }, 2000);
-        }
+    function updateCartDisplay() {
+      const basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
+      const cartItemCount = document.getElementById('cart-item-count');
+      const cartTotal = document.getElementById('cart-total');
 
-        function updateCartDisplay() {
-            const basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
-            const cartItemCount = document.getElementById('cart-item-count');
-            const cartTotal = document.getElementById('cart-total');
+      let total = 0;
+      basket.forEach(p => { total += Number(p.price) || 0; });
 
-            let total = 0;
+      cartItemCount.textContent = basket.length;
+      cartTotal.textContent = `${total.toFixed(2)} CHF`;
+    }
 
-            basket.forEach(product => {
-                total += product.price;
-            });
+    // Saisie manuelle
+    function toggleManualEntry() {
+      const manualEntry = document.getElementById('manual-entry');
+      manualEntry.classList.toggle('hidden');
+      if (!manualEntry.classList.contains('hidden')) {
+        document.getElementById('barcode-input').focus();
+      }
+    }
 
-            cartItemCount.textContent = basket.length;
-            cartTotal.textContent = `${total.toFixed(2)} CHF`;
-        }
+    function appendNumber(number) {
+      const input = document.getElementById('barcode-input');
+      if (input.value.length < 13) input.value += number;
+    }
 
-        // Fonctions pour la saisie manuelle
-        function toggleManualEntry() {
-            const manualEntry = document.getElementById('manual-entry');
-            manualEntry.classList.toggle('hidden');
-            if (!manualEntry.classList.contains('hidden')) {
-                document.getElementById('barcode-input').focus();
-            }
-        }
+    function clearInput() {
+      const input = document.getElementById('barcode-input');
+      input.value = input.value.slice(0, -1);
+    }
 
-        function appendNumber(number) {
-            const input = document.getElementById('barcode-input');
-            if (input.value.length < 13) {
-                input.value += number;
-            }
-        }
+    function submitManualBarcode() {
+      const input = document.getElementById('barcode-input');
+      const barcode = input.value;
 
-        function clearInput() {
-            const input = document.getElementById('barcode-input');
-            input.value = input.value.slice(0, -1);
-        }
+      if (barcode.length === 13) {
+        onScanSuccess(barcode, null);
+        input.value = '';
+        toggleManualEntry();
+      } else {
+        alert("Le code-barres doit contenir exactement 13 chiffres.");
+      }
+    }
 
-        function submitManualBarcode() {
-            const input = document.getElementById('barcode-input');
-            const barcode = input.value;
+    // Exposer les fonctions utilisées en onclick=""
+    window.toggleManualEntry = toggleManualEntry;
+    window.appendNumber = appendNumber;
+    window.clearInput = clearInput;
+    window.submitManualBarcode = submitManualBarcode;
 
-            if (barcode.length === 13) {
-                onScanSuccess(barcode, null);
-                input.value = '';
-                toggleManualEntry();
-            } else {
-                alert("Le code-barres doit contenir exactement 13 chiffres.");
-            }
-        }
-    </script>
+    window.closeProductModal = closeProductModal;
+    window.increaseQuantity = increaseQuantity;
+    window.decreaseQuantity = decreaseQuantity;
+    window.addProductToBasket = addProductToBasket;
+  </script>
 </body>
 </html>

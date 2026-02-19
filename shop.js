@@ -46,8 +46,8 @@ function displayProducts(filterCategory = 'Tous') {
     grid.innerHTML = "";
 
     const filteredProducts = filterCategory === 'Tous'
-        ? products
-        : products.filter(p => p.category === filterCategory);
+    ? window.products
+    : window.products.filter(p => p.category === filterCategory);
 
     filteredProducts.forEach(product => {
         // Déterminer la couleur du stock

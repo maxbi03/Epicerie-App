@@ -5,16 +5,18 @@ export async function fetchProducts() {
   const { data, error } = await supabase
     .from('products_with_stock')   // 👈 on lit la VIEW
     .select(`
-      id,
-      name,
-      category,
-      producer,
-      description,
-      price_chf,
-      image_url,
-      stock_shelf,
-      stock_back,
-      stock_total
+    id,
+    name,
+    category,
+    producer,
+    description,
+    price_chf,
+    image_url,
+    barcode,
+    badge,
+    stock_shelf,
+    stock_back,
+    stock_total
     `)
     .eq('is_active', true)
     .order('category', { ascending: true })
@@ -30,6 +32,8 @@ export async function fetchProducts() {
     description: p.description ?? '',
     price: Number(p.price_chf),
     image: p.image_url ?? '',
+    barcode: p.barcode,
+    badge: p.badge,
     stockShelf: p.stock_shelf ?? 0,
     stockBack: p.stock_back ?? 0,
     stock: p.stock_total ?? 0  // 👈 IMPORTANT
