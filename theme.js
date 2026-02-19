@@ -1,5 +1,6 @@
 // theme.js
-tailwind.config = {
+window.tailwind = window.tailwind || {};
+window.tailwind.config = {
   darkMode: "class",
   theme: {
     extend: {
@@ -10,7 +11,7 @@ tailwind.config = {
         "background-dark": "#102215",
         "primary": "#13ec49",
       },
-      fontFamily: { "display": ["Space Grotesk", "sans-serif"] }
+      fontFamily: { display: ["Space Grotesk", "sans-serif"] },
     },
   },
 };
