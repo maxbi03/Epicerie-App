@@ -1,5 +1,5 @@
 // auth.js
-// Auth + affichage prénom/nom + logout + mode visiteur (sessionStorage)
+// Auth + affichage prénom/nom + logout + helpers UI (modal inscription) + mode visiteur (sessionStorage)
 import { supabase } from './supabaseClient.js';
 import { getSession, fetchUserProfile, createUserProfile } from './services/userService.js';
 
@@ -21,16 +21,24 @@ function clearVisitorMode() {
   }
 }
 
-// Expose helpers (utile pour les prochaines étapes: scanner/porte)
-window.isVisitorMode = isVisitorMode;
-window.clearVisitorMode = clearVisitorMode;
+// ✅ Ouvrir/fermer le modal d'inscription (corrige le bouton "S'inscrire")
+window.toggleModal = function (show) {
+  const modal = document.getElementById('register-modal');
+  if (!modal) return;
+
+  if (show) {
+    modal.classList.remove('hidden');
+  } else {
+    modal.classList.add('hidden');
+  }
+};
 
 // Affiche prénom/nom si les éléments existent sur la page
 document.addEventListener('DOMContentLoaded', async () => {
   const greetingElement = document.getElementById('user-greeting');
   const nameElement = document.getElementById('user-name');
 
-  // ✅ PRIORITÉ: mode visiteur (pas de session Supabase)
+  // ✅ PRIORITÉ: mode visiteur
   if (isVisitorMode()) {
     if (greetingElement) greetingElement.textContent = "Visiteur";
     if (nameElement) nameElement.textContent = "Visiteur";
@@ -63,7 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-// Register
+// Register (⚠️ pour l’instant email/password, on fera l’OTP SMS à l’étape suivante)
 window.handleRegister = async function () {
   const firstname = document.getElementById('reg-firstname')?.value?.trim();
   const lastname = document.getElementById('reg-lastname')?.value?.trim();
@@ -107,9 +115,13 @@ window.handleRegister = async function () {
     return;
   }
 
-  // ✅ si on s'inscrit, on quitte le mode visiteur
+  // ✅ si on s'inscrit, on sort du mode visiteur
   clearVisitorMode();
 
+  // Ferme le modal
+  window.toggleModal(false);
+
+  // Pour l’instant on redirige (à l’étape suivante on fera OTP SMS avant d’entrer)
   window.location.href = "home.html";
 };
 
@@ -130,7 +142,7 @@ window.handleLogin = async function () {
     return;
   }
 
-  // ✅ si on se connecte, on quitte le mode visiteur
+  // ✅ si on se connecte, on sort du mode visiteur
   clearVisitorMode();
 
   window.location.href = "home.html";
