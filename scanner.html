@@ -12,14 +12,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
   <script src="https://unpkg.com/html5-qrcode"></script>
 
-  <!-- Remplacé type="text/tailwindcss" par CSS standard (plus stable) -->
   <style>
     .scan-bracket{
       position:absolute;
-      width:2.5rem; /* w-10 */
-      height:2.5rem; /* h-10 */
-      border-top:4px solid #13ec49;  /* primary */
-      border-left:4px solid #13ec49; /* primary */
+      width:2.5rem;
+      height:2.5rem;
+      border-top:4px solid #13ec49;
+      border-left:4px solid #13ec49;
     }
     #video-preview {
       width: 100%;
@@ -123,6 +122,35 @@
 
       </div>
     </div>
+
+    <!-- ✅ OVERLAY MODE VISITEUR (au-dessus de tout, empêche l'accès caméra) -->
+    <div id="visitor-scan-overlay" class="hidden absolute inset-0 z-[500] flex items-center justify-center px-6">
+      <div class="w-full max-w-sm bg-white dark:bg-background-dark rounded-[2rem] p-6 shadow-2xl border border-gray-100 dark:border-white/10 text-center">
+        <div class="mx-auto size-14 rounded-2xl bg-primary/15 flex items-center justify-center border border-primary/20 mb-4">
+          <span class="material-symbols-outlined text-primary text-3xl">lock</span>
+        </div>
+        <h2 class="text-lg font-black text-forest-green dark:text-white mb-2">Scanner désactivé</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+          Créez un compte et vérifiez-le pour utiliser cette fonctionnalité.
+        </p>
+
+        <div class="grid grid-cols-2 gap-3 mt-6">
+          <a href="index.html"
+             class="w-full py-4 rounded-2xl bg-primary text-white font-black text-xs uppercase tracking-widest text-center active:scale-[0.98] transition-all">
+            Se connecter
+          </a>
+          <a href="index.html"
+             class="w-full py-4 rounded-2xl bg-primary/15 text-primary font-black text-xs uppercase tracking-widest text-center active:scale-[0.98] transition-all">
+            Créer un compte
+          </a>
+        </div>
+
+        <a href="home.html" class="block mt-5 text-xs font-bold text-gray-400 hover:text-gray-500">
+          Retour à l’accueil
+        </a>
+      </div>
+    </div>
+
   </div>
 
   <!-- Pop-up Fiche Produit -->
@@ -175,9 +203,28 @@
     let currentProduct = null;
     let productQuantity = 1;
 
+    function isVisitorMode() {
+      try {
+        return sessionStorage.getItem('app_mode') === 'visitor';
+      } catch {
+        return false;
+      }
+    }
+
+    function showVisitorOverlay() {
+      const overlay = document.getElementById('visitor-scan-overlay');
+      if (overlay) overlay.classList.remove('hidden');
+    }
+
     window.addEventListener('DOMContentLoaded', async () => {
-      // Header (ok même si déjà fait dans header.js)
       if (typeof initAppShell === 'function') initAppShell();
+
+      // ✅ MODE VISITEUR: on n'initialise PAS le scanner => aucune permission caméra
+      if (isVisitorMode()) {
+        showVisitorOverlay();
+        updateCartDisplay(); // panier visible si besoin
+        return;
+      }
 
       // Charger produits depuis Supabase
       try {
@@ -259,7 +306,6 @@
       modal.classList.add('hidden');
       currentProduct = null;
 
-      // Reset quantité
       productQuantity = 1;
       const qtyEl = document.getElementById('product-quantity');
       if (qtyEl) qtyEl.textContent = '1';
@@ -281,9 +327,7 @@
       if (!currentProduct) return;
 
       let basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
-
       for (let i = 0; i < productQuantity; i++) basket.push(currentProduct);
-
       localStorage.setItem('user_basket', JSON.stringify(basket));
 
       if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
@@ -312,12 +356,17 @@
       let total = 0;
       basket.forEach(p => { total += Number(p.price) || 0; });
 
-      cartItemCount.textContent = basket.length;
-      cartTotal.textContent = `${total.toFixed(2)} CHF`;
+      if (cartItemCount) cartItemCount.textContent = basket.length;
+      if (cartTotal) cartTotal.textContent = `${total.toFixed(2)} CHF`;
     }
 
     // Saisie manuelle
     function toggleManualEntry() {
+      // ✅ mode visiteur: on ne laisse pas ouvrir la saisie manuelle
+      if (isVisitorMode()) {
+        showVisitorOverlay();
+        return;
+      }
       const manualEntry = document.getElementById('manual-entry');
       manualEntry.classList.toggle('hidden');
       if (!manualEntry.classList.contains('hidden')) {
@@ -336,6 +385,10 @@
     }
 
     function submitManualBarcode() {
+      if (isVisitorMode()) {
+        showVisitorOverlay();
+        return;
+      }
       const input = document.getElementById('barcode-input');
       const barcode = input.value;
 
@@ -359,5 +412,9 @@
     window.decreaseQuantity = decreaseQuantity;
     window.addProductToBasket = addProductToBasket;
   </script>
+
+  <!-- Auth (pour logout/menu) -->
+  <script type="module" src="auth.js"></script>
+
 </body>
 </html>
