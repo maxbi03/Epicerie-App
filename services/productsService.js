@@ -1,41 +1,46 @@
-// productsService.js
-import { supabase } from './supabaseClient.js';
+// services/productsService.js
+// Récupération du catalogue produits depuis Supabase (table: products)
 
+import { supabase } from '../supabaseClient.js';
+
+/**
+ * Normalise un enregistrement Supabase en objet produit attendu par l'app.
+ * Adapte ici les noms de colonnes si besoin.
+ */
+function normalizeProduct(row) {
+  // Noms possibles côté Supabase (on tolère plusieurs variantes)
+  const stock = row.stock ?? row.quantity ?? row.qty ?? 0;
+  const barcode = row.barcode ?? row.ean ?? row.ean13 ?? row.code_barres ?? row.codebarres;
+
+  return {
+    id: row.id,
+    name: row.name ?? row.title ?? row.nom ?? '',
+    barcode: barcode == null ? null : String(barcode),
+    price: Number(row.price ?? row.prix ?? 0),
+    unit: row.unit ?? row.unite ?? '',
+    origin: row.origin ?? row.producer ?? row.fournisseur ?? row.origine ?? '',
+    image: row.image ?? row.image_url ?? row.photo ?? '',
+    category: row.category ?? row.categorie ?? 'Divers',
+    badge: row.badge ?? row.label ?? '',
+    stock: Number(stock ?? 0)
+  };
+}
+
+/**
+ * Charge les produits depuis Supabase.
+ * @returns {Promise<Array>} liste des produits normalisés
+ */
 export async function fetchProducts() {
   const { data, error } = await supabase
-    .from('products_with_stock')   // 👈 on lit la VIEW
-    .select(`
-    id,
-    name,
-    category,
-    producer,
-    description,
-    price_chf,
-    image_url,
-    barcode,
-    badge,
-    stock_shelf,
-    stock_back,
-    stock_total
-    `)
-    .eq('is_active', true)
-    .order('category', { ascending: true })
+    .from('products')
+    .select('*')
     .order('name', { ascending: true });
 
-  if (error) throw error;
+  if (error) {
+    throw new Error(error.message || 'Erreur Supabase (products)');
+  }
 
-  return (data || []).map(p => ({
-    id: p.id,
-    name: p.name,
-    category: p.category,
-    producer: p.producer,
-    description: p.description ?? '',
-    price: Number(p.price_chf),
-    image: p.image_url ?? '',
-    barcode: p.barcode,
-    badge: p.badge,
-    stockShelf: p.stock_shelf ?? 0,
-    stockBack: p.stock_back ?? 0,
-    stock: p.stock_total ?? 0  // 👈 IMPORTANT
-  }));
+  return (data || [])
+    .map(normalizeProduct)
+    .filter(p => p.id != null);
 }
