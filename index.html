@@ -36,68 +36,132 @@
             </div>
 
             <div class="space-y-4">
-                <input id="login-email" type="email"
-                       placeholder="Adresse email"
-                       class="w-full px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 text-sm">
 
-                <input id="login-password" type="password"
-                       placeholder="Code secret"
-                       class="w-full px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 text-sm">
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400">
+                        smartphone
+                    </span>
+                    <input id="login-email" type="email"
+                        placeholder="Adresse email"
+                        class="w-full pl-12 pr-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 focus:ring-primary focus:border-primary text-gray-900 dark:text-white text-sm">
+                </div>
+
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400">
+                        lock
+                    </span>
+                    <input id="login-password" type="password" autocomplete="off"
+                           placeholder="Code secret"
+                           class="w-full pl-12 pr-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 focus:ring-primary focus:border-primary text-gray-900 dark:text-white text-sm">
+                </div>
 
                 <button onclick="handleLogin()"
-                        class="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg">
+                        class="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/20 hover:brightness-105 active:scale-95 transition-all">
                     Se connecter
                 </button>
+
             </div>
         </div>
 
+        <!-- SEPARATOR -->
         <div class="w-full h-[1px] bg-gray-200 dark:bg-white/10"></div>
 
         <!-- REGISTER BUTTON -->
-        <div class="text-center">
+        <div class="space-y-6 text-center">
+            <div class="space-y-2">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white">Nouveau ici ?</h2>
+                <p class="text-sm text-gray-500 px-4">
+                    Créez votre compte pour accéder à l'épicerie autonome.
+                </p>
+            </div>
+
             <button onclick="toggleModal(true)"
-                    class="w-full bg-primary/20 text-primary font-bold py-4 rounded-2xl shadow-lg">
+                    class="w-full bg-primary/20 text-primary font-bold py-4 rounded-2xl shadow-lg shadow-primary/10 hover:brightness-95 active:scale-95 transition-all">
                 S'inscrire
             </button>
         </div>
 
-    </div>
-</div>
+        <!-- REGISTER MODAL -->
+        <div id="register-modal"
+             class="fixed inset-0 z-[150] hidden bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
 
-<!-- Modal email déjà existant -->
-<div id="email-exists-modal"
-     class="hidden fixed inset-0 z-[300] bg-black/50 backdrop-blur-sm flex items-center justify-center p-6">
+            <div class="bg-white dark:bg-background-dark w-full max-w-md rounded-[2.5rem] p-8 space-y-6 shadow-2xl overflow-y-auto max-h-[90vh]">
 
-    <div class="bg-white dark:bg-background-dark w-full max-w-sm rounded-[2rem] p-6 text-center shadow-2xl">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold dark:text-white">Création de compte</h2>
+                    <button onclick="toggleModal(false)"
+                            class="material-symbols-outlined text-gray-400">close</button>
+                </div>
 
-        <div class="mx-auto size-14 rounded-2xl bg-red-100 flex items-center justify-center mb-4">
-            <span class="material-symbols-outlined text-red-600 text-3xl">error</span>
+                <div class="space-y-4">
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <input id="reg-firstname" type="text" placeholder="Prénom"
+                               class="w-full px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+
+                        <input id="reg-lastname" type="text" placeholder="Nom"
+                               class="w-full px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+                    </div>
+
+                    <input id="reg-address" type="text" placeholder="Rue et n°"
+                           class="w-full px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+
+                    <div class="grid grid-cols-3 gap-3">
+                        <input id="reg-npa" type="number" placeholder="NPA"
+                               class="w-full px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+
+                        <input id="reg-city" type="text" placeholder="Localité"
+                               class="col-span-2 w-full px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+                    </div>
+
+                    <!-- ✅ IDENTIFIANTS (mis en avant) -->
+                    <div class="space-y-2">
+                        <p class="text-[10px] font-black text-primary uppercase ml-2 tracking-widest">
+                            Identifiants de connexion
+                        </p>
+
+                        <input id="reg-email" type="email" placeholder="Adresse email"
+                               class="w-full px-4 py-4 rounded-2xl border-primary/30 border-2 dark:bg-white/5 dark:text-white text-sm">
+
+                        <input id="reg-password" type="password" placeholder="Code secret"
+                               class="w-full px-4 py-4 rounded-2xl border-primary/30 border-2 dark:bg-white/5 dark:text-white text-sm">
+
+                        <input id="reg-password-confirm" type="password" placeholder="Confirmer le code secret"
+                               class="w-full px-4 py-4 rounded-2xl border-primary/30 border-2 dark:bg-white/5 dark:text-white text-sm">
+                    </div>
+
+                    <!-- ✅ TELEPHONE (vérification) -->
+                    <div class="space-y-2 pt-2">
+                        <p class="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">
+                            Vérification SMS
+                        </p>
+
+                        <input id="reg-phone" type="tel" placeholder="N° de téléphone (pour recevoir le code)"
+                               class="w-full px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+                    </div>
+
+                    <button onclick="handleRegister()"
+                            class="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/20 hover:brightness-105 active:scale-95 transition-all">
+                        Confirmer l'inscription
+                    </button>
+
+                    <p class="text-[10px] text-gray-400 leading-relaxed">
+                        Nous enverrons un code de vérification par SMS pour activer les fonctionnalités sensibles (scanner / porte).
+                    </p>
+
+                </div>
+            </div>
         </div>
 
-        <h3 class="text-lg font-bold text-forest-green dark:text-white mb-2">
-            Compte déjà existant
-        </h3>
-
-        <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-            Cette adresse email correspond déjà à un compte existant.
-            <br><br>
-            Vous pouvez vous connecter ou utiliser une autre adresse email.
-        </p>
-
-        <div class="grid grid-cols-2 gap-3 mt-6">
-            <button onclick="goToLogin()"
-                    class="w-full py-3 rounded-xl bg-primary text-white font-bold text-xs uppercase">
-                Se connecter
-            </button>
-
-            <button onclick="closeEmailExistsModal()"
-                    class="w-full py-3 rounded-xl bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-white font-bold text-xs uppercase">
-                Changer d’email
-            </button>
-        </div>
     </div>
+
+    <p class="text-[10px] text-center text-gray-400 pb-4 mt-8">
+        Vérification d'identité requise pour la sécurité de l'épicerie autonome.
+    </p>
+
 </div>
 
+<!-- AUTH MODULE -->
 <script type="module" src="auth.js"></script>
 
 </body>
