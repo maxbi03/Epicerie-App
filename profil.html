@@ -8,7 +8,6 @@
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <script src="theme.js"></script>
 
-
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 </head>
@@ -19,11 +18,15 @@
 
 <main class="max-w-md mx-auto px-5 pt-6 pb-24 min-h-screen">
 
+  <!-- EN-TÊTE PROFIL -->
   <div class="flex flex-col items-center mb-8">
     <div class="relative group">
-      <div class="size-28 rounded-[2rem] bg-white dark:bg-white/5 flex items-center justify-center border-2 border-primary shadow-xl overflow-hidden">
-        <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop"
-             class="w-full h-full object-cover">
+      <div id="avatar-container" class="size-28 rounded-[2rem] bg-white dark:bg-white/5 flex items-center justify-center border-2 border-primary shadow-xl overflow-hidden">
+        <!-- Avatar par défaut (sera remplacé en mode visiteur) -->
+        <img id="user-avatar"
+             src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop"
+             class="w-full h-full object-cover"
+             alt="Avatar">
       </div>
     </div>
 
@@ -36,100 +39,162 @@
     </p>
   </div>
 
-  <div class="grid grid-cols-2 gap-3 mb-8">
-    <div class="bg-white dark:bg-white/5 p-5 rounded-3xl border shadow-sm text-center">
-      <span class="text-[10px] font-black uppercase text-gray-400 tracking-widest block mb-1">
-        Points Fidélité
-      </span>
-      <span id="user-points" class="text-2xl font-black text-primary italic">0</span>
-    </div>
+  <!-- ✅ BLOC VISITEUR (caché par défaut) -->
+  <div id="visitor-actions" class="hidden">
+    <div class="bg-white dark:bg-white/5 rounded-[2rem] border border-gray-100 dark:border-white/5 shadow-sm p-6 text-center">
+      <h3 class="text-lg font-black text-forest-green dark:text-white mb-2">Compte requis</h3>
+      <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+        Créez un compte et vérifiez-le pour accéder aux fonctionnalités de l’épicerie autonome.
+      </p>
 
-    <div class="bg-white dark:bg-white/5 p-5 rounded-3xl border shadow-sm text-center">
-      <span class="text-[10px] font-black uppercase text-gray-400 tracking-widest block mb-1">
-        Économies
-      </span>
-      <span class="text-2xl font-black text-forest-green dark:text-white">
-        0.00 <span class="text-xs">CHF</span>
-      </span>
+      <div class="grid grid-cols-2 gap-3 mt-6">
+        <a href="index.html"
+           class="w-full py-4 rounded-2xl bg-primary text-white font-black text-xs uppercase tracking-widest text-center active:scale-[0.98] transition-all">
+          Se connecter
+        </a>
+
+        <a href="index.html"
+           class="w-full py-4 rounded-2xl bg-primary/15 text-primary font-black text-xs uppercase tracking-widest text-center active:scale-[0.98] transition-all">
+          Créer un compte
+        </a>
+      </div>
     </div>
   </div>
 
-  <div class="space-y-6">
-    <div>
-      <h3 class="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-4 mb-3">
-        Compte & Sécurité
-      </h3>
+  <!-- ✅ BLOC UTILISATEUR CONNECTÉ -->
+  <div id="loggedin-content">
 
-      <div class="bg-white dark:bg-white/5 rounded-[2rem] border overflow-hidden shadow-sm p-4">
+    <div class="grid grid-cols-2 gap-3 mb-8">
+      <div class="bg-white dark:bg-white/5 p-5 rounded-3xl border shadow-sm text-center">
+        <span class="text-[10px] font-black uppercase text-gray-400 tracking-widest block mb-1">
+          Points Fidélité
+        </span>
+        <span id="user-points" class="text-2xl font-black text-primary italic">0</span>
+      </div>
 
-        <div id="profile-display">
-          <div class="mb-4">
-            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Prénom</p>
-            <p id="user-firstname" class="text-sm font-bold text-forest-green dark:text-gray-200">Chargement...</p>
-          </div>
-
-          <div class="mb-4">
-            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Nom</p>
-            <p id="user-lastname" class="text-sm font-bold text-forest-green dark:text-gray-200">Chargement...</p>
-          </div>
-
-          <div class="mb-4">
-            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Téléphone</p>
-            <p id="user-phone-display" class="text-sm font-bold text-forest-green dark:text-gray-200">Chargement...</p>
-          </div>
-
-          <button id="edit-profile-btn"
-                  class="w-full py-3 mt-2 rounded-2xl bg-primary text-white font-bold text-sm hover:brightness-105 transition-all">
-            Modifier mes informations
-          </button>
-        </div>
-
-        <div id="profile-edit-form" class="hidden space-y-4">
-          <input id="edit-firstname" type="text" placeholder="Prénom"
-                 class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
-
-          <input id="edit-lastname" type="text" placeholder="Nom"
-                 class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
-
-          <input id="edit-phone" type="tel" placeholder="Téléphone"
-                 class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
-
-          <div class="flex gap-3">
-            <button id="save-profile-btn"
-                    class="flex-1 py-3 rounded-2xl bg-primary text-white font-bold text-sm hover:brightness-105 transition-all">
-              Sauvegarder
-            </button>
-            <button id="cancel-profile-btn"
-                    class="flex-1 py-3 rounded-2xl bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-white font-bold text-sm hover:brightness-105 transition-all">
-              Annuler
-            </button>
-          </div>
-        </div>
-
+      <div class="bg-white dark:bg-white/5 p-5 rounded-3xl border shadow-sm text-center">
+        <span class="text-[10px] font-black uppercase text-gray-400 tracking-widest block mb-1">
+          Économies
+        </span>
+        <span class="text-2xl font-black text-forest-green dark:text-white">
+          0.00 <span class="text-xs">CHF</span>
+        </span>
       </div>
     </div>
 
-    <button onclick="logout()"
-            class="w-full py-4 rounded-3xl bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 font-black text-xs uppercase tracking-widest active:scale-[0.98] transition-all">
-      Se déconnecter de l'application
-    </button>
+    <div class="space-y-6">
+      <div>
+        <h3 class="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-4 mb-3">
+          Compte & Sécurité
+        </h3>
+
+        <div class="bg-white dark:bg-white/5 rounded-[2rem] border overflow-hidden shadow-sm p-4">
+
+          <div id="profile-display">
+            <div class="mb-4">
+              <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Prénom</p>
+              <p id="user-firstname" class="text-sm font-bold text-forest-green dark:text-gray-200">Chargement...</p>
+            </div>
+
+            <div class="mb-4">
+              <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Nom</p>
+              <p id="user-lastname" class="text-sm font-bold text-forest-green dark:text-gray-200">Chargement...</p>
+            </div>
+
+            <div class="mb-4">
+              <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Téléphone</p>
+              <p id="user-phone-display" class="text-sm font-bold text-forest-green dark:text-gray-200">Chargement...</p>
+            </div>
+
+            <button id="edit-profile-btn"
+                    class="w-full py-3 mt-2 rounded-2xl bg-primary text-white font-bold text-sm hover:brightness-105 transition-all">
+              Modifier mes informations
+            </button>
+          </div>
+
+          <div id="profile-edit-form" class="hidden space-y-4">
+            <input id="edit-firstname" type="text" placeholder="Prénom"
+                   class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+
+            <input id="edit-lastname" type="text" placeholder="Nom"
+                   class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+
+            <input id="edit-phone" type="tel" placeholder="Téléphone"
+                   class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+
+            <div class="flex gap-3">
+              <button id="save-profile-btn"
+                      class="flex-1 py-3 rounded-2xl bg-primary text-white font-bold text-sm hover:brightness-105 transition-all">
+                Sauvegarder
+              </button>
+              <button id="cancel-profile-btn"
+                      class="flex-1 py-3 rounded-2xl bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-white font-bold text-sm hover:brightness-105 transition-all">
+                Annuler
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <button id="logout-profile-btn" onclick="logout()"
+              class="w-full py-4 rounded-3xl bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 font-black text-xs uppercase tracking-widest active:scale-[0.98] transition-all">
+        Se déconnecter de l'application
+      </button>
+    </div>
+
   </div>
 </main>
 
-<!-- Script profil : utilise userService -->
+<!-- Script profil : adapte l'UI selon mode visiteur / session -->
 <script type="module">
-  import {
-    getSession,
-    fetchUserProfile,
-    updateUserProfile
-  } from './services/userService.js';
+  import { getSession, fetchUserProfile, updateUserProfile } from './services/userService.js';
+
+  function isVisitorMode() {
+    try {
+      return sessionStorage.getItem('app_mode') === 'visitor';
+    } catch {
+      return false;
+    }
+  }
+
+  function setVisitorUI() {
+    // Texte
+    document.getElementById('user-name').textContent = 'Visiteur';
+    document.getElementById('user-level').textContent = 'Visiteur';
+
+    // Avatar neutre (SVG)
+    const avatar = document.getElementById('avatar-container');
+    avatar.innerHTML = `
+      <svg viewBox="0 0 120 120" class="w-full h-full">
+        <rect width="120" height="120" fill="transparent"></rect>
+        <circle cx="60" cy="45" r="20" fill="#cbd5e1"></circle>
+        <path d="M25 110c3-26 24-40 35-40h0c11 0 32 14 35 40" fill="#94a3b8"></path>
+      </svg>
+    `;
+
+    // Affichage des blocs
+    document.getElementById('loggedin-content').classList.add('hidden');
+    document.getElementById('visitor-actions').classList.remove('hidden');
+  }
 
   window.addEventListener('DOMContentLoaded', async () => {
     if (typeof initAppShell === 'function') initAppShell();
 
-    const session = await getSession();
-    if (!session) return;
+    // ✅ 1) Mode visiteur
+    if (isVisitorMode()) {
+      setVisitorUI();
+      return;
+    }
 
+    // ✅ 2) Pas de session => on traite comme visiteur (UX)
+    const session = await getSession();
+    if (!session) {
+      setVisitorUI();
+      return;
+    }
+
+    // ✅ 3) Session => UI utilisateur
     const profile = await fetchUserProfile(session.user.id);
     if (!profile) return;
 
