@@ -1,58 +1,81 @@
 <!DOCTYPE html>
 <html class="light" lang="fr">
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Stocks - L'Épicerie du Village</title>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Stocks - L'Épicerie du Village</title>
 
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="theme.js"></script>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="theme.js"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 </head>
 
 <body class="bg-background-light dark:bg-background-dark font-display text-[#111813] antialiased">
 
-    <div id="header-container" class="relative z-[100] max-w-md mx-auto"></div>
+  <div id="header-container" class="relative z-[100] max-w-md mx-auto"></div>
 
-    <main class="relative flex min-h-screen max-w-md mx-auto flex-col overflow-x-hidden">
-        
-        <div class="flex-1 overflow-y-auto px-5 pt-4 pb-24">
-            
-            <div class="flex justify-between items-end mb-6">
-                <div>
-                    <h1 class="text-2xl font-bold text-forest-green dark:text-white">Stocks</h1>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Disponibilité en temps réel</p>
-                </div>
-                <span class="text-[9px] bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 px-2 py-1 rounded-lg font-black text-gray-400 uppercase tracking-widest shadow-sm">
-                    Màj : En direct
-                </span>
-            </div>
+  <main class="relative flex min-h-screen max-w-md mx-auto flex-col overflow-x-hidden">
+    <div class="flex-1 overflow-y-auto px-5 pt-4 pb-24">
 
-            <div class="flex gap-2 overflow-x-auto pb-4 mb-4 no-scrollbar">
-                <button onclick="displayProducts('Tous')" class="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl whitespace-nowrap">Tous</button>
-                <button onclick="displayProducts('Crèmerie')" class="px-4 py-2 bg-white dark:bg-white/5 text-gray-500 text-xs font-bold rounded-xl whitespace-nowrap border border-gray-100 dark:border-white/5">Crèmerie</button>
-                <button onclick="displayProducts('Boulangerie')" class="px-4 py-2 bg-white dark:bg-white/5 text-gray-500 text-xs font-bold rounded-xl whitespace-nowrap border border-gray-100 dark:border-white/5">Boulangerie</button>
-            </div>
-
-            <div id="products-grid" class="space-y-3">
-                <p class="text-center text-gray-400 text-xs py-10">Chargement des stocks...</p>
-            </div>
+      <div class="flex justify-between items-end mb-6">
+        <div>
+          <h1 class="text-2xl font-bold text-forest-green dark:text-white">Stocks</h1>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Disponibilité en temps réel</p>
         </div>
-    </main>
+        <span class="text-[9px] bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 px-2 py-1 rounded-lg font-black text-gray-400 uppercase tracking-widest shadow-sm">
+          Màj : En direct
+        </span>
+      </div>
 
-    <script src="header.js"></script>
-    <script src="shop.js"></script> 
+      <div class="flex gap-2 overflow-x-auto pb-4 mb-4 no-scrollbar">
+        <button onclick="displayProducts('Tous')" class="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl whitespace-nowrap">Tous</button>
+        <button onclick="displayProducts('Crèmerie')" class="px-4 py-2 bg-white dark:bg-white/5 text-gray-500 text-xs font-bold rounded-xl whitespace-nowrap border border-gray-100 dark:border-white/5">Crèmerie</button>
+        <button onclick="displayProducts('Boulangerie')" class="px-4 py-2 bg-white dark:bg-white/5 text-gray-500 text-xs font-bold rounded-xl whitespace-nowrap border border-gray-100 dark:border-white/5">Boulangerie</button>
+      </div>
 
-    <script>
-        window.addEventListener('load', () => {
-            // On vérifie si les fonctions existent avant de les lancer
-            if (typeof initAppShell === 'function') initAppShell();
-            if (typeof displayProducts === 'function') {
-                displayProducts('Tous');
-            }
-        });
-    </script>
+      <div id="products-grid" class="space-y-3">
+        <p class="text-center text-gray-400 text-xs py-10">Chargement des stocks...</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Scripts "non module" -->
+  <script src="header.js"></script>
+  <script src="shop.js"></script>
+
+  <!-- Loader Supabase (module) -->
+  <script type="module">
+    import { fetchProducts } from './services/productsService.js';
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      // 1) Header (si ton header.js le fait déjà, ça ne casse pas)
+      if (typeof initAppShell === 'function') initAppShell();
+
+      // 2) Charger produits depuis Supabase
+      try {
+        window.products = await fetchProducts();
+      } catch (e) {
+        console.error("Erreur chargement produits Supabase:", e);
+        window.products = [];
+        const grid = document.getElementById('products-grid');
+        if (grid) {
+          grid.innerHTML = `
+            <p class="text-center text-red-500 text-sm py-10">
+              Impossible de charger les stocks (Supabase).
+            </p>
+          `;
+        }
+        return; // on stoppe ici
+      }
+
+      // 3) Affichage initial
+      if (typeof displayProducts === 'function') {
+        displayProducts('Tous');
+      }
+    });
+  </script>
+
 </body>
 </html>
