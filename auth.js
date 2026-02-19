@@ -21,16 +21,12 @@ function clearVisitorMode() {
   }
 }
 
-// ✅ Ouvrir/fermer le modal d'inscription (corrige le bouton "S'inscrire")
+// ✅ Ouvrir/fermer le modal d'inscription
 window.toggleModal = function (show) {
   const modal = document.getElementById('register-modal');
   if (!modal) return;
-
-  if (show) {
-    modal.classList.remove('hidden');
-  } else {
-    modal.classList.add('hidden');
-  }
+  if (show) modal.classList.remove('hidden');
+  else modal.classList.add('hidden');
 };
 
 // Affiche prénom/nom si les éléments existent sur la page
@@ -38,7 +34,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const greetingElement = document.getElementById('user-greeting');
   const nameElement = document.getElementById('user-name');
 
-  // ✅ PRIORITÉ: mode visiteur
   if (isVisitorMode()) {
     if (greetingElement) greetingElement.textContent = "Visiteur";
     if (nameElement) nameElement.textContent = "Visiteur";
@@ -71,11 +66,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-// Register (⚠️ pour l’instant email/password, on fera l’OTP SMS à l’étape suivante)
+// Register (email/password pour l’instant; OTP SMS ensuite)
 window.handleRegister = async function () {
   const firstname = document.getElementById('reg-firstname')?.value?.trim();
   const lastname = document.getElementById('reg-lastname')?.value?.trim();
-  const email = document.getElementById('reg-email')?.value?.trim();
+
+  // ✅ email normalisé
+  const emailRaw = document.getElementById('reg-email')?.value ?? '';
+  const email = emailRaw.trim().toLowerCase();
+
   const address = document.getElementById('reg-address')?.value?.trim();
   const npa = document.getElementById('reg-npa')?.value?.trim();
   const city = document.getElementById('reg-city')?.value?.trim();
@@ -88,6 +87,11 @@ window.handleRegister = async function () {
     return;
   }
 
+  if (!email.includes('@')) {
+    alert("Adresse email invalide.");
+    return;
+  }
+
   if (password !== passwordConfirm) {
     alert("Les mots de passe ne correspondent pas !");
     return;
@@ -96,9 +100,23 @@ window.handleRegister = async function () {
   const fullName = `${firstname} ${lastname}`;
   const fullAddress = `${address}, ${npa} ${city}`;
 
+  // 🔎 Diagnostic (console)
+  console.log("➡️ Signup attempt with email:", email);
+
   const { data, error } = await supabase.auth.signUp({ email, password });
+
+  // 🔎 Diagnostic (console)
+  console.log("⬅️ Signup response:", { data, error });
+
   if (error) {
-    alert(error.message);
+    const msg = (error.message || "").toLowerCase();
+
+    // Message plus clair côté utilisateur
+    if (msg.includes("already registered")) {
+      alert("Un compte existe déjà avec cette adresse email. Essaie de te connecter.");
+    } else {
+      alert(error.message);
+    }
     return;
   }
 
@@ -115,19 +133,17 @@ window.handleRegister = async function () {
     return;
   }
 
-  // ✅ si on s'inscrit, on sort du mode visiteur
   clearVisitorMode();
-
-  // Ferme le modal
   window.toggleModal(false);
 
-  // Pour l’instant on redirige (à l’étape suivante on fera OTP SMS avant d’entrer)
+  // (on remplacera par l'écran OTP ensuite)
   window.location.href = "home.html";
 };
 
 // Login
 window.handleLogin = async function () {
-  const email = document.getElementById('login-email')?.value?.trim();
+  const emailRaw = document.getElementById('login-email')?.value ?? '';
+  const email = emailRaw.trim().toLowerCase();
   const password = document.getElementById('login-password')?.value?.trim();
 
   if (!email || !password) {
@@ -142,9 +158,7 @@ window.handleLogin = async function () {
     return;
   }
 
-  // ✅ si on se connecte, on sort du mode visiteur
   clearVisitorMode();
-
   window.location.href = "home.html";
 };
 
