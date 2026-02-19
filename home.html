@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>L'Épicerie du Village - Accueil (TEST)</title>
+    <title>L'Épicerie du Village - Accueil</title>
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="theme.js"></script>
@@ -17,7 +17,7 @@
             box-shadow: 0 4px 0px #9ca3af;
             cursor: not-allowed;
         }
-        </style>
+    </style>
 </head>
 
 <body class="bg-background-light dark:bg-background-dark font-display text-[#111813] antialiased">
@@ -27,19 +27,11 @@
     <main class="relative flex min-h-screen max-w-md mx-auto flex-col overflow-x-hidden">
         <div class="flex-1 overflow-y-auto pb-10">
 
-            <!-- ✅ BADGE TEST ULTRA VISIBLE -->
-            <div class="px-5 pt-4">
-                <div class="inline-flex items-center gap-2 bg-primary/15 text-forest-green border border-primary/30 px-3 py-2 rounded-full text-xs font-black tracking-widest">
-                    <span class="material-symbols-outlined text-[18px]">science</span>
-                    MODE TEST — SANS SUPABASE
-                </div>
-            </div>
-
-            <div class="px-5 pt-4 pb-2">
+            <div class="px-5 pt-6 pb-2">
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-                    Bonjour, <span id="user-greeting">TEST</span> !
+                    Bonjour, <span id="user-greeting">…</span> !
                 </h1>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Si tu vois ce badge, ton fichier home.html est bien chargé.</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Bienvenue dans votre épicerie autonome.</p>
             </div>
 
             <div class="p-5">
@@ -90,6 +82,9 @@
             if (typeof initAppShell === 'function') initAppShell();
         });
     </script>
+
+    <!-- ✅ Important : nécessaire pour afficher Visiteur / Nom -->
+    <script type="module" src="auth.js"></script>
 
 </body>
 </html>
