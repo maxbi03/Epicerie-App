@@ -9,7 +9,7 @@ window.tailwind.config = {
         "leaf-green": "#2D6A4F",
         "background-light": "#f6f8f6",
         "background-dark": "#102215",
-        "primary": "#13ec49",
+        "primary": "#1B5E20",
       },
       fontFamily: { display: ["Space Grotesk", "sans-serif"] },
     },
