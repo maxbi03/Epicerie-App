@@ -4,6 +4,7 @@ import { supabase } from './supabaseClient.js';
 import { getSession, fetchUserProfile, createUserProfile } from './services/userService.js';
 
 const VISITOR_KEY = 'app_mode';
+const SKIP_SPLASH_KEY = 'skip_splash_once';
 
 function isVisitorMode() {
   try {
@@ -16,6 +17,14 @@ function isVisitorMode() {
 function clearVisitorMode() {
   try {
     sessionStorage.removeItem(VISITOR_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+function skipSplashOnce() {
+  try {
+    sessionStorage.setItem(SKIP_SPLASH_KEY, '1');
   } catch {
     // ignore
   }
@@ -71,7 +80,6 @@ window.handleRegister = async function () {
   const firstname = document.getElementById('reg-firstname')?.value?.trim();
   const lastname = document.getElementById('reg-lastname')?.value?.trim();
 
-  // ✅ email normalisé
   const emailRaw = document.getElementById('reg-email')?.value ?? '';
   const email = emailRaw.trim().toLowerCase();
 
@@ -100,18 +108,15 @@ window.handleRegister = async function () {
   const fullName = `${firstname} ${lastname}`;
   const fullAddress = `${address}, ${npa} ${city}`;
 
-  // 🔎 Diagnostic (console)
   console.log("➡️ Signup attempt with email:", email);
 
   const { data, error } = await supabase.auth.signUp({ email, password });
 
-  // 🔎 Diagnostic (console)
   console.log("⬅️ Signup response:", { data, error });
 
   if (error) {
     const msg = (error.message || "").toLowerCase();
 
-    // Message plus clair côté utilisateur
     if (msg.includes("already registered")) {
       alert("Un compte existe déjà avec cette adresse email. Essaie de te connecter.");
     } else {
@@ -135,8 +140,6 @@ window.handleRegister = async function () {
 
   clearVisitorMode();
   window.toggleModal(false);
-
-  // (on remplacera par l'écran OTP ensuite)
   window.location.href = "home.html";
 };
 
@@ -165,6 +168,7 @@ window.handleLogin = async function () {
 // Logout
 window.logout = async function () {
   clearVisitorMode();
+  skipSplashOnce();
   await supabase.auth.signOut();
   window.location.href = "index.html";
 };

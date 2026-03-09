@@ -70,11 +70,13 @@
 
                                 <div class="grid grid-cols-2 gap-3 mt-4">
                                     <a href="index.html"
-                                       class="w-full py-3 rounded-xl bg-primary text-white font-black text-[10px] uppercase tracking-widest text-center active:scale-[0.98] transition-all">
+                                    onclick="event.preventDefault(); goToLogin('login');"
+                                    class="w-full py-3 rounded-xl bg-primary text-white font-black text-[10px] uppercase tracking-widest text-center active:scale-[0.98] transition-all">
                                         Se connecter
                                     </a>
                                     <a href="index.html"
-                                       class="w-full py-3 rounded-xl bg-primary/15 text-primary font-black text-[10px] uppercase tracking-widest text-center active:scale-[0.98] transition-all">
+                                    onclick="event.preventDefault(); goToLogin('register');"
+                                    class="w-full py-3 rounded-xl bg-primary/15 text-primary font-black text-[10px] uppercase tracking-widest text-center active:scale-[0.98] transition-all">
                                         Créer un compte
                                     </a>
                                 </div>
