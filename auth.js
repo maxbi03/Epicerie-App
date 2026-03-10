@@ -5,6 +5,7 @@ import { getSession, fetchUserProfile, createUserProfile } from './services/user
 
 const VISITOR_KEY = 'app_mode';
 const SKIP_SPLASH_KEY = 'skip_splash_once';
+const OPEN_REGISTER_MODAL_KEY = 'open_register_modal';
 
 function isVisitorMode() {
   try {
@@ -30,18 +31,57 @@ function skipSplashOnce() {
   }
 }
 
+// ✅ Redirection vers index sans splash, avec option d'ouvrir le modal d'inscription
+window.goToLogin = function (mode = 'login') {
+  try {
+    sessionStorage.setItem(SKIP_SPLASH_KEY, '1');
+
+    if (mode === 'register') {
+      sessionStorage.setItem(OPEN_REGISTER_MODAL_KEY, '1');
+    } else {
+      sessionStorage.removeItem(OPEN_REGISTER_MODAL_KEY);
+    }
+  } catch (err) {
+    console.warn('Impossible de préparer la redirection vers index.html', err);
+  }
+
+  window.location.href = 'index.html';
+};
+
 // ✅ Ouvrir/fermer le modal d'inscription
 window.toggleModal = function (show) {
   const modal = document.getElementById('register-modal');
   if (!modal) return;
-  if (show) modal.classList.remove('hidden');
-  else modal.classList.add('hidden');
+
+  if (show) {
+    modal.classList.remove('hidden');
+  } else {
+    modal.classList.add('hidden');
+  }
 };
 
-// Affiche prénom/nom si les éléments existent sur la page
+// ✅ Si on arrive sur index avec "ouvrir inscription", on ouvre automatiquement le modal
 document.addEventListener('DOMContentLoaded', async () => {
   const greetingElement = document.getElementById('user-greeting');
   const nameElement = document.getElementById('user-name');
+
+  try {
+    const shouldOpenRegisterModal =
+      sessionStorage.getItem(OPEN_REGISTER_MODAL_KEY) === '1';
+
+    if (shouldOpenRegisterModal) {
+      sessionStorage.removeItem(OPEN_REGISTER_MODAL_KEY);
+
+      // petit délai pour laisser le DOM se stabiliser
+      setTimeout(() => {
+        if (typeof window.toggleModal === 'function') {
+          window.toggleModal(true);
+        }
+      }, 50);
+    }
+  } catch (err) {
+    console.warn("Impossible d'ouvrir automatiquement le modal d'inscription", err);
+  }
 
   if (isVisitorMode()) {
     if (greetingElement) greetingElement.textContent = "Visiteur";
@@ -65,11 +105,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       const firstName = (profile.name || "").split(" ")[0] || "Utilisateur";
       greetingElement.textContent = firstName;
     }
+
     if (nameElement) {
       nameElement.textContent = profile.name || "Utilisateur";
     }
   } catch (err) {
     console.error("Erreur session/profil:", err?.message || err);
+
     if (greetingElement) greetingElement.textContent = "Visiteur";
     if (nameElement) nameElement.textContent = "Visiteur";
   }
@@ -132,7 +174,13 @@ window.handleRegister = async function () {
   }
 
   try {
-    await createUserProfile({ id: userId, name: fullName, email, address: fullAddress, phone });
+    await createUserProfile({
+      id: userId,
+      name: fullName,
+      email,
+      address: fullAddress,
+      phone
+    });
   } catch (err) {
     alert("Erreur création profil : " + (err?.message || err));
     return;
