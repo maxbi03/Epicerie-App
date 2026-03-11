@@ -1,264 +1,335 @@
-const ADDRESS_SEARCH_ENDPOINT =
-  window.APP_CONFIG?.ADDRESS_SEARCH_ENDPOINT ||
-  "https://jykfgstmcmhhhluzojxb.supabase.co/functions/v1/address-search";
-
+const SEARCH_ENDPOINT = 'https://api3.geo.admin.ch/rest/services/ech/SearchServer';
 const MIN_QUERY_LENGTH = 3;
-const DEBOUNCE_DELAY = 250;
+const MAX_SUGGESTIONS = 6;
 
-function debounce(fn, delay = DEBOUNCE_DELAY) {
-  let timeoutId;
-  return (...args) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => fn(...args), delay);
-  };
+function getEl(id) {
+  return document.getElementById(id);
 }
 
-function escapeHtml(value = "") {
+function escapeHtml(value = '') {
   return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-function normalizeSuggestion(item = {}) {
-  const street = item.street || "";
-  const houseNumber = item.houseNumber || item.house_number || "";
-  const postalCode = item.postalCode || item.postal_code || "";
-  const city = item.city || "";
-  const country = item.country || "CH";
+function stripTags(value = '') {
+  const div = document.createElement('div');
+  div.innerHTML = value;
+  return (div.textContent || div.innerText || '').replace(/\s+/g, ' ').trim();
+}
 
-  const fallbackLabel = [street, houseNumber].filter(Boolean).join(" ") +
-    ((postalCode || city) ? `, ${postalCode} ${city}` : "");
+function setStatus(message = '', tone = 'neutral') {
+  const status = getEl('address-status');
+  if (!status) return;
+
+  status.textContent = message;
+  status.classList.remove(
+    'hidden',
+    'text-red-500',
+    'text-green-600',
+    'text-gray-500',
+    'dark:text-red-400',
+    'dark:text-green-400',
+    'dark:text-gray-300'
+  );
+
+  if (!message) {
+    status.classList.add('hidden');
+    return;
+  }
+
+  if (tone === 'error') {
+    status.classList.add('text-red-500', 'dark:text-red-400');
+  } else if (tone === 'success') {
+    status.classList.add('text-green-600', 'dark:text-green-400');
+  } else {
+    status.classList.add('text-gray-500', 'dark:text-gray-300');
+  }
+}
+
+function clearSuggestions() {
+  const container = getEl('address-suggestions');
+  if (!container) return;
+  container.innerHTML = '';
+  container.classList.add('hidden');
+}
+
+function extractStreetAndNumber(text = '') {
+  const clean = stripTags(text);
+
+  const match = clean.match(/^(.+?)\s+(\d+[A-Za-z]?)$/);
+  if (match) {
+    return {
+      street: match[1].trim(),
+      houseNumber: match[2].trim(),
+    };
+  }
 
   return {
-    label: String(item.label || fallbackLabel).trim(),
-    street: String(street).trim(),
-    houseNumber: String(houseNumber).trim(),
-    postalCode: String(postalCode).trim(),
-    city: String(city).trim(),
-    country: String(country).trim() || "CH",
+    street: clean.trim(),
+    houseNumber: '',
   };
 }
 
-async function fetchAddressSuggestions(query) {
-  const url = new URL(ADDRESS_SEARCH_ENDPOINT);
-  url.searchParams.set("q", query);
+function extractPostalCodeAndCity(...parts) {
+  for (const part of parts) {
+    const clean = stripTags(part || '');
+    if (!clean) continue;
+
+    const match = clean.match(/(\d{4})\s+([A-Za-zÀ-ÿ'’\- ]{2,})/);
+    if (match) {
+      return {
+        postalCode: match[1].trim(),
+        city: match[2].trim(),
+      };
+    }
+  }
+
+  return {
+    postalCode: '',
+    city: '',
+  };
+}
+
+function normalizeSuggestion(result) {
+  const attrs = result?.attrs || {};
+
+  const labelText = stripTags(attrs.label || '');
+  const detailText = stripTags(attrs.detail || '');
+
+  const streetAndNumber = extractStreetAndNumber(
+    attrs.street || labelText.split(',')[0] || labelText
+  );
+
+  const locality = extractPostalCodeAndCity(
+    attrs.zip,
+    attrs.postalcode,
+    attrs.plz,
+    attrs.city,
+    attrs.gemeinde,
+    detailText,
+    labelText
+  );
+
+  let label = labelText;
+  if (!label) {
+    label = [
+      [streetAndNumber.street, streetAndNumber.houseNumber].filter(Boolean).join(' '),
+      [locality.postalCode, locality.city].filter(Boolean).join(' '),
+    ]
+      .filter(Boolean)
+      .join(', ');
+  }
+
+  return {
+    label,
+    street: streetAndNumber.street,
+    houseNumber: streetAndNumber.houseNumber,
+    postalCode: locality.postalCode,
+    city: locality.city,
+    country: 'CH',
+    raw: result,
+  };
+}
+
+function fillSelectedAddress(item) {
+  const searchInput = getEl('reg-address-search') || getEl('reg-address');
+  const hiddenAddress = getEl('reg-address');
+  const streetInput = getEl('reg-street');
+  const houseNumberInput = getEl('reg-house-number');
+  const npaInput = getEl('reg-npa');
+  const cityInput = getEl('reg-city');
+  const countryInput = getEl('reg-country');
+  const verifiedInput = getEl('reg-address-verified');
+
+  const previewNpa = getEl('reg-address-preview-npa');
+  const previewCity = getEl('reg-address-preview-city');
+
+  const selectedCard = getEl('address-selected-card');
+  const selectedLabel = getEl('address-selected-label');
+
+  if (searchInput) searchInput.value = item.label;
+  if (hiddenAddress) hiddenAddress.value = item.label;
+  if (streetInput) streetInput.value = item.street;
+  if (houseNumberInput) houseNumberInput.value = item.houseNumber;
+  if (npaInput) npaInput.value = item.postalCode;
+  if (cityInput) cityInput.value = item.city;
+  if (countryInput) countryInput.value = item.country;
+  if (verifiedInput) verifiedInput.value = 'true';
+
+  if (previewNpa) previewNpa.value = item.postalCode;
+  if (previewCity) previewCity.value = item.city;
+
+  if (selectedLabel) selectedLabel.textContent = item.label;
+  if (selectedCard) selectedCard.classList.remove('hidden');
+
+  clearSuggestions();
+  setStatus('Adresse suisse validée.', 'success');
+}
+
+function resetSelection() {
+  const verifiedInput = getEl('reg-address-verified');
+  const selectedCard = getEl('address-selected-card');
+  const selectedLabel = getEl('address-selected-label');
+
+  ['reg-address', 'reg-street', 'reg-house-number', 'reg-npa', 'reg-city'].forEach((id) => {
+    const el = getEl(id);
+    if (el) el.value = '';
+  });
+
+  const previewNpa = getEl('reg-address-preview-npa');
+  const previewCity = getEl('reg-address-preview-city');
+
+  if (previewNpa) previewNpa.value = '';
+  if (previewCity) previewCity.value = '';
+
+  if (verifiedInput) verifiedInput.value = 'false';
+  if (selectedLabel) selectedLabel.textContent = '';
+  if (selectedCard) selectedCard.classList.add('hidden');
+}
+
+async function searchAddresses(query, signal) {
+  const url = new URL(SEARCH_ENDPOINT);
+  url.searchParams.set('type', 'locations');
+  url.searchParams.set('origins', 'address');
+  url.searchParams.set('searchText', query);
+  url.searchParams.set('limit', String(MAX_SUGGESTIONS));
+  url.searchParams.set('lang', 'fr');
 
   const response = await fetch(url.toString(), {
-    method: "GET",
+    method: 'GET',
+    signal,
     headers: {
-      Accept: "application/json",
+      Accept: 'application/json',
     },
   });
 
   if (!response.ok) {
-    throw new Error(`Adresse API HTTP ${response.status}`);
+    throw new Error(`HTTP ${response.status}`);
   }
 
   const payload = await response.json();
-  const suggestions = Array.isArray(payload?.suggestions) ? payload.suggestions : [];
+  const results = Array.isArray(payload?.results) ? payload.results : [];
 
-  return suggestions
+  return results
     .map(normalizeSuggestion)
-    .filter((item) => item.label && item.city);
+    .filter((item) => item.label && (item.city || item.postalCode));
 }
 
-export function initializeAddressAutocomplete() {
-  const searchInput = document.getElementById("reg-address-search");
-  const suggestionsBox = document.getElementById("address-suggestions");
-  const statusBox = document.getElementById("address-status");
-  const selectedCard = document.getElementById("address-selected-card");
-  const selectedLabel = document.getElementById("address-selected-label");
-  const changeButton = document.getElementById("change-address-btn");
+function renderSuggestions(items) {
+  const container = getEl('address-suggestions');
+  if (!container) return;
 
-  const hiddenAddress = document.getElementById("reg-address");
-  const hiddenStreet = document.getElementById("reg-street");
-  const hiddenHouseNumber = document.getElementById("reg-house-number");
-  const hiddenPostalCode = document.getElementById("reg-npa");
-  const hiddenCity = document.getElementById("reg-city");
-  const hiddenCountry = document.getElementById("reg-country");
-  const hiddenVerified = document.getElementById("reg-address-verified");
-
-  const previewPostalCode = document.getElementById("reg-address-preview-npa");
-  const previewCity = document.getElementById("reg-address-preview-city");
-
-  if (
-    !searchInput ||
-    !suggestionsBox ||
-    !statusBox ||
-    !hiddenAddress ||
-    !hiddenStreet ||
-    !hiddenHouseNumber ||
-    !hiddenPostalCode ||
-    !hiddenCity ||
-    !hiddenCountry ||
-    !hiddenVerified ||
-    !previewPostalCode ||
-    !previewCity
-  ) {
+  if (!items.length) {
+    clearSuggestions();
     return;
   }
 
-  let currentResults = [];
+  container.innerHTML = items
+    .map(
+      (item, index) => `
+        <button
+          type="button"
+          class="block w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-white/10 transition ${index < items.length - 1 ? 'border-b border-gray-100 dark:border-white/10' : ''}"
+          data-address-index="${index}"
+        >
+          <div class="font-medium text-sm text-gray-900 dark:text-white">${escapeHtml(item.label)}</div>
+          <div class="text-xs text-gray-500 dark:text-gray-300 mt-1">${escapeHtml(
+            [item.postalCode, item.city].filter(Boolean).join(' ')
+          )}</div>
+        </button>
+      `
+    )
+    .join('');
 
-  function setStatus(message = "", type = "neutral") {
-    statusBox.classList.remove("hidden", "text-red-500", "text-primary", "text-gray-500", "dark:text-gray-300");
+  container.classList.remove('hidden');
 
-    if (!message) {
-      statusBox.textContent = "";
-      statusBox.classList.add("hidden");
-      return;
-    }
+  container.querySelectorAll('[data-address-index]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const index = Number(btn.dataset.addressIndex);
+      fillSelectedAddress(items[index]);
+    });
+  });
+}
 
-    statusBox.textContent = message;
+export function initializeAddressAutocomplete() {
+  const searchInput = getEl('reg-address-search') || getEl('reg-address');
+  const suggestions = getEl('address-suggestions');
 
-    if (type === "error") {
-      statusBox.classList.add("text-red-500");
-      return;
-    }
+  if (!searchInput || !suggestions) return;
 
-    if (type === "success") {
-      statusBox.classList.add("text-primary");
-      return;
-    }
+  let debounceTimer = null;
+  let controller = null;
 
-    statusBox.classList.add("text-gray-500", "dark:text-gray-300");
-  }
-
-  function clearSuggestions() {
-    suggestionsBox.innerHTML = "";
-    suggestionsBox.classList.add("hidden");
-    currentResults = [];
-  }
-
-  function clearSelectedAddress() {
-    hiddenAddress.value = "";
-    hiddenStreet.value = "";
-    hiddenHouseNumber.value = "";
-    hiddenPostalCode.value = "";
-    hiddenCity.value = "";
-    hiddenCountry.value = "CH";
-    hiddenVerified.value = "false";
-
-    previewPostalCode.value = "";
-    previewCity.value = "";
-
-    if (selectedLabel) selectedLabel.textContent = "";
-    if (selectedCard) selectedCard.classList.add("hidden");
-  }
-
-  function markAddressAsUnverified() {
-    clearSelectedAddress();
-  }
-
-  function applySelectedAddress(address) {
-    hiddenAddress.value = address.label;
-    hiddenStreet.value = address.street;
-    hiddenHouseNumber.value = address.houseNumber;
-    hiddenPostalCode.value = address.postalCode;
-    hiddenCity.value = address.city;
-    hiddenCountry.value = address.country || "CH";
-    hiddenVerified.value = "true";
-
-    previewPostalCode.value = address.postalCode;
-    previewCity.value = address.city;
-
-    if (selectedLabel) selectedLabel.textContent = address.label;
-    if (selectedCard) selectedCard.classList.remove("hidden");
-
-    searchInput.value = address.label;
-    clearSuggestions();
-    setStatus("Adresse suisse validée.", "success");
-  }
-
-  function renderSuggestions(items) {
-    if (!items.length) {
-      clearSuggestions();
-      setStatus("Aucune adresse trouvée.", "error");
-      return;
-    }
-
-    suggestionsBox.innerHTML = items
-      .map((item, index) => {
-        const safeLabel = escapeHtml(item.label);
-        const safeCity = escapeHtml(item.city);
-        const safePostalCode = escapeHtml(item.postalCode);
-        const safeCountry = escapeHtml(item.country);
-
-        return `
-          <button
-            type="button"
-            data-address-index="${index}"
-            class="w-full text-left px-4 py-3 hover:bg-primary/5 transition-colors border-b last:border-b-0 border-gray-100 dark:border-white/10"
-          >
-            <p class="text-sm font-semibold text-gray-900 dark:text-white">${safeLabel}</p>
-            <p class="text-xs text-gray-500 dark:text-gray-300">${safePostalCode} ${safeCity} · ${safeCountry}</p>
-          </button>
-        `;
-      })
-      .join("");
-
-    suggestionsBox.classList.remove("hidden");
-  }
-
-  const performSearch = debounce(async (query) => {
-    if (query.length < MIN_QUERY_LENGTH) {
-      clearSuggestions();
-      setStatus("Tapez au moins 3 caractères.", "neutral");
-      return;
-    }
-
-    setStatus("Recherche en cours...", "neutral");
-
-    try {
-      const results = await fetchAddressSuggestions(query);
-      currentResults = results;
-      renderSuggestions(results);
-
-      if (results.length) {
-        setStatus("Sélectionnez votre adresse dans la liste.", "neutral");
-      }
-    } catch (error) {
-      clearSuggestions();
-      setStatus("Service d’adresse indisponible.", "error");
-      console.error("Erreur autocomplete adresse :", error);
-    }
-  }, DEBOUNCE_DELAY);
-
-  searchInput.addEventListener("input", () => {
+  const runSearch = () => {
     const query = searchInput.value.trim();
 
-    markAddressAsUnverified();
+    resetSelection();
 
-    if (!query) {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    if (controller) controller.abort();
+
+    if (query.length < MIN_QUERY_LENGTH) {
       clearSuggestions();
-      setStatus("", "neutral");
+      setStatus('Tapez au moins 3 caractères pour rechercher une adresse suisse.');
       return;
     }
 
-    performSearch(query);
+    setStatus('Recherche en cours...');
+
+    debounceTimer = setTimeout(async () => {
+      controller = new AbortController();
+
+      try {
+        const items = await searchAddresses(query, controller.signal);
+
+        if (!items.length) {
+          clearSuggestions();
+          setStatus('Aucune adresse trouvée. Essayez avec rue + numéro + localité.', 'error');
+          return;
+        }
+
+        renderSuggestions(items);
+        setStatus('Sélectionnez votre adresse dans la liste.');
+      } catch (error) {
+        if (error?.name === 'AbortError') return;
+
+        console.error('Erreur autocomplete adresse:', error);
+        clearSuggestions();
+        setStatus("Le service d'adresse n'est pas disponible pour le moment.", 'error');
+      }
+    }, 250);
+  };
+
+  searchInput.addEventListener('input', runSearch);
+
+  searchInput.addEventListener('focus', () => {
+    const query = searchInput.value.trim();
+    if (query.length < MIN_QUERY_LENGTH) {
+      setStatus('Tapez au moins 3 caractères pour rechercher une adresse suisse.');
+    }
   });
 
-  suggestionsBox.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-address-index]");
-    if (!button) return;
+  document.addEventListener('click', (event) => {
+    const container = getEl('address-suggestions');
+    if (!container) return;
 
-    const index = Number(button.dataset.addressIndex);
-    const selectedAddress = currentResults[index];
-    if (!selectedAddress) return;
-
-    applySelectedAddress(selectedAddress);
-  });
-
-  if (changeButton) {
-    changeButton.addEventListener("click", () => {
+    if (!container.contains(event.target) && event.target !== searchInput) {
       clearSuggestions();
-      clearSelectedAddress();
-      searchInput.value = "";
+    }
+  });
+
+  const changeBtn = getEl('change-address-btn');
+  if (changeBtn) {
+    changeBtn.addEventListener('click', () => {
+      resetSelection();
+      searchInput.value = '';
       searchInput.focus();
-      setStatus("Recherchez une nouvelle adresse.", "neutral");
+      clearSuggestions();
+      setStatus('Saisissez une nouvelle adresse suisse.');
     });
   }
 }

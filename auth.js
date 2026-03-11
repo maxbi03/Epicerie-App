@@ -52,13 +52,19 @@ window.toggleModal = function (show) {
 
   if (show) {
     modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
   } else {
     modal.classList.add('hidden');
+    document.body.style.overflow = '';
   }
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
-  initializeAddressAutocomplete();
+  try {
+    initializeAddressAutocomplete();
+  } catch (err) {
+    console.error("Erreur d'initialisation de l'autocomplétion :", err);
+  }
 
   const greetingElement = document.getElementById('user-greeting');
   const nameElement = document.getElementById('user-name');
@@ -148,23 +154,27 @@ window.handleRegister = async function () {
     return;
   }
 
+  if (password.length < 6) {
+    alert('Le mot de passe doit contenir au moins 6 caractères.');
+    return;
+  }
+
   if (password !== passwordConfirm) {
     alert('Les mots de passe ne correspondent pas !');
     return;
   }
 
-  const fullName = `${firstname} ${lastname}`;
-
-  console.log('➡️ Signup attempt with email:', email);
+  const fullName = `${firstname} ${lastname}`.trim();
 
   const { data, error } = await supabase.auth.signUp({ email, password });
-
-  console.log('⬅️ Signup response:', { data, error });
 
   if (error) {
     const msg = (error.message || '').toLowerCase();
 
-    if (msg.includes('already registered')) {
+    if (
+      msg.includes('already registered') ||
+      msg.includes('already been registered')
+    ) {
       alert('Un compte existe déjà avec cette adresse email. Essaie de te connecter.');
     } else {
       alert(error.message);
@@ -172,9 +182,9 @@ window.handleRegister = async function () {
     return;
   }
 
-  const userId = data.user?.id;
+  const userId = data?.user?.id;
   if (!userId) {
-    alert('Erreur: userId introuvable.');
+    alert("Erreur d'inscription : identifiant utilisateur introuvable.");
     return;
   }
 
@@ -199,7 +209,12 @@ window.handleRegister = async function () {
   }
 
   clearVisitorMode();
-  window.toggleModal(false);
+
+  const modal = document.getElementById('register-modal');
+  if (modal) {
+    window.toggleModal(false);
+  }
+
   window.location.href = 'home.html';
 };
 
