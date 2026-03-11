@@ -149,11 +149,9 @@
 
 <body class="bg-background-light dark:bg-background-dark font-display antialiased">
 
-    <!-- SPLASH SCREEN -->
     <div id="splash-screen" class="splash-screen">
         <div class="splash-card">
             <div class="logo-placeholder">É</div>
-
             <div class="splash-subtitle">Ouverture</div>
             <h1 class="splash-title">L'Épicerie</h1>
             <p class="splash-slogan">Village connecté</p>
@@ -165,11 +163,7 @@
         </div>
     </div>
 
-    <!-- CONTENU APP -->
     <div id="app-shell" class="app-shell min-h-screen flex flex-col p-6 max-w-md mx-auto">
-
-        <!-- MODE VISITEUR -->
-        <!--TEST BRANCH-->
         <div class="flex justify-end mt-4">
             <a href="home.html"
                onclick="sessionStorage.setItem('app_mode','visitor');"
@@ -180,8 +174,6 @@
         </div>
 
         <div class="flex-1 flex flex-col justify-center space-y-10">
-
-            <!-- LOGIN -->
             <div class="space-y-6">
                 <div class="text-center space-y-2">
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Déjà client ?</h2>
@@ -189,20 +181,15 @@
                 </div>
 
                 <div class="space-y-4">
-
                     <div class="relative">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400">
-                            smartphone
-                        </span>
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400">smartphone</span>
                         <input id="login-email" type="email"
                             placeholder="Adresse email"
                             class="w-full pl-12 pr-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 focus:ring-primary focus:border-primary text-gray-900 dark:text-white text-sm">
                     </div>
 
                     <div class="relative">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400">
-                            lock
-                        </span>
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400">lock</span>
                         <input id="login-password" type="password" autocomplete="off"
                                placeholder="Code secret"
                                class="w-full pl-12 pr-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 focus:ring-primary focus:border-primary text-gray-900 dark:text-white text-sm">
@@ -212,14 +199,11 @@
                             class="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/20 hover:brightness-105 active:scale-95 transition-all">
                         Se connecter
                     </button>
-
                 </div>
             </div>
 
-            <!-- SEPARATOR -->
             <div class="w-full h-[1px] bg-gray-200 dark:bg-white/10"></div>
 
-            <!-- REGISTER BUTTON -->
             <div class="space-y-6 text-center">
                 <div class="space-y-2">
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white">Nouveau ici ?</h2>
@@ -234,20 +218,16 @@
                 </button>
             </div>
 
-            <!-- REGISTER MODAL -->
             <div id="register-modal"
                  class="fixed inset-0 z-[150] hidden bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
 
                 <div class="bg-white dark:bg-background-dark w-full max-w-md rounded-[2.5rem] p-8 space-y-6 shadow-2xl overflow-y-auto max-h-[90vh]">
-
                     <div class="flex justify-between items-center">
                         <h2 class="text-2xl font-bold dark:text-white">Création de compte</h2>
-                        <button onclick="toggleModal(false)"
-                                class="material-symbols-outlined text-gray-400">close</button>
+                        <button onclick="toggleModal(false)" class="material-symbols-outlined text-gray-400">close</button>
                     </div>
 
                     <div class="space-y-4">
-
                         <div class="grid grid-cols-2 gap-3">
                             <input id="reg-firstname" type="text" placeholder="Prénom"
                                    class="w-full px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
@@ -256,21 +236,53 @@
                                    class="w-full px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
                         </div>
 
-                        <input id="reg-address" type="text" placeholder="Rue et n°"
-                               class="w-full px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+                        <div class="space-y-2">
+                            <p class="text-[10px] font-black text-primary uppercase ml-2 tracking-widest">Adresse suisse vérifiée</p>
+
+                            <div class="relative">
+                                <span class="absolute left-4 top-4 material-symbols-outlined text-gray-400">home_pin</span>
+                                <input id="reg-address-search" type="text" autocomplete="off" placeholder="Commencez à taper votre adresse suisse"
+                                       class="w-full pl-12 pr-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+                            </div>
+
+                            <div id="address-status" class="hidden text-xs px-3 text-gray-500 dark:text-gray-300"></div>
+
+                            <div id="address-suggestions"
+                                class="hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 overflow-hidden shadow-lg relative z-20"></div>
+
+                            <div id="address-selected-card"
+                                 class="hidden rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p class="text-[10px] font-black text-primary uppercase tracking-widest">Adresse sélectionnée</p>
+                                        <p id="address-selected-label" class="mt-1 text-sm font-semibold text-gray-900 dark:text-white"></p>
+                                    </div>
+                                    <button type="button" id="change-address-btn"
+                                            class="text-xs font-bold text-primary whitespace-nowrap">
+                                        Modifier
+                                    </button>
+                                </div>
+                            </div>
+
+                            <input id="reg-address" type="hidden">
+                            <input id="reg-street" type="hidden">
+                            <input id="reg-house-number" type="hidden">
+                            <input id="reg-npa" type="hidden">
+                            <input id="reg-city" type="hidden">
+                            <input id="reg-country" type="hidden" value="CH">
+                            <input id="reg-address-verified" type="hidden" value="false">
+                        </div>
 
                         <div class="grid grid-cols-3 gap-3">
-                            <input id="reg-npa" type="number" placeholder="NPA"
-                                   class="w-full px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+                            <input id="reg-address-preview-npa" type="text" placeholder="NPA" readonly
+                                   class="w-full px-4 py-4 rounded-2xl border-gray-200 bg-gray-50 dark:bg-white/5 dark:border-white/10 dark:text-white text-sm opacity-80">
 
-                            <input id="reg-city" type="text" placeholder="Localité"
-                                   class="col-span-2 w-full px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+                            <input id="reg-address-preview-city" type="text" placeholder="Localité" readonly
+                                   class="col-span-2 w-full px-4 py-4 rounded-2xl border-gray-200 bg-gray-50 dark:bg-white/5 dark:border-white/10 dark:text-white text-sm opacity-80">
                         </div>
 
                         <div class="space-y-2">
-                            <p class="text-[10px] font-black text-primary uppercase ml-2 tracking-widest">
-                                Identifiants de connexion
-                            </p>
+                            <p class="text-[10px] font-black text-primary uppercase ml-2 tracking-widest">Identifiants de connexion</p>
 
                             <input id="reg-email" type="email" placeholder="Adresse email"
                                    class="w-full px-4 py-4 rounded-2xl border-primary/30 border-2 dark:bg-white/5 dark:text-white text-sm">
@@ -283,33 +295,28 @@
                         </div>
 
                         <div class="space-y-2 pt-2">
-                            <p class="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">
-                                Vérification SMS
-                            </p>
+                            <p class="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Vérification SMS</p>
 
                             <input id="reg-phone" type="tel" placeholder="N° de téléphone (pour recevoir le code)"
                                    class="w-full px-4 py-4 rounded-2xl border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
                         </div>
 
-                        <button onclick="handleRegister()"
-                                class="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/20 hover:brightness-105 active:scale-95 transition-all">
+                        <button id="register-btn" type="button" onclick="handleRegister()"
+                            class="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/20 hover:brightness-105 active:scale-95 transition-all">
                             Confirmer l'inscription
                         </button>
 
                         <p class="text-[10px] text-gray-400 leading-relaxed">
-                            Nous enverrons un code de vérification par SMS pour activer les fonctionnalités sensibles (scanner / porte).
+                            L'adresse doit être sélectionnée dans les suggestions. Cette structure est prête pour un futur backend chez Infomaniak.
                         </p>
-
                     </div>
                 </div>
             </div>
-
         </div>
 
         <p class="text-[10px] text-center text-gray-400 pb-4 mt-8">
             Vérification d'identité requise pour la sécurité de l'épicerie autonome.
         </p>
-
     </div>
 
     <script>
@@ -323,34 +330,6 @@
                 splash.classList.add('hidden-splash');
                 appShell.classList.add('ready');
             }
-
-            window.goToLogin = function (mode = 'login') {
-                try {
-                    sessionStorage.setItem('skip_splash_once', '1');
-
-                    if (mode === 'register') {
-                        sessionStorage.setItem('open_register_modal', '1');
-                    } else {
-                        sessionStorage.removeItem('open_register_modal');
-                    }
-                } catch (e) {
-                    console.warn('Impossible de préparer la redirection vers index.html', e);
-                }
-
-                window.location.href = 'index.html';
-            };
-
-            document.addEventListener('DOMContentLoaded', () => {
-                try {
-                    const shouldOpenRegister = sessionStorage.getItem('open_register_modal') === '1';
-                    if (shouldOpenRegister && typeof window.toggleModal === 'function') {
-                        sessionStorage.removeItem('open_register_modal');
-                        window.toggleModal(true);
-                    }
-                } catch (e) {
-                    console.warn('Impossible d’ouvrir automatiquement le modal d’inscription', e);
-                }
-            });
 
             let skipSplash = false;
 
