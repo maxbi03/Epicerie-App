@@ -19,6 +19,17 @@ function displayProducts(filterCategory = 'Tous') {
     ? all
     : all.filter(p => (p.category || '') === filterCategory);
 
+   // Réinitialiser tous les boutons
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.className = 'filter-btn px-4 py-2 bg-white dark:bg-white/5 text-gray-500 text-xs font-bold rounded-xl whitespace-nowrap border border-gray-100 dark:border-white/5 shrink-0';
+  });
+
+  // Mettre le bouton cliqué en actif
+  const activeBtn = document.querySelector(`.filter-btn[data-category="${filterCategory}"]`);
+  if (activeBtn) {
+    activeBtn.className = 'filter-btn px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl whitespace-nowrap shrink-0';
+  }
+
   if (filteredProducts.length === 0) {
     grid.innerHTML = `
       <p class="text-center text-gray-400 text-xs py-10">
@@ -80,6 +91,31 @@ document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('products-grid')) {
     displayProducts('Tous');
   }
+
+ // Scroll horizontal pour les catégories filtrantes
+
+const slider = document.querySelector('.menu-scroll');
+let isDown = false;
+let startX;
+let scrollLeft;
+
+slider.addEventListener('mousedown', (e) => {
+  isDown = true;
+  startX = e.pageX - slider.offsetLeft;
+  scrollLeft = slider.scrollLeft;
+});
+
+slider.addEventListener('mouseleave', () => isDown = false);
+slider.addEventListener('mouseup', () => isDown = false);
+
+slider.addEventListener('mousemove', (e) => {
+  if (!isDown) return;
+  e.preventDefault();
+  const x = e.pageX - slider.offsetLeft;
+  const walk = x - startX;
+  slider.scrollLeft = scrollLeft - walk;
+});
+
 
   
 });

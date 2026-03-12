@@ -10,13 +10,20 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <style>
+      .no-scrollbar::-webkit-scrollbar {display: none;}
+      .no-scrollbar {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+  </style>
 </head>
 
 <body class="bg-background-light dark:bg-background-dark font-display text-[#111813] antialiased">
 
   <div id="header-container" class="relative z-[100] max-w-md mx-auto"></div>
 
-  <main class="relative flex min-h-screen max-w-md mx-auto flex-col overflow-x-hidden">
+  <main class="relative flex min-h-screen max-w-md mx-auto flex-col">
     <div class="flex-1 overflow-y-auto px-5 pt-4 pb-24">
 
       <div class="flex justify-between items-end mb-6">
@@ -29,10 +36,13 @@
         </span>
       </div>
 
-      <div class="flex gap-2 overflow-x-auto pb-4 mb-4 no-scrollbar">
-        <button id="btn1" onclick="displayProducts('Tous')" class="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl whitespace-nowrap">Tous</button>
-        <button id="btn2" onclick="displayProducts('Crèmerie')" class="px-4 py-2 bg-white dark:bg-white/5 text-gray-500 text-xs font-bold rounded-xl whitespace-nowrap border border-gray-100 dark:border-white/5">Crèmerie</button>
-        <button id="btn3" onclick="displayProducts('Boulangerie')" class="px-4 py-2 bg-white dark:bg-white/5 text-gray-500 text-xs font-bold rounded-xl whitespace-nowrap border border-gray-100 dark:border-white/5">Boulangerie</button>
+      <div class="menu-scroll flex gap-2 overflow-x-auto pb-4 mb-4 no-scrollbar">
+        <button data-category="Tous" onclick="displayProducts('Tous')" class="filter-btn px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl whitespace-nowrap shrink-0">Tous</button>
+        <button data-category="Crèmerie" onclick="displayProducts('Crèmerie')" class="filter-btn px-4 py-2 bg-white dark:bg-white/5 text-gray-500 text-xs font-bold rounded-xl whitespace-nowrap border border-gray-100 dark:border-white/5 shrink-0">Crèmerie</button>
+        <button data-category="Boulangerie" onclick="displayProducts('Boulangerie')" class="filter-btn px-4 py-2 bg-white dark:bg-white/5 text-gray-500 text-xs font-bold rounded-xl whitespace-nowrap border border-gray-100 dark:border-white/5 shrink-0">Boulangerie</button>
+        <button data-category="Boissons" onclick="displayProducts('Boissons')" class="filter-btn px-4 py-2 bg-white dark:bg-white/5 text-gray-500 text-xs font-bold rounded-xl whitespace-nowrap border border-gray-100 dark:border-white/5 shrink-0">Boissons</button>
+        <button data-category="Epicerie" onclick="displayProducts('Epicerie')" class="filter-btn px-4 py-2 bg-white dark:bg-white/5 text-gray-500 text-xs font-bold rounded-xl whitespace-nowrap border border-gray-100 dark:border-white/5 shrink-0">Epicerie</button>
+        <button data-category="Fruits & Légumes" onclick="displayProducts('Fruits & Légumes')" class="filter-btn px-4 py-2 bg-white dark:bg-white/5 text-gray-500 text-xs font-bold rounded-xl whitespace-nowrap border border-gray-100 dark:border-white/5 shrink-0">Fruits & Légumes</button>
       </div>
 
       <div id="products-grid" class="space-y-3">
