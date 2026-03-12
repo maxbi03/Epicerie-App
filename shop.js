@@ -80,4 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('products-grid')) {
     displayProducts('Tous');
   }
+
+  
 });
