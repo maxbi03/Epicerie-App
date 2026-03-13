@@ -79,7 +79,7 @@ function addProductToBasket() {
 
   closeProductModal();
   showConfirmation();
-  updateCartDisplay(); // définie dans global_functions.js
+  updateCartDisplayHeader();
 }
 
 function showConfirmation() {
