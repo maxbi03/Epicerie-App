@@ -381,6 +381,22 @@
                 setTimeout(closeSplash, remaining);
             });
         })();
+
+        // Sur le champ email — Enter passe au mot de passe
+        document.getElementById('login-email').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            document.getElementById('login-password').focus(); // focus sur le champ suivant
+        }
+        });
+
+        // Sur le champ mot de passe — Enter soumet
+        document.getElementById('login-password').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleLogin();
+        }
+        });
+
     </script>
 
     <script type="module" src="auth.js"></script>
