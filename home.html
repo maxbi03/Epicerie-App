@@ -24,6 +24,21 @@
 
     <div id="header-container" class="relative z-[100] max-w-md mx-auto"></div>
 
+    <!-- Bandeau email non vérifié -->
+    <div id="email-unverified-banner" class="hidden max-w-md mx-auto w-full">
+        <div class="mx-4 mt-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 rounded-2xl px-4 py-3 flex items-start gap-3">
+            <span class="material-symbols-outlined text-amber-500 text-xl mt-0.5 shrink-0">mark_email_unread</span>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold text-amber-800 dark:text-amber-300">Email non confirmé</p>
+                <p class="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Vérifiez votre boîte mail et cliquez sur le lien de confirmation.</p>
+            </div>
+            <button onclick="resendConfirmationEmail()" id="resend-email-btn"
+                class="text-xs font-black text-amber-600 dark:text-amber-400 whitespace-nowrap hover:text-amber-800 transition-colors shrink-0">
+                Renvoyer
+            </button>
+        </div>
+    </div>
+
     <main class="relative flex min-h-screen max-w-md mx-auto flex-col overflow-x-hidden">
         <div class="flex-1 overflow-y-auto pb-10">
 
@@ -149,6 +164,40 @@
             }
             updateCartDisplay();
         });
+    </script>
+
+    <!-- Bandeau email non vérifié -->
+    <script type="module">
+        import { supabase } from './supabaseClient.js';
+
+        async function checkEmailVerification() {
+            try { if (sessionStorage.getItem('app_mode') === 'visitor') return; } catch {}
+            const { data } = await supabase.auth.getSession();
+            const user = data?.session?.user;
+            if (!user) return;
+            if (!user.email_confirmed_at) {
+                document.getElementById('email-unverified-banner')?.classList.remove('hidden');
+            }
+        }
+
+        window.resendConfirmationEmail = async function () {
+            const btn = document.getElementById('resend-email-btn');
+            if (btn) { btn.textContent = 'Envoi…'; btn.disabled = true; }
+            try {
+                const { data } = await supabase.auth.getSession();
+                const email = data?.session?.user?.email;
+                if (!email) throw new Error('Email introuvable.');
+                const { error } = await supabase.auth.resend({ type: 'signup', email });
+                if (error) throw error;
+                if (btn) btn.textContent = 'Envoyé ✓';
+                setTimeout(() => { if (btn) { btn.textContent = 'Renvoyer'; btn.disabled = false; } }, 30000);
+            } catch (err) {
+                alert('Erreur : ' + (err?.message || err));
+                if (btn) { btn.textContent = 'Renvoyer'; btn.disabled = false; }
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', checkEmailVerification);
     </script>
 
     <!-- Auth pour “Bonjour Visiteur” / utilisateur -->

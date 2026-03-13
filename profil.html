@@ -139,6 +139,13 @@
         </div>
       </div>
 
+      <!-- Réinitialiser mot de passe -->
+      <button id="reset-password-btn" onclick="sendPasswordReset()"
+              class="w-full py-4 rounded-3xl bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 font-black text-xs uppercase tracking-widest active:scale-[0.98] transition-all flex items-center justify-center gap-2 border border-gray-100 dark:border-white/10">
+        <span class="material-symbols-outlined text-sm">lock_reset</span>
+        Réinitialiser mon mot de passe
+      </button>
+
       <button id="logout-profile-btn" onclick="logout()"
               class="w-full py-4 rounded-3xl bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 font-black text-xs uppercase tracking-widest active:scale-[0.98] transition-all">
         Se déconnecter de l'application
@@ -231,6 +238,31 @@
       editForm.classList.add('hidden');
       profileDisplay.classList.remove('hidden');
     });
+
+    // ── Réinitialisation mot de passe ──────────────────────
+    window.sendPasswordReset = async function () {
+      const btn = document.getElementById('reset-password-btn');
+      if (btn) { btn.disabled = true; btn.querySelector('span:last-child').textContent = 'Envoi…'; }
+
+      try {
+        const email = session.user.email;
+        if (!email) throw new Error('Email introuvable.');
+
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + '/reset.html',
+        });
+        if (error) throw error;
+
+        alert('Un email de réinitialisation a été envoyé à ' + email + '.\nCliquez sur le lien dans l\'email pour choisir un nouveau mot de passe.');
+      } catch (err) {
+        alert('Erreur : ' + (err?.message || err));
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.querySelector('span:last-child').textContent = 'Réinitialiser mon mot de passe';
+        }
+      }
+    };
 
     saveBtn.addEventListener('click', async () => {
       const newFirstName = document.getElementById('edit-firstname').value.trim();
