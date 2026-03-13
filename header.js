@@ -16,6 +16,11 @@ async function initAppShell() {
         // Activer bouton logout si présent
         bindLogoutButton();
 
+        // Mettre a jour le nombre d'items dans le panier
+        if (window.updateCartDisplayHeader) {
+            window.updateCartDisplayHeader();
+        }
+
     } catch (err) {
         console.error("Erreur chargement header.html:", err);
     }
@@ -92,8 +97,30 @@ function bindLogoutButton() {
     });
 }
 
+// =============================
+// 5. Mise à jour du panier (nombre d'items + total)
+// =============================
+function updateCartDisplayHeader() {
+  const basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
+  const cartItemCountHeader = document.getElementById('cart-item-count-header');
+  const cartTotal = document.getElementById('cart-total');
+
+  if (cartItemCountHeader) {
+    if (basket.length > 0) {
+      cartItemCountHeader.textContent = basket.length;
+      cartItemCountHeader.classList.remove('hidden'); // ← affiche la bulle
+    } else {
+      cartItemCountHeader.classList.add('hidden');    // ← cache si vide
+    }
+  }
+
+  let total = 0;
+  basket.forEach(p => { total += Number(p.price) || 0; });
+  if (cartTotal) cartTotal.textContent = `${total.toFixed(2)} CHF`;
+}
+
 
 // =============================
-// 5. Init
+// Init
 // =============================
 window.addEventListener('DOMContentLoaded', initAppShell);
