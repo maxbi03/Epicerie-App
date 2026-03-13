@@ -189,9 +189,9 @@
     </div>
   </div>
 
-  <script src="header.js"></script>
-  <script src="shop.js"></script>
-  <script src="fiche_produit.js"></script>
+  <script src="header.js" defer></script>
+  <script src="shop.js" defer></script>
+  <script src="fiche_produit.js" defer></script>
 
   <!-- Loader Supabase + Scanner (module) -->
   <script type="module">
@@ -282,7 +282,7 @@
         if (navigator.vibrate) navigator.vibrate(100);
 
         currentProduct = product;
-        showProductModal(product);
+        showProductModal(product.name);
 
         setTimeout(() => { isScanning = false; }, 3000);
       } else {
@@ -295,6 +295,61 @@
     function onScanError(error) {
       // silencieux
     }
+
+    function showProductModal(name) {
+      const modal = document.getElementById('product-modal');
+      const content = document.getElementById('modal-content');
+      const product = window.products.find(p => p.name === name);
+      content.innerHTML = generateProductSheet(product);
+      modal.classList.remove('hidden');
+}
+
+function closeProductModal() {
+      const modal = document.getElementById('product-modal');
+      modal.classList.add('hidden');
+      currentProduct = null;
+
+      productQuantity = 1;
+      const qtyEl = document.getElementById('product-quantity');
+      if (qtyEl) qtyEl.textContent = '1';
+}
+
+function increaseQuantity() {
+      productQuantity++;
+      document.getElementById('product-quantity').textContent = productQuantity;
+    }
+
+function decreaseQuantity() {
+      if (productQuantity > 1) {
+        productQuantity--;
+        document.getElementById('product-quantity').textContent = productQuantity;
+      }
+}
+
+function addProductToBasket() {
+      if (!currentProduct) return;
+
+      let basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
+      for (let i = 0; i < productQuantity; i++) basket.push(currentProduct);
+      localStorage.setItem('user_basket', JSON.stringify(basket));
+
+      if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
+
+      closeProductModal();
+      showConfirmation();
+      updateCartDisplay();
+}
+
+function showConfirmation() {
+      const confirmMsg = document.createElement('div');
+      confirmMsg.className = 'fixed top-20 left-1/2 -translate-x-1/2 bg-primary text-forest-green font-bold px-6 py-3 rounded-full shadow-lg z-[300] flex items-center gap-2';
+      confirmMsg.innerHTML = `
+        <span class="material-symbols-outlined">check_circle</span>
+        <span>Ajouté au panier !</span>
+      `;
+      document.body.appendChild(confirmMsg);
+      setTimeout(() => confirmMsg.remove(), 2000);
+}
 
     // Saisie manuelle
     function toggleManualEntry() {

@@ -5,9 +5,19 @@
  * @param {Object} product - Objet produit depuis shop.js
  * @returns {string} HTML de la fiche produit
 */
-function showProductModal(product) {
+
+window.showProductModal = showProductModal;
+window.closeProductModal = closeProductModal;
+window.increaseQuantity = increaseQuantity;
+window.decreaseQuantity = decreaseQuantity;
+window.addProductToBasket = addProductToBasket;
+
+
+
+function showProductModal(name) {
       const modal = document.getElementById('product-modal');
       const content = document.getElementById('modal-content');
+      const product = window.products.find(p => p.name === name);
       content.innerHTML = generateProductSheet(product);
       modal.classList.remove('hidden');
 }
@@ -75,7 +85,7 @@ function generateProductSheet(product) {
     const category = product.category.toLowerCase();
 
     // Déterminer quelle template utiliser
-    if (category.includes('crèm') || category.includes('lait') || category.includes('fromage')) {
+    if (category.includes('crème') || category.includes('lait') || category.includes('fromage')) {
         return generateDairySheet(product);
     } else if (category.includes('boulang') || category.includes('pain')) {
         return generateBakerySheet(product);

@@ -59,10 +59,10 @@ function displayProducts(filterCategory = 'Tous') {
       stockLabel = 'Faible';
     }
 
-    const image = product.image || 'https://images.unsplash.com/photo-1587049352846-4a222e784b7e?q=80&w=200&auto=format&fit=crop';
+    const image = product.image || 'https://thumbs.dreamstime.com/b/no-image-available-icon-flat-vector-no-image-available-icon-flat-vector-illustration-132482953.jpg';
 
     grid.innerHTML += `
-      <div class="bg-white dark:bg-white/5 p-4 rounded-3xl border border-gray-100 dark:border-white/5 flex items-center justify-between shadow-sm transition-all active:scale-[0.98]">
+      <button type="button" onclick="showProductModal('${(product.name || '').replace(/"/g,'&quot;')}')" class=" w-full text-left bg-white dark:bg-white/5 p-4 rounded-3xl border border-gray-100 dark:border-white/5 flex items-center justify-between shadow-sm transition-all active:scale-[0.98] appearance-none">
         <div class="flex items-center gap-4">
           <div class="size-12 bg-gray-50 dark:bg-gray-800 rounded-2xl flex items-center justify-center border border-gray-100 dark:border-white/10 overflow-hidden">
             <img src="${image}" class="w-full h-full object-cover" alt="${(product.name || '').replace(/"/g,'&quot;')}">
@@ -76,7 +76,7 @@ function displayProducts(filterCategory = 'Tous') {
           <span class="text-sm font-black ${stockColor}">${stock}</span>
           <p class="text-[8px] text-gray-400 uppercase font-black tracking-tighter">${stockLabel}</p>
         </div>
-      </div>
+      </button>
     `;
   });
 }
@@ -114,6 +114,12 @@ slider.addEventListener('mousemove', (e) => {
   const x = e.pageX - slider.offsetLeft;
   const walk = x - startX;
   slider.scrollLeft = scrollLeft - walk;
+});
+
+document.getElementById('product-modal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('product-modal')) {
+    closeProductModal();
+  }
 });
 
 
