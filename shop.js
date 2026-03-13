@@ -107,28 +107,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.getElementById('search-input').addEventListener('input', (e) => {
-  const query = e.target.value.toLowerCase().trim();
-  
-  const filtered = window.products.filter(p =>
-    (p.name || '').toLowerCase().includes(query) ||
-    (p.origin || '').toLowerCase().includes(query) ||
-    (p.category || '').toLowerCase().includes(query)
-  );
+    const query = e.target.value.trim();
 
-  renderProducts(filtered);
-});
+    // Première lettre tapée → reset catégorie sur Tous
+    if (query.length === 1 && currentSearch === '') {
+      displayProducts('Tous'); // remet le bouton Tous actif
+    }
 
-document.getElementById('search-input').addEventListener('input', (e) => {
-  const query = e.target.value.trim();
-
-  // Première lettre tapée → reset catégorie sur Tous
-  if (query.length === 1 && currentSearch === '') {
-    displayProducts('Tous'); // remet le bouton Tous actif
-  }
-
-  currentSearch = query;
-  applyFilters();
-});
+    currentSearch = query;
+    applyFilters();
+  });
 
 
 // Scroll horizontal pour les catégories filtrantes

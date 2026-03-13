@@ -6,14 +6,16 @@
  * @returns {string} HTML de la fiche produit
 */
 
+// Variables du modal produit
+let productQuantity = 1;
+let currentProduct = null;
+
+// Exposer les fonctions aux onclick HTML
 window.showProductModal = showProductModal;
 window.closeProductModal = closeProductModal;
 window.increaseQuantity = increaseQuantity;
 window.decreaseQuantity = decreaseQuantity;
 window.addProductToBasket = addProductToBasket;
-window.productQuantity = productQuantity = 1;
-
-let currentProduct = null; // ← variable globale pour stocker le produit actuellement affiché dans le modal
 
 
 
@@ -67,40 +69,28 @@ function decreaseQuantity() {
 }
 
 function addProductToBasket() {
-      if (!currentProduct) return;
+  if (!currentProduct) return;
 
-      let basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
-      for (let i = 0; i < productQuantity; i++) basket.push(currentProduct);
-      localStorage.setItem('user_basket', JSON.stringify(basket));
+  let basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
+  for (let i = 0; i < productQuantity; i++) basket.push(currentProduct);
+  localStorage.setItem('user_basket', JSON.stringify(basket));
 
-      if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
+  if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
 
-      closeProductModal();
-      showConfirmation();
-      updateCartDisplay();
+  closeProductModal();
+  showConfirmation();
+  updateCartDisplay(); // définie dans global_functions.js
 }
 
 function showConfirmation() {
-      const confirmMsg = document.createElement('div');
-      confirmMsg.className = 'fixed top-20 left-1/2 -translate-x-1/2 bg-primary text-forest-green font-bold px-6 py-3 rounded-full shadow-lg z-[300] flex items-center gap-2';
-      confirmMsg.innerHTML = `
-        <span class="material-symbols-outlined">check_circle</span>
-        <span>Ajouté au panier !</span>
-      `;
-      document.body.appendChild(confirmMsg);
-      setTimeout(() => confirmMsg.remove(), 2000);
-}
-
-function updateCartDisplay() {
-      const basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
-      const cartItemCount = document.getElementById('cart-item-count');
-      const cartTotal = document.getElementById('cart-total');
-
-      let total = 0;
-      basket.forEach(p => { total += Number(p.price) || 0; });
-
-      if (cartItemCount) cartItemCount.textContent = basket.length;
-      if (cartTotal) cartTotal.textContent = `${total.toFixed(2)} CHF`;
+  const confirmMsg = document.createElement('div');
+  confirmMsg.className = 'fixed top-20 left-1/2 -translate-x-1/2 bg-primary text-forest-green font-bold px-6 py-3 rounded-full shadow-lg z-[300] flex items-center gap-2';
+  confirmMsg.innerHTML = `
+    <span class="material-symbols-outlined">check_circle</span>
+    <span>Ajouté au panier !</span>
+  `;
+  document.body.appendChild(confirmMsg);
+  setTimeout(() => confirmMsg.remove(), 2000);
 }
 
 function generateProductSheet(product) {
