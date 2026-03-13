@@ -1,7 +1,7 @@
 // services/productsService.js
 // Récupération du catalogue produits depuis Supabase (table: products)
 
-import { supabase } from '../supabaseClient.js';
+import { supabase } from '../.gitignore/supabaseClient.js';
 
 /**
  * Normalise un enregistrement Supabase en objet produit attendu par l'app.
