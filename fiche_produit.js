@@ -11,25 +11,45 @@ window.closeProductModal = closeProductModal;
 window.increaseQuantity = increaseQuantity;
 window.decreaseQuantity = decreaseQuantity;
 window.addProductToBasket = addProductToBasket;
+window.productQuantity = productQuantity = 1;
 
 
 
 function showProductModal(name) {
       const modal = document.getElementById('product-modal');
+      const panel = document.getElementById('modal-panel');
       const content = document.getElementById('modal-content');
       const product = window.products.find(p => p.name === name);
       content.innerHTML = generateProductSheet(product);
-      modal.classList.remove('hidden');
+      // 1. Afficher le modal
+        modal.classList.remove('hidden');
+
+        // 2. Attendre que le navigateur rende, puis animer
+         requestAnimationFrame(() => {
+         panel.classList.remove('translate-y-full');
+         panel.classList.add('translate-y-0');
+  });
 }
 
 function closeProductModal() {
       const modal = document.getElementById('product-modal');
-      modal.classList.add('hidden');
-      currentProduct = null;
-
+      const panel = document.getElementById('modal-panel');
+      
       productQuantity = 1;
       const qtyEl = document.getElementById('product-quantity');
       if (qtyEl) qtyEl.textContent = '1';
+
+      // 1. Animer vers le bas
+        panel.classList.remove('translate-y-0');
+        panel.classList.add('translate-y-full');
+
+        // 2. Cacher après l'animation
+        setTimeout(() => {
+        modal.classList.add('hidden');
+        productQuantity = 1;
+        const qtyEl = document.getElementById('product-quantity');
+        if (qtyEl) qtyEl.textContent = '1';
+        }, 300); // même durée que duration-300
 }
 
 function increaseQuantity() {
