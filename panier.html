@@ -146,10 +146,12 @@
         // Augmenter la quantité d'un produit
         function increaseQuantity(productId) {
             const basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
-            const product = JSON.parse(localStorage.getItem('user_basket')).find(p => p.id === productId);
-            basket.push(product);
-            localStorage.setItem('user_basket', JSON.stringify(basket));
-            loadCartItems();
+            const product = basket.find(p => p.id === productId);
+            if (product) {
+                basket.push(product);
+                localStorage.setItem('user_basket', JSON.stringify(basket));
+                loadCartItems();
+            }
         }
 
         // Diminuer la quantité d'un produit
