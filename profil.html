@@ -148,6 +148,8 @@
   </div>
 </main>
 
+<script src="global_functions.js"></script>
+
 <!-- Script profil : adapte l'UI selon mode visiteur / session -->
 <script type="module">
   import { getSession, fetchUserProfile, updateUserProfile } from './services/userService.js';
@@ -258,6 +260,7 @@
       profileDisplay.classList.remove('hidden');
       alert("Informations mises à jour !");
     });
+    updateCartDisplay();
   });
 </script>
 

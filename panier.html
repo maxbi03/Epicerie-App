@@ -65,6 +65,8 @@
     </div>
 
     <script src="header.js"></script>
+    <script src="global_functions.js"></script>
+
     <script>
         // Charger les produits du panier depuis le localStorage
         function loadCartItems() {
@@ -170,7 +172,9 @@
         }
 
         // Charger les produits au démarrage
-        document.addEventListener('DOMContentLoaded', loadCartItems);
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCartItems();
+        });
     </script>
 </body>
 </html>

@@ -13,14 +13,16 @@ window.decreaseQuantity = decreaseQuantity;
 window.addProductToBasket = addProductToBasket;
 window.productQuantity = productQuantity = 1;
 
+let currentProduct = null; // ← variable globale pour stocker le produit actuellement affiché dans le modal
+
 
 
 function showProductModal(name) {
       const modal = document.getElementById('product-modal');
       const panel = document.getElementById('modal-panel');
       const content = document.getElementById('modal-content');
-      const product = window.products.find(p => p.name === name);
-      content.innerHTML = generateProductSheet(product);
+      currentProduct = window.products.find(p => p.name === name);
+      content.innerHTML = generateProductSheet(currentProduct);
       // 1. Afficher le modal
         modal.classList.remove('hidden');
 
@@ -34,7 +36,7 @@ function showProductModal(name) {
 function closeProductModal() {
       const modal = document.getElementById('product-modal');
       const panel = document.getElementById('modal-panel');
-      
+
       productQuantity = 1;
       const qtyEl = document.getElementById('product-quantity');
       if (qtyEl) qtyEl.textContent = '1';

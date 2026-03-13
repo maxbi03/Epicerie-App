@@ -100,6 +100,8 @@
     </main>
 
     <script src="header.js"></script>
+    <script src="global_functions.js"></script>
+
     <script>
     function filterNews(category, btnElement = null) {
         const items = document.querySelectorAll('.news-item');
@@ -133,7 +135,10 @@
             }
         });
     }
-
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        updateCartDisplay(); // ← bulle mise à jour dès l'ouverture
+    });
     // Initialisation au chargement
     window.addEventListener('load', () => {
         filterNews('all');

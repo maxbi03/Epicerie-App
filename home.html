@@ -114,6 +114,8 @@
     </main>
 
     <script src="header.js"></script>
+    <script src="global_functions.js"></script>
+
     <script>
         window.addEventListener('load', () => {
             if (typeof initAppShell === 'function') initAppShell();
@@ -145,6 +147,8 @@
                 doorBtn.disabled = true;
                 doorBtn.classList.add('opacity-60');
             }
+
+            updateCartDisplay();
         });
     </script>
 
