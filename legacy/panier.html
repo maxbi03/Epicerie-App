@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html class="light" lang="fr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Mon Panier - L'Épicerie du Village</title>
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="theme.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+</head>
+
+<body class="bg-gray-100 font-display text-[#111813] antialiased">
+
+    <div id="header-container" class="relative z-[100] max-w-md mx-auto w-full"></div>
+
+<div class="relative flex h-screen max-w-md mx-auto flex-col bg-background-light dark:bg-background-dark shadow-2xl overflow-hidden border-x border-gray-200 dark:border-white/10">
+
+    <!-- Titre -->
+    <div class="px-6 pt-6 pb-2 flex justify-between items-center shrink-0">
+        <h2 class="text-2xl font-bold tracking-tight dark:text-white">Mon Panier</h2>
+        <span id="cart-item-count" class="text-[10px] font-black text-gray-400 uppercase bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded tracking-widest">0 Article</span>
+    </div>
+
+    <!-- Contenu scrollable -->
+    <main class="flex-1 overflow-y-auto no-scrollbar">
+        <div id="cart-items-container" class="flex flex-col px-4 py-2">
+            <!-- produits -->
+        </div>
+
+        <div id="cart-empty-message" class="flex flex-col items-center justify-center px-10 text-center py-20">
+            <div class="size-20 bg-primary/5 rounded-full flex items-center justify-center mb-4">
+                <span class="material-symbols-outlined text-primary/40 text-4xl">shopping_cart_checkout</span>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">Votre panier est vide</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed max-w-[200px] mx-auto">
+                Scannez vos produits en magasin pour les ajouter ici !
+            </p>
+            <a href="scanner.html" class="mt-6 flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest border-b border-primary pb-1 active:scale-95 transition-transform">
+                Ouvrir le scanner
+                <span class="material-symbols-outlined text-sm">qr_code_scanner</span>
+            </a>
+        </div>
+    </main>
+
+    <!-- Zone figée en bas — shrink-0 empêche de rétrécir -->
+    <div class="shrink-0 bg-background-light dark:bg-background-dark px-6 pb-6 pt-4 border-t border-gray-100 dark:border-white/10">
+        <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3">Résumé</h3>
+        <div class="bg-white dark:bg-white/5 rounded-2xl p-4 border border-gray-100 dark:border-white/5 mb-4">
+            <div class="flex justify-between text-sm font-bold dark:text-gray-300">
+                <span class="text-gray-400 uppercase text-[10px] tracking-widest">Total à payer</span>
+                <span id="cart-total">0,00 CHF</span>
+            </div>
+        </div>
+        <div class="bg-white/80 dark:bg-background-dark/80 backdrop-blur-md rounded-3xl p-1 border border-white/20">
+            <button id="checkout-button" disabled class="w-full bg-gray-200 dark:bg-gray-800 text-gray-400 py-4 rounded-2xl font-black text-sm uppercase tracking-[0.1em] cursor-not-allowed">
+                Payer 0,00 CHF
+            </button>
+        </div>
+    </div>
+
+</div>
+
+    <script src="header.js"></script>
+
+    <script>
+        // Charger les produits du panier depuis le localStorage
+        function loadCartItems() {
+            const basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
+            const cartItemsContainer = document.getElementById('cart-items-container');
+            const cartEmptyMessage = document.getElementById('cart-empty-message');
+            const cartItemCount = document.getElementById('cart-item-count');
+            const cartTotal = document.getElementById('cart-total');
+            const checkoutButton = document.getElementById('checkout-button');
+
+            if (basket.length === 0) {
+                cartItemsContainer.innerHTML = '';
+                cartEmptyMessage.style.display = 'flex';
+            } else {
+                cartEmptyMessage.style.display = 'none';
+                cartItemsContainer.innerHTML = '';
+
+                // Regrouper les produits identiques
+                const groupedProducts = {};
+                basket.forEach(product => {
+                    if (!groupedProducts[product.id]) {
+                        groupedProducts[product.id] = { ...product, quantity: 0 };
+                    }
+                    groupedProducts[product.id].quantity += 1;
+                });
+
+                let total = 0;
+
+                // Afficher les produits regroupés
+                Object.values(groupedProducts).forEach(product => {
+                    const productTotalPrice = product.price * product.quantity;
+                    total += productTotalPrice;
+
+                    const productHTML = `
+                        <div class="bg-white dark:bg-white/5 rounded-2xl p-4 border border-gray-100 dark:border-white/5 mb-3">
+                            <div class="flex items-center gap-4">
+                                <div class="size-12 bg-gray-50 dark:bg-gray-800 rounded-2xl flex items-center justify-center border border-gray-100 dark:border-white/10 overflow-hidden">
+                                    <img src="${product.image}" class="w-full h-full object-cover">
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="font-bold text-sm text-forest-green dark:text-gray-200">${product.name}</h4>
+                                    <p class="text-[10px] text-gray-400 font-medium">${product.origin}</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-sm font-black text-forest-green dark:text-white">${productTotalPrice.toFixed(2)} CHF</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between mt-3">
+                                <div class="flex items-center gap-3">
+                                    <button onclick="decreaseQuantity(${product.id})" class="size-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                                        <span class="material-symbols-outlined text-forest-green text-sm">remove</span>
+                                    </button>
+                                    <span class="text-sm font-bold text-forest-green dark:text-white">${product.quantity}</span>
+                                    <button onclick="increaseQuantity(${product.id})" class="size-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                                        <span class="material-symbols-outlined text-forest-green text-sm">add</span>
+                                    </button>
+                                </div>
+                                <button onclick="removeProduct(${product.id})" class="text-red-500 text-xs font-bold uppercase tracking-widest">
+                                    Supprimer
+                                </button>
+                            </div>
+                        </div>
+                    `;
+
+                    cartItemsContainer.innerHTML += productHTML;
+                });
+
+                cartItemCount.textContent = `${basket.length} Article${basket.length > 1 ? 's' : ''}`;
+                cartTotal.textContent = `${total.toFixed(2)} CHF`;
+                checkoutButton.textContent = `Payer ${total.toFixed(2)} CHF`;
+                checkoutButton.disabled = false;
+                checkoutButton.classList.remove('bg-gray-200', 'dark:bg-gray-800', 'text-gray-400', 'cursor-not-allowed');
+                checkoutButton.classList.add('bg-primary', 'text-forest-green');
+            }
+        }
+
+        // Augmenter la quantité d'un produit
+        function increaseQuantity(productId) {
+            const basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
+            const product = basket.find(p => p.id === productId);
+            if (product) {
+                basket.push(product);
+                localStorage.setItem('user_basket', JSON.stringify(basket));
+                loadCartItems(); // Mettre à jour le nombre d'items dans le panier
+                updateCartDisplayHeader(); // Mettre à jour le nombre d'items dans le panier du header
+            }
+        }
+
+        // Diminuer la quantité d'un produit
+        function decreaseQuantity(productId) {
+            const basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
+            const index = basket.findIndex(p => p.id === productId);
+            if (index !== -1) {
+                basket.splice(index, 1);
+                localStorage.setItem('user_basket', JSON.stringify(basket));
+                loadCartItems(); // Mettre à jour le nombre d'items dans le panier
+                updateCartDisplayHeader(); // Mettre à jour le nombre d'items dans le panier du header
+            }
+        }
+
+        // Supprimer un produit du panier
+        function removeProduct(productId) {
+            let basket = JSON.parse(localStorage.getItem('user_basket') || "[]");
+            basket = basket.filter(p => p.id !== productId);
+            localStorage.setItem('user_basket', JSON.stringify(basket));           
+            loadCartItems(); // Mettre à jour le nombre d'items dans le panier
+            updateCartDisplayHeader(); // Mettre à jour le nombre d'items dans le panier du header        
+        }
+
+        // Charger les produits au démarrage
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCartItems();
+        });
+    </script>
+</body>
+</html>

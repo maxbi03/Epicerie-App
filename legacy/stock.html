@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html class="light" lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>ÉPICO - Stocks</title>
+
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="theme.js" defer></script>
+  
+
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <style>
+      .no-scrollbar::-webkit-scrollbar {display: none;}
+      .no-scrollbar {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+  </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark font-display text-[#111813] antialiased">
+
+  <div id="header-container" class="relative z-[100] max-w-md mx-auto"></div>
+
+  <main class="relative flex min-h-screen max-w-md mx-auto flex-col">
+    <div class="flex-1 overflow-y-auto px-5 pt-4 pb-24">
+
+      <div class="flex justify-between items-end mb-6">
+        <div>
+          <h1 class="text-2xl font-bold text-forest-green dark:text-white">Stocks</h1>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Disponibilité en temps réel</p>
+        </div>
+        <span class="text-[9px] bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 px-2 py-1 rounded-lg font-black text-gray-400 uppercase tracking-widest shadow-sm">
+          Màj : En direct
+        </span>
+      </div>
+
+    <div class="flex justify-between items-center gap-4 mb-4">
+      <input id="search-input" type="text" placeholder="Rechercher un produit..."
+              class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white">
+
+    </div>
+
+      <div class="menu-scroll flex gap-2 overflow-x-auto pb-4 mb-4 no-scrollbar">
+        <button data-category="Tous" onclick="displayProducts('Tous')" class="filter-btn px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl whitespace-nowrap shrink-0">Tous</button>
+        <button data-category="Crèmerie" onclick="displayProducts('Crèmerie')" class="filter-btn px-4 py-2 bg-white dark:bg-white/5 text-gray-500 text-xs font-bold rounded-xl whitespace-nowrap border border-gray-100 dark:border-white/5 shrink-0">Crèmerie</button>
+        <button data-category="Boulangerie" onclick="displayProducts('Boulangerie')" class="filter-btn px-4 py-2 bg-white dark:bg-white/5 text-gray-500 text-xs font-bold rounded-xl whitespace-nowrap border border-gray-100 dark:border-white/5 shrink-0">Boulangerie</button>
+        <button data-category="Boissons" onclick="displayProducts('Boissons')" class="filter-btn px-4 py-2 bg-white dark:bg-white/5 text-gray-500 text-xs font-bold rounded-xl whitespace-nowrap border border-gray-100 dark:border-white/5 shrink-0">Boissons</button>
+        <button data-category="Epicerie" onclick="displayProducts('Epicerie')" class="filter-btn px-4 py-2 bg-white dark:bg-white/5 text-gray-500 text-xs font-bold rounded-xl whitespace-nowrap border border-gray-100 dark:border-white/5 shrink-0">Epicerie</button>
+        <button data-category="Fruits & Légumes" onclick="displayProducts('Fruits & Légumes')" class="filter-btn px-4 py-2 bg-white dark:bg-white/5 text-gray-500 text-xs font-bold rounded-xl whitespace-nowrap border border-gray-100 dark:border-white/5 shrink-0">Fruits & Légumes</button>
+      </div>
+
+     <div id="products-grid" class="space-y-3 overflow-y-auto max-h-[calc(100vh-200px)] px-2 no-scrollbar">
+        <p class="text-center text-gray-400 text-xs py-10">Chargement des stocks...</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Pop-up Fiche Produit -->
+<div id="product-modal" class="fixed inset-0 backdrop-blur-sm z-50 hidden flex items-end justify-center" onclick="closeProductModal()">
+  <div id="modal-panel" class="transform transition-transform duration-300 translate-y-full bg-white dark:bg-background-dark rounded-t-3xl w-full max-w-md overflow-y-auto max-h-[85vh]" onclick="event.stopPropagation()">
+    
+    <!-- Header sticky -->
+    <div class="sticky top-0 bg-white/95 dark:bg-background-dark/95 backdrop-blur-md z-10 px-4 py-3 flex items-center justify-between border-b border-gray-100 dark:border-white/10">
+      <h2 class="text-lg font-bold text-forest-green dark:text-white">Détails du produit</h2>
+      <button onclick="closeProductModal()" class="size-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
+        <span class="material-symbols-outlined text-gray-600 dark:text-gray-400">close</span>
+      </button>
+    </div>
+
+    <!-- Contenu -->
+    <div id="modal-content" class="pb-6"></div>
+
+    <!-- Footer sticky -->
+    <div class="sticky bottom-0 bg-white dark:bg-background-dark p-4 border-t border-gray-100 dark:border-white/10">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-4">
+          <button onclick="decreaseQuantity()" class="size-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+            <span class="material-symbols-outlined text-forest-green">remove</span>
+          </button>
+          <span id="product-quantity" class="text-lg font-bold text-forest-green dark:text-white">1</span>
+          <button onclick="increaseQuantity()" class="size-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+            <span class="material-symbols-outlined text-forest-green">add</span>
+          </button>
+        </div>
+        <button onclick="addProductToBasket()" class="w-[70%] bg-primary text-forest-green font-black py-3 rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all">
+          <span class="material-symbols-outlined">add_shopping_cart</span>
+          <span>Ajouter</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+  <!-- Scripts "non module" -->
+  <script src="header.js"></script>
+  <script src="shop.js"></script>
+  <script src="fiche_produit.js"></script>
+  
+  <!-- Loader Supabase (module) -->
+  <script type="module">
+    import { fetchProducts } from './services/productsService.js';
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      // 1) Header (si ton header.js le fait déjà, ça ne casse pas)
+      if (typeof initAppShell === 'function') initAppShell();
+
+      // 2) Charger produits depuis Supabase
+      try {
+        window.products = await fetchProducts();
+      } catch (e) {
+        console.error("Erreur chargement produits Supabase:", e);
+        window.products = [];
+        const grid = document.getElementById('products-grid');
+        if (grid) {
+          grid.innerHTML = `
+            <p class="text-center text-red-500 text-sm py-10">
+              Impossible de charger les stocks (Supabase).
+            </p>
+          `;
+        }
+        return; // on stoppe ici
+      }
+
+      // 3) Affichage initial
+      if (typeof displayProducts === 'function') {
+        displayProducts('Tous');
+      }
+
+      updateCartDisplay();
+    });
+  </script>
+</body>
+</html>

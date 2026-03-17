@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html class="light" lang="fr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>L'Épicerie du Village - Accueil</title>
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="theme.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+    <style>
+        .key-btn-disabled{
+            background: linear-gradient(145deg, #e5e7eb, #d1d5db);
+            box-shadow: 0 4px 0px #9ca3af;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark font-display text-[#111813] antialiased">
+
+    <div id="header-container" class="relative z-[100] max-w-md mx-auto"></div>
+
+    <!-- Bandeau email non vérifié -->
+    <div id="email-unverified-banner" class="hidden max-w-md mx-auto w-full">
+        <div class="mx-4 mt-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 rounded-2xl px-4 py-3 flex items-start gap-3">
+            <span class="material-symbols-outlined text-amber-500 text-xl mt-0.5 shrink-0">mark_email_unread</span>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold text-amber-800 dark:text-amber-300">Email non confirmé</p>
+                <p class="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Vérifiez votre boîte mail et cliquez sur le lien de confirmation.</p>
+            </div>
+            <button onclick="resendConfirmationEmail()" id="resend-email-btn"
+                class="text-xs font-black text-amber-600 dark:text-amber-400 whitespace-nowrap hover:text-amber-800 transition-colors shrink-0">
+                Renvoyer
+            </button>
+        </div>
+    </div>
+
+    <main class="relative flex min-h-screen max-w-md mx-auto flex-col overflow-x-hidden">
+        <div class="flex-1 overflow-y-auto pb-10">
+
+            <div class="px-5 pt-6 pb-2">
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+                    Bonjour, <span id="user-greeting">…</span> !
+                </h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Bienvenue dans votre épicerie autonome.</p>
+            </div>
+
+            <!-- CARD PORTE -->
+            <div class="p-5">
+                <div class="bg-white dark:bg-white/5 rounded-3xl p-6 flex flex-col items-center text-center relative border border-gray-100 dark:border-white/5 shadow-sm">
+                    <div class="mb-6">
+                        <div class="size-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center border border-gray-200 dark:border-white/10">
+                            <span class="material-symbols-outlined text-gray-400 text-3xl">location_off</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <h2 class="text-forest-green dark:text-white text-xl font-bold mb-1">Aucun magasin détecté</h2>
+                        <p class="text-gray-400 text-sm font-medium">Approchez-vous d'une borne Bluetooth</p>
+                    </div>
+
+                    <!-- Bouton porte -->
+                    <button id="door-button" class="key-btn-disabled w-full py-5 rounded-2xl flex items-center justify-center gap-3 opacity-60" disabled>
+                        <span class="material-symbols-outlined text-gray-500 font-bold text-2xl" id="door-icon">lock</span>
+                        <span class="text-gray-500 font-bold text-lg uppercase tracking-wider" id="door-label">Porte verrouillée</span>
+                    </button>
+
+                    <!-- ✅ Message mode visiteur (caché par défaut) -->
+                    <div id="visitor-door-message" class="hidden w-full mt-4 bg-primary/10 border border-primary/20 rounded-2xl p-4 text-left">
+                        <div class="flex items-start gap-3">
+                            <div class="mt-0.5 size-10 rounded-xl bg-primary/15 flex items-center justify-center border border-primary/20">
+                                <span class="material-symbols-outlined text-primary">lock</span>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-bold text-forest-green dark:text-white">
+                                    Déverrouillage désactivé
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mt-1">
+                                    Créez un compte et vérifiez-le pour utiliser cette fonctionnalité.
+                                </p>
+
+                                <div class="grid grid-cols-2 gap-3 mt-4">
+                                    <a href="index.html"
+                                    onclick="event.preventDefault(); goToLogin('login');"
+                                    class="w-full py-3 rounded-xl bg-primary text-white font-black text-[10px] uppercase tracking-widest text-center active:scale-[0.98] transition-all">
+                                        Se connecter
+                                    </a>
+                                    <a href="index.html"
+                                    onclick="event.preventDefault(); goToLogin('register');"
+                                    class="w-full py-3 rounded-xl bg-primary/15 text-primary font-black text-[10px] uppercase tracking-widest text-center active:scale-[0.98] transition-all">
+                                        Créer un compte
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- INFO AFFLUENCE -->
+            <div class="px-5 mb-6">
+                <div class="bg-leaf-green/5 dark:bg-primary/5 border border-leaf-green/10 dark:border-primary/10 rounded-2xl p-4 flex items-center justify-between">
+                    <div class="flex flex-col">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="material-symbols-outlined text-leaf-green dark:text-primary text-sm font-bold">location_on</span>
+                            <span class="text-[10px] font-black text-leaf-green dark:text-primary uppercase tracking-widest">Semsales</span>
+                        </div>
+                        <span class="text-sm font-bold text-forest-green dark:text-gray-200">Affluence : 3 personnes</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEWS TEASER -->
+            <div class="px-5">
+                <a href="news.html" class="block bg-white dark:bg-white/5 rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-white/5 active:scale-[0.98] transition-all">
+                    <div class="h-32 bg-gray-200 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1550989460-0adf9ea622e2?q=80&w=500&auto=format&fit=crop')"></div>
+                    <div class="p-4">
+                        <h3 class="font-bold text-forest-green dark:text-white text-base">Arrivage de fraises de pays 🍓</h3>
+                    </div>
+                </a>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="header.js"></script>
+    <script src="global_functions.js"></script>
+
+    <script>
+        window.addEventListener('load', () => {
+            if (typeof initAppShell === 'function') initAppShell();
+        });
+    </script>
+
+    <!-- ✅ Mode visiteur : affichage message porte -->
+    <script>
+        function isVisitorMode() {
+            try { return sessionStorage.getItem('app_mode') === 'visitor'; }
+            catch { return false; }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!isVisitorMode()) return;
+
+            // Affiche le message “compte requis”
+            const msg = document.getElementById('visitor-door-message');
+            if (msg) msg.classList.remove('hidden');
+
+            // Laisse le bouton porte en disabled (pas d’action critique en visiteur)
+            const doorBtn = document.getElementById('door-button');
+            const doorLabel = document.getElementById('door-label');
+            const doorIcon = document.getElementById('door-icon');
+
+            if (doorIcon) doorIcon.textContent = 'lock';
+            if (doorLabel) doorLabel.textContent = 'Compte requis';
+            if (doorBtn) {
+                doorBtn.disabled = true;
+                doorBtn.classList.add('opacity-60');
+            }
+            updateCartDisplay();
+        });
+    </script>
+
+    <!-- Bandeau email non vérifié -->
+    <script type="module">
+        import { supabase } from './supabaseClient.js';
+
+        async function checkEmailVerification() {
+            try { if (sessionStorage.getItem('app_mode') === 'visitor') return; } catch {}
+            const { data } = await supabase.auth.getSession();
+            const user = data?.session?.user;
+            if (!user) return;
+            if (!user.email_confirmed_at) {
+                document.getElementById('email-unverified-banner')?.classList.remove('hidden');
+            }
+        }
+
+        window.resendConfirmationEmail = async function () {
+            const btn = document.getElementById('resend-email-btn');
+            if (btn) { btn.textContent = 'Envoi…'; btn.disabled = true; }
+            try {
+                const { data } = await supabase.auth.getSession();
+                const email = data?.session?.user?.email;
+                if (!email) throw new Error('Email introuvable.');
+                const { error } = await supabase.auth.resend({ type: 'signup', email });
+                if (error) throw error;
+                if (btn) btn.textContent = 'Envoyé ✓';
+                setTimeout(() => { if (btn) { btn.textContent = 'Renvoyer'; btn.disabled = false; } }, 30000);
+            } catch (err) {
+                alert('Erreur : ' + (err?.message || err));
+                if (btn) { btn.textContent = 'Renvoyer'; btn.disabled = false; }
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', checkEmailVerification);
+    </script>
+
+    <!-- Auth pour “Bonjour Visiteur” / utilisateur -->
+    <script type="module" src="auth.js"></script>
+
+</body>
+</html>

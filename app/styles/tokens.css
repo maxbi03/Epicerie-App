@@ -1,0 +1,22 @@
+:root {
+  --app-bg:        #f6f8f6;
+  --card-bg:       #ffffff;
+  --header-bg:     #ffffff;
+  --menu-bg:       #ffffff;
+  --input-bg:      #ffffff;
+
+  --text-primary:   #1B4332;
+  --text-secondary: #6b7280;
+  --text-muted:     #9ca3af;
+
+  --primary:        #00b503;
+  --primary-light:  #e8fce8;
+  --forest-green:   #1B4332;
+  --leaf-green:     #2D6A4F;
+
+  --border:         #e5e7eb;
+  --border-light:   #f3f4f6;
+
+  --shadow-sm:      0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md:      0 4px 12px rgba(0,0,0,0.08);
+}

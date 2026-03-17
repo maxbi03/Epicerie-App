@@ -1,0 +1,17 @@
+// theme.js
+window.tailwind = window.tailwind || {};
+window.tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "forest-green": "#1B4332",
+        "leaf-green": "#2D6A4F",
+        "background-light": "#f6f8f6",
+        "background-dark": "#102215",
+        "primary": "#00b503",
+      },
+      fontFamily: { display: ["Space Grotesk", "sans-serif"] },
+    },
+  },
+};
