@@ -1,0 +1,28 @@
+@import "tailwindcss";
+@import "./styles/tokens.css";
+
+@theme inline {
+  --color-primary:        var(--primary);
+  --color-primary-light:  var(--primary-light);
+  --color-forest-green:   var(--forest-green);
+  --color-leaf-green:     var(--leaf-green);
+  --color-app-bg:         var(--app-bg);
+  --color-card-bg:        var(--card-bg);
+  --color-header-bg:      var(--header-bg);
+  --color-text-primary:   var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted:     var(--text-muted);
+  --color-border:         var(--border);
+  --color-border-light:   var(--border-light);
+}
+
+@layer base {
+  html { font-family: "Space Grotesk", sans-serif; }
+  body { background-color: var(--app-bg); color: var(--text-primary); }
+}
+
+#reader__scan_region {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}

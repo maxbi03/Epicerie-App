@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html class="light" lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Nouveau mot de passe - L'Épicerie du Village</title>
+
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="theme.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark font-display antialiased">
+
+  <div class="min-h-screen flex flex-col justify-center px-6 max-w-md mx-auto">
+
+    <!-- Logo -->
+    <div class="text-center mb-8">
+      <div class="size-16 rounded-[1.2rem] bg-gradient-to-br from-forest-green to-primary flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary/20">
+        <span class="text-white text-2xl font-black">É</span>
+      </div>
+      <h1 class="text-2xl font-black text-forest-green dark:text-white">Nouveau mot de passe</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Choisissez un code secret fort</p>
+    </div>
+
+    <!-- État : chargement -->
+    <div id="state-loading" class="text-center py-10">
+      <div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+      <p class="text-sm text-gray-500">Vérification du lien…</p>
+    </div>
+
+    <!-- État : lien invalide -->
+    <div id="state-invalid" class="hidden text-center space-y-4">
+      <div class="size-16 bg-red-50 dark:bg-red-500/10 rounded-full flex items-center justify-center mx-auto">
+        <span class="material-symbols-outlined text-red-500 text-3xl">link_off</span>
+      </div>
+      <h2 class="text-lg font-bold text-gray-900 dark:text-white">Lien invalide ou expiré</h2>
+      <p class="text-sm text-gray-500 dark:text-gray-400">Ce lien de réinitialisation n'est plus valide.<br>Faites une nouvelle demande depuis votre profil.</p>
+      <a href="index.html"
+         class="inline-block mt-4 bg-primary text-white font-bold px-8 py-3 rounded-2xl shadow-lg shadow-primary/20 hover:brightness-105 active:scale-95 transition-all">
+        Retour à la connexion
+      </a>
+    </div>
+
+    <!-- État : formulaire nouveau mot de passe -->
+    <div id="state-form" class="hidden space-y-5">
+
+      <!-- Nouveau mot de passe -->
+      <div class="space-y-2">
+        <p class="text-[10px] font-black text-primary uppercase ml-2 tracking-widest">Nouveau code secret</p>
+        <div class="relative">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400 text-sm">lock</span>
+          <input id="new-password" type="password" placeholder="10 caractères minimum" autocomplete="new-password"
+                 class="w-full pl-12 pr-12 py-4 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition">
+          <button type="button" onclick="toggleVis('new-password', this)"
+                  class="absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400 text-sm hover:text-gray-600">visibility</button>
+        </div>
+
+        <!-- Barre de force -->
+        <div class="flex gap-1 px-1">
+          <div class="h-1 flex-1 rounded-full bg-gray-200 dark:bg-white/10 transition-all" id="sb-1"></div>
+          <div class="h-1 flex-1 rounded-full bg-gray-200 dark:bg-white/10 transition-all" id="sb-2"></div>
+          <div class="h-1 flex-1 rounded-full bg-gray-200 dark:bg-white/10 transition-all" id="sb-3"></div>
+          <div class="h-1 flex-1 rounded-full bg-gray-200 dark:bg-white/10 transition-all" id="sb-4"></div>
+        </div>
+        <p id="sb-label" class="text-[10px] text-gray-400 px-1"></p>
+      </div>
+
+      <!-- Confirmation -->
+      <div class="relative">
+        <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400 text-sm">lock_reset</span>
+        <input id="new-password-confirm" type="password" placeholder="Confirmer le code secret" autocomplete="new-password"
+               class="w-full pl-12 pr-4 py-4 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition">
+      </div>
+
+      <p id="reset-error" class="hidden text-sm text-red-500 text-center font-medium"></p>
+
+      <button id="reset-btn" onclick="submitNewPassword()"
+              class="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/20 hover:brightness-105 active:scale-95 transition-all">
+        Enregistrer le nouveau mot de passe
+      </button>
+    </div>
+
+    <!-- État : succès -->
+    <div id="state-success" class="hidden text-center space-y-4">
+      <div class="size-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+        <span class="material-symbols-outlined text-primary text-3xl">check_circle</span>
+      </div>
+      <h2 class="text-lg font-bold text-forest-green dark:text-white">Mot de passe mis à jour !</h2>
+      <p class="text-sm text-gray-500 dark:text-gray-400">Vous allez être redirigé vers la connexion…</p>
+      <div class="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+    </div>
+
+  </div>
+
+  <script type="module">
+    import { supabase } from './supabaseClient.js';
+
+    // ── Helpers force mot de passe ───────────────────────
+    const STRENGTH_COLORS = ['', 'bg-red-400', 'bg-orange-400', 'bg-yellow-400', 'bg-primary'];
+    const STRENGTH_LABELS = ['', 'Trop faible', 'Faible', 'Moyen', 'Fort ✓'];
+
+    function getStrength(pwd) {
+      let s = 0;
+      if (pwd.length >= 10) s++;
+      if (/[A-Z]/.test(pwd)) s++;
+      if (/[0-9]/.test(pwd)) s++;
+      if (/[^A-Za-z0-9]/.test(pwd)) s++;
+      return s;
+    }
+
+    function updateStrength(pwd) {
+      const score = getStrength(pwd);
+      for (let i = 1; i <= 4; i++) {
+        const bar = document.getElementById(`sb-${i}`);
+        if (bar) bar.className = `h-1 flex-1 rounded-full transition-all ${i <= score ? STRENGTH_COLORS[score] : 'bg-gray-200 dark:bg-white/10'}`;
+      }
+      const label = document.getElementById('sb-label');
+      if (label) label.textContent = pwd.length > 0 ? STRENGTH_LABELS[score] : '';
+    }
+
+    document.getElementById('new-password')?.addEventListener('input', e => updateStrength(e.target.value));
+
+    // ── Toggle visibilité ───────────────────────────────
+    window.toggleVis = function (id, btn) {
+      const input = document.getElementById(id);
+      if (!input) return;
+      const hidden = input.type === 'password';
+      input.type = hidden ? 'text' : 'password';
+      btn.textContent = hidden ? 'visibility_off' : 'visibility';
+    };
+
+    // ── Vérifier le lien de reset au chargement ─────────
+    function showState(name) {
+      ['loading', 'invalid', 'form', 'success'].forEach(s => {
+        document.getElementById(`state-${s}`)?.classList.toggle('hidden', s !== name);
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      // Supabase gère le token de reset via l'URL (hash fragment)
+      // On attend que la session soit établie automatiquement
+      const { data, error } = await supabase.auth.getSession();
+
+      if (error || !data?.session) {
+        // Essayer d'échanger le token présent dans le hash
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(
+          window.location.search
+        );
+        if (exchangeError) {
+          showState('invalid');
+          return;
+        }
+      }
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) {
+        showState('invalid');
+        return;
+      }
+
+      showState('form');
+    });
+
+    // ── Soumettre le nouveau mot de passe ───────────────
+    window.submitNewPassword = async function () {
+      const password = document.getElementById('new-password')?.value ?? '';
+      const confirm  = document.getElementById('new-password-confirm')?.value ?? '';
+      const errEl    = document.getElementById('reset-error');
+      const btn      = document.getElementById('reset-btn');
+
+      if (password.length < 10) {
+        errEl.textContent = 'Le code secret doit contenir au moins 10 caractères.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+      if (getStrength(password) < 2) {
+        errEl.textContent = 'Code trop faible. Ajoutez des chiffres ou des majuscules.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+      if (password !== confirm) {
+        errEl.textContent = 'Les codes secrets ne correspondent pas.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      errEl.classList.add('hidden');
+      if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement…'; }
+
+      try {
+        const { error } = await supabase.auth.updateUser({ password });
+        if (error) throw error;
+
+        showState('success');
+        await supabase.auth.signOut();
+        setTimeout(() => { window.location.href = 'index.html'; }, 2500);
+      } catch (err) {
+        errEl.textContent = err?.message || 'Erreur lors de la mise à jour.';
+        errEl.classList.remove('hidden');
+        if (btn) { btn.disabled = false; btn.textContent = 'Enregistrer le nouveau mot de passe'; }
+      }
+    };
+  </script>
+
+</body>
+</html>
