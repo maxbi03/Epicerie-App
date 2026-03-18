@@ -1,5 +1,6 @@
 'use client';
 
+import { fetchProducts } from '../lib/productsService';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Script from 'next/script';

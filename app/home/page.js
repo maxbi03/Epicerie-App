@@ -1,5 +1,7 @@
 'use client';
 
+import { supabase } from '../lib/supabaseClient';
+import { fetchUserProfile } from '../lib/userService';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
@@ -11,7 +13,14 @@ export default function HomePage() {
   useEffect(() => {
     const visitor = sessionStorage.getItem('app_mode') === 'visitor';
     setIsVisitor(visitor);
-    setGreeting(visitor ? 'Visiteur' : 'Utilisateur');
+    if (visitor) { setGreeting('Visiteur'); return; }
+    
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) { setGreeting('Visiteur'); return; }
+      fetchUserProfile(session.user.id).then(profile => {
+        if (profile?.name) setGreeting(profile.name.split(' ')[0]);
+      });
+    });
   }, []);
 
   return (
