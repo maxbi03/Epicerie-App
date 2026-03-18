@@ -57,7 +57,6 @@ export default function StockPage() {
     localStorage.setItem('user_basket', JSON.stringify(basket));
     window.dispatchEvent(new Event('cart-updated'));
     closeModal();
-    alert(`${quantity}x ${selectedProduct.name} ajouté au panier !`);
   }
 
   return (

@@ -2,16 +2,16 @@ import { getSupabaseAdmin } from '../../lib/supabaseServer';
 import { NextResponse } from 'next/server';
 
 function normalizeProduct(row) {
-  const stock = row.stock ?? row.quantity ?? row.qty ?? 0;
+  const stock = row.stock_total ?? row.stock ?? row.quantity ?? row.qty ?? 0;
   const barcode = row.barcode ?? row.ean ?? row.ean13 ?? row.code_barres ?? row.codebarres;
   return {
     id: row.id,
     name: row.name ?? row.title ?? row.nom ?? '',
     barcode: barcode == null ? null : String(barcode),
-    price: Number(row.price ?? row.prix ?? 0),
+    price: Number(row.price_chf ?? row.price ?? row.prix ?? 0),
     unit: row.unit ?? row.unite ?? '',
-    origin: row.origin ?? row.producer ?? row.fournisseur ?? row.origine ?? '',
-    image: row.image ?? row.image_url ?? row.photo ?? '',
+    origin: row.producer ?? row.origin ?? row.fournisseur ?? row.origine ?? '',
+    image: row.image_url ?? row.image ?? row.photo ?? '',
     category: row.category ?? row.categorie ?? 'Divers',
     badge: row.badge ?? row.label ?? '',
     stock: Number(stock ?? 0),
@@ -20,7 +20,7 @@ function normalizeProduct(row) {
 
 export async function GET() {
   const { data, error } = await getSupabaseAdmin()
-    .from('products')
+    .from('products_with_stock')
     .select('*')
     .order('name', { ascending: true });
 

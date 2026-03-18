@@ -14,6 +14,7 @@ export default function PanierPage() {
   function saveBasket(newBasket) {
     localStorage.setItem('user_basket', JSON.stringify(newBasket));
     setBasket(newBasket);
+    window.dispatchEvent(new Event('cart-updated'));
   }
 
   function increaseQuantity(productId) {
