@@ -74,7 +74,7 @@ export default function PanierPage() {
               <div key={product.id} className="bg-white dark:bg-white/5 rounded-2xl p-4 border border-gray-100 dark:border-white/5 mb-3">
                 <div className="flex items-center gap-4">
                   <div className="size-12 bg-gray-50 dark:bg-gray-800 rounded-2xl flex items-center justify-center border border-gray-100 dark:border-white/10 overflow-hidden">
-                    <img src={product.image} className="w-full h-full object-cover" alt={product.name} />
+                    {product.image && <img src={product.image} className="w-full h-full object-cover" alt={product.name} />}
                   </div>
                   <div className="flex-1">
                     <h4 className="font-bold text-sm text-green-900 dark:text-gray-200">{product.name}</h4>

@@ -114,7 +114,7 @@ export default function StockPage() {
                   className="w-full flex items-center gap-4 bg-card-bg rounded-2xl p-4 border border-border-light shadow-sm active:scale-[0.98] transition-all text-left"
                 >
                   <div className="size-14 rounded-2xl overflow-hidden bg-app-bg shrink-0">
-                    <img src={product.image} className="w-full h-full object-cover" alt={product.name} />
+                    {product.image && <img src={product.image} className="w-full h-full object-cover" alt={product.name} />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-bold text-sm text-text-primary truncate">{product.name}</h4>
@@ -143,7 +143,7 @@ export default function StockPage() {
             </div>
             <div className="p-5">
               <div className="w-full h-48 rounded-2xl overflow-hidden bg-app-bg mb-4">
-                <img src={selectedProduct.image} className="w-full h-full object-cover" alt={selectedProduct.name} />
+                {selectedProduct.image && <img src={selectedProduct.image} className="w-full h-full object-cover" alt={selectedProduct.name} />}
               </div>
               <h3 className="text-xl font-bold text-text-primary">{selectedProduct.name}</h3>
               <p className="text-sm text-text-secondary mt-1">{selectedProduct.origin}</p>
