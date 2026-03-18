@@ -1,0 +1,24 @@
+{
+  "name": "L'Épicerie du Village",
+  "short_name": "L'Épicerie",
+  "description": "Épicerie autonome de Semsales — scannez, payez, repartez.",
+  "start_url": "/home",
+  "display": "standalone",
+  "background_color": "#f6f8f6",
+  "theme_color": "#00b503",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
