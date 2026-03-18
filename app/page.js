@@ -1,7 +1,13 @@
 'use client';
 
+import { supabase } from './lib/supabaseClient';
+import { createUserProfile } from './lib/userService';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+
+function clearVisitorMode() {
+  try { sessionStorage.removeItem('app_mode'); } catch {}
+}
 
 function getStrength(pwd) {
   let s = 0;
@@ -88,9 +94,12 @@ export default function IndexPage() {
     setLoginError('');
     if (!loginEmail || !loginPassword) { setLoginError('Email et mot de passe requis.'); return; }
     try {
-      // TODO : remplacer par Pocketbase Auth (semaine 4)
-      // await pb.collection('users').authWithPassword(loginEmail, loginPassword)
-      alert('Connexion simulée — branchement Pocketbase à venir !');
+      const { error } = await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password: loginPassword,
+      });
+      if (error) throw error;
+      clearVisitorMode();
       router.push('/home');
     } catch (err) {
       setLoginError('Identifiants incorrects.');
@@ -104,17 +113,49 @@ export default function IndexPage() {
     if (form.password.length < 10) { alert('Mot de passe : 10 caractères minimum.'); return; }
     if (getStrength(form.password) < 2) { alert('Mot de passe trop faible.'); return; }
     if (form.password !== form.passwordConfirm) { alert('Les mots de passe ne correspondent pas.'); return; }
-    // TODO : envoyer SMS OTP via Infobip (semaine 4)
-    setStep(2);
-    setTimeout(() => otpRefs.current[0]?.focus(), 100);
+
+    try {
+      const { error } = await supabase.auth.signInWithOtp({ phone: form.phone });
+      if (error) throw error;
+      setStep(2);
+      setTimeout(() => otpRefs.current[0]?.focus(), 100);
+    } catch (err) {
+      alert('Erreur envoi SMS : ' + err.message);
+    }
   }
 
   async function verifyOtpAndRegister() {
     const token = otp.join('');
     if (token.length !== 6) { setOtpError('Entrez les 6 chiffres du code.'); return; }
     setOtpError('');
+
     try {
-      // TODO : vérifier OTP + créer compte Pocketbase (semaine 4)
+      const { error: otpError } = await supabase.auth.verifyOtp({
+        phone: form.phone,
+        token,
+        type: 'sms',
+      });
+      if (otpError) throw otpError;
+
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+      });
+      if (signUpError) throw signUpError;
+
+      await createUserProfile({
+        id: data.user.id,
+        name: `${form.firstname} ${form.lastname}`.trim(),
+        email: form.email,
+        phone: form.phone,
+        address: form.address,
+        city: form.city,
+        postal_code: form.npa,
+        country: 'CH',
+        address_verified: false,
+        phone_verified: true,
+      });
+
       setStep(3);
       setTimeout(() => { setModalOpen(false); router.push('/home'); }, 2500);
     } catch (err) {
