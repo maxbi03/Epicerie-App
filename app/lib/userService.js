@@ -8,46 +8,36 @@ export async function getSession() {
 
 export async function fetchUserProfile(userId) {
   if (!userId) return null;
-  const { data, error } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', userId)
-    .maybeSingle();
-  if (error) throw error;
-  return data;
+  const res = await fetch(`/api/users/${userId}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || 'Erreur serveur (user)');
+  }
+  return res.json();
 }
 
 export async function createUserProfile(profile) {
-  const { data, error } = await supabase
-    .from('users')
-    .upsert({
-      id: profile.id,
-      name: profile.name ?? null,
-      email: profile.email ?? null,
-      phone: profile.phone ?? null,
-      address: profile.address ?? null,
-      street: profile.street ?? null,
-      house_number: profile.house_number ?? null,
-      postal_code: profile.postal_code ?? null,
-      city: profile.city ?? null,
-      country: profile.country ?? 'CH',
-      address_label: profile.address_label ?? null,
-      address_verified: profile.address_verified ?? false,
-      phone_verified: profile.phone_verified ?? false,
-    }, { onConflict: 'id' })
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
+  const res = await fetch('/api/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(profile),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || 'Erreur serveur (create user)');
+  }
+  return res.json();
 }
 
 export async function updateUserProfile(userId, patch) {
-  const { data, error } = await supabase
-    .from('users')
-    .update(patch)
-    .eq('id', userId)
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
+  const res = await fetch(`/api/users/${userId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || 'Erreur serveur (update user)');
+  }
+  return res.json();
 }
