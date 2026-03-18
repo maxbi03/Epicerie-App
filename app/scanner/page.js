@@ -4,13 +4,20 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Script from 'next/script';
 
+function validateEAN13(barcode) {
+  if (!/^\d{13}$/.test(barcode)) return false;
+  const digits = barcode.split('').map(Number);
+  const sum = digits.slice(0, 12).reduce((acc, d, i) => acc + d * (i % 2 === 0 ? 1 : 3), 0);
+  return (10 - (sum % 10)) % 10 === digits[12];
+}
+
 export default function ScannerPage() {
   const [isVisitor, setIsVisitor] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
   const [barcodeInput, setBarcodeInput] = useState('');
   const [cartCount, setCartCount] = useState(0);
   const [cartTotal, setCartTotal] = useState(0);
-  const [scannerReady, setScannerReady] = useState(false);
+  const [feedback, setFeedback] = useState(null);
   const scannerRef = useRef(null);
   const isScanning = useRef(false);
 
@@ -27,15 +34,23 @@ export default function ScannerPage() {
     setCartTotal(total.toFixed(2));
   }
 
-  function initScanner() {
-    if (isVisitor || !window.Html5Qrcode || scannerRef.current) return;
+  function showFeedback(type, message) {
+    setFeedback({ type, message });
+    setTimeout(() => setFeedback(null), 2500);
+  }
 
+  function initScanner() {
+    if (!window.Html5Qrcode || scannerRef.current) return;
     const html5QrCode = new window.Html5Qrcode('reader');
     scannerRef.current = html5QrCode;
 
     html5QrCode.start(
       { facingMode: 'environment' },
-      { fps: 10, qrbox: { width: 250, height: 150 } },
+      {
+        fps: 10,
+        qrbox: { width: 320, height: 150 },
+        disableFlip: false,
+      },
       (decodedText) => {
         if (isScanning.current) return;
         isScanning.current = true;
@@ -43,17 +58,22 @@ export default function ScannerPage() {
         setTimeout(() => { isScanning.current = false; }, 3000);
       },
       () => {}
-    ).catch(() => alert("Impossible d'accéder à la caméra. Vérifiez les permissions."));
+    ).catch(() => showFeedback('error', "Impossible d'accéder à la caméra."));
   }
 
   function handleScanSuccess(barcode) {
+    if (!validateEAN13(barcode)) {
+      showFeedback('error', 'Code-barres invalide.');
+      return;
+    }
     const products = JSON.parse(localStorage.getItem('products_cache') || '[]');
     const product = products.find(p => String(p.barcode) === String(barcode));
     if (product) {
       if (navigator.vibrate) navigator.vibrate(100);
       addToBasket(product);
+      showFeedback('success', `✓ ${product.name} ajouté !`);
     } else {
-      alert('Produit non trouvé dans la base de données.');
+      showFeedback('error', 'Produit non trouvé.');
     }
   }
 
@@ -62,6 +82,7 @@ export default function ScannerPage() {
     basket.push(product);
     localStorage.setItem('user_basket', JSON.stringify(basket));
     updateCartSummary();
+    window.dispatchEvent(new Event('cart-updated'));
   }
 
   function submitManualBarcode() {
@@ -70,132 +91,134 @@ export default function ScannerPage() {
       setBarcodeInput('');
       setManualOpen(false);
     } else {
-      alert('Le code-barres doit contenir exactement 13 chiffres.');
+      showFeedback('error', 'Le code doit contenir 13 chiffres.');
     }
   }
 
   if (isVisitor) return (
-    <div className="relative h-screen max-w-md mx-auto bg-black shadow-2xl overflow-hidden flex items-center justify-center px-6">
-      <div className="w-full max-w-sm bg-white dark:bg-gray-900 rounded-[2rem] p-6 shadow-2xl border border-gray-100 dark:border-white/10 text-center">
-        <div className="mx-auto size-14 rounded-2xl bg-green-100 flex items-center justify-center mb-4">
-          <span className="text-3xl">🔒</span>
+    <div className="h-[calc(100vh-73px)] max-w-md mx-auto bg-black flex items-center justify-center px-6">
+      <div className="w-full bg-card-bg rounded-[2rem] p-6 text-center">
+        <div className="mx-auto size-14 rounded-2xl bg-primary-light flex items-center justify-center mb-4 text-3xl">🔒</div>
+        <h2 className="text-lg font-black text-text-primary mb-2">Scanner désactivé</h2>
+        <p className="text-sm text-text-secondary leading-relaxed mb-6">Créez un compte pour utiliser cette fonctionnalité.</p>
+        <div className="grid grid-cols-2 gap-3">
+          <Link href="/" className="py-4 rounded-2xl bg-primary text-white font-black text-xs uppercase tracking-widest text-center">Se connecter</Link>
+          <Link href="/" className="py-4 rounded-2xl bg-primary-light text-forest-green font-black text-xs uppercase tracking-widest text-center">Créer un compte</Link>
         </div>
-        <h2 className="text-lg font-black text-green-900 dark:text-white mb-2">Scanner désactivé</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-          Créez un compte et vérifiez-le pour utiliser cette fonctionnalité.
-        </p>
-        <div className="grid grid-cols-2 gap-3 mt-6">
-          <Link href="/" className="w-full py-4 rounded-2xl bg-green-600 text-white font-black text-xs uppercase tracking-widest text-center">
-            Se connecter
-          </Link>
-          <Link href="/" className="w-full py-4 rounded-2xl bg-green-100 text-green-700 font-black text-xs uppercase tracking-widest text-center">
-            Créer un compte
-          </Link>
-        </div>
-        <Link href="/home" className="block mt-5 text-xs font-bold text-gray-400 hover:text-gray-500">
-          Retour à l'accueil
-        </Link>
+        <Link href="/home" className="block mt-5 text-xs font-bold text-text-muted">Retour à l'accueil</Link>
       </div>
     </div>
   );
 
   return (
     <>
-      <Script
-        src="https://unpkg.com/html5-qrcode"
-        onLoad={() => {
-          setScannerReady(true);
-          initScanner();
-        }}
-      />
+      <Script src="https://unpkg.com/html5-qrcode" onLoad={initScanner} />
 
-      <div className="relative h-screen max-w-md mx-auto bg-black shadow-2xl overflow-hidden">
+      <style>{`
+        #reader { border: none !important; }
+        #reader video { border-radius: 16px; }
+        #reader__scan_region { background: transparent !important; }
+        #reader__dashboard { display: none !important; }
+        #reader__header_message { display: none !important; }
+        #reader img { display: none !important; }
+        #reader__scan_region img { display: none !important; }
+        #reader video { border-radius: 0px; height: 100% !important; width: 100% !important; object-fit: cover !important; }
+      `}</style>
 
-        <div className="absolute inset-0 z-0">
-          <div id="reader" className="w-full h-full opacity-90" />
+      <div className="h-[calc(100vh-73px)] max-w-md mx-auto bg-gray-950 flex flex-col overflow-hidden">
+
+        {/* Zone caméra — prend 55% de l'écran */}
+        <div className="relative flex-[6] overflow-hidden pt-30">
+          <div id="reader" className="w-full h-full" />
+
+          {/* Feedback message */}
+          {feedback && (
+            <div className={`absolute bottom-3 left-4 right-4 px-4 py-3 rounded-2xl text-sm font-bold text-center z-20 ${
+              feedback.type === 'success' ? 'bg-primary text-white' :
+              feedback.type === 'warn' ? 'bg-amber-400 text-amber-900' :
+              'bg-red-500 text-white'
+            }`}>
+              {feedback.message}
+            </div>
+          )}
         </div>
 
-        <div className="absolute inset-0 z-10 flex flex-col">
+        {/* Zone contrôles — prend 44.5% de l'écran */}
+        <div className="flex-[4.5] flex flex-col justify-between px-5 py-4 bg-gray-950">
 
-          <div className="flex-1 bg-black/50" />
+          <p className="text-white/50 text-xs text-center">
+            Alignez le code-barres dans le cadre
+          </p>
 
-          <div className="relative h-64 w-full flex justify-center items-center bg-transparent">
-            <div className="relative w-full h-full mx-10">
-              <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-green-400" />
-              <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-green-400" />
-              <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-green-400" />
-              <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-green-400" />
+          {/* Saisie manuelle */}
+          {manualOpen && (
+            <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20">
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={13}
+                value={barcodeInput}
+                onChange={e => setBarcodeInput(e.target.value.replace(/\D/g, ''))}
+                className="w-full p-3 rounded-xl text-center text-lg font-bold bg-white/20 border border-white/30 text-white placeholder-white/40 mb-3"
+                placeholder="2000000000000"
+                autoFocus
+              />
+              <div className="grid grid-cols-3 gap-2">
+                {['1','2','3','4','5','6','7','8','9','0'].map(n => (
+                  <button
+                    key={n}
+                    onClick={() => setBarcodeInput(v => v.length < 13 ? v + n : v)}
+                    className="py-2.5 text-lg font-bold rounded-xl bg-white/20 text-white active:bg-primary transition-colors"
+                  >
+                    {n}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setBarcodeInput(v => v.slice(0, -1))}
+                  className="py-2.5 text-lg font-bold rounded-xl bg-white/10 text-white active:bg-white/20"
+                >
+                  ⌫
+                </button>
+                <button
+                  onClick={submitManualBarcode}
+                  className="col-span-2 py-2.5 text-sm font-black rounded-xl bg-primary text-white uppercase tracking-widest active:scale-95 transition-all"
+                >
+                  Valider
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="flex-[1.5] bg-black/50 flex flex-col items-center px-10 text-center">
-            <p className="text-white text-sm font-medium leading-relaxed mt-8">
-              Alignez le code-barres de l'article dans le rectangle vert.
-            </p>
-
+          <div className="space-y-3">
             <button
               onClick={() => setManualOpen(o => !o)}
-              className="mt-8 flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/20 rounded-xl text-white text-xs font-bold uppercase tracking-widest active:scale-95 transition-all"
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-white/10 border border-white/20 rounded-2xl text-white text-xs font-bold uppercase tracking-widest active:scale-95 transition-all"
             >
-              ⌨️ Saisie manuelle
+              ⌨️ {manualOpen ? 'Fermer la saisie' : 'Saisie manuelle'}
             </button>
 
-            {manualOpen && (
-              <div className="mt-4 w-full max-w-xs bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/20">
-                <p className="text-white text-sm mb-2">Entrez le code-barres (13 chiffres) :</p>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={13}
-                  value={barcodeInput}
-                  onChange={e => setBarcodeInput(e.target.value.replace(/\D/g, ''))}
-                  className="w-full p-2 rounded-lg text-center text-lg font-bold bg-white/20 border border-white/30 text-white placeholder-white/50"
-                  placeholder="1234567890123"
-                />
-                <div className="grid grid-cols-3 gap-2 mt-4">
-                  {['1','2','3','4','5','6','7','8','9','0'].map(n => (
-                    <button
-                      key={n}
-                      onClick={() => setBarcodeInput(v => v.length < 13 ? v + n : v)}
-                      className="py-3 text-xl font-bold rounded-lg bg-white text-green-900 active:bg-green-400"
-                    >
-                      {n}
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => setBarcodeInput(v => v.slice(0, -1))}
-                    className="py-3 text-xl font-bold rounded-lg bg-white text-green-900 active:bg-green-400"
-                  >
-                    ⌫
-                  </button>
-                  <button
-                    onClick={submitManualBarcode}
-                    className="col-span-2 py-3 text-sm font-black rounded-lg bg-green-400 text-green-900 uppercase tracking-widest active:scale-95"
-                  >
-                    OK
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <div className="mt-12 mb-32 w-full">
-              <Link href="/panier" className="flex items-center justify-between bg-green-400 p-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all">
-                <div className="flex items-center gap-3 text-green-900">
-                  <div className="relative">
-                    <span className="text-xl">🛒</span>
-                    <span className="absolute -top-2 -right-2 bg-white text-[10px] font-black px-1.5 rounded-full border border-green-400">
+            <Link
+              href="/panier"
+              className="flex items-center justify-between bg-primary px-5 py-4 rounded-2xl active:scale-[0.98] transition-all"
+            >
+              <div className="flex items-center gap-3 text-white">
+                <div className="relative">
+                  <span className="text-xl">🛒</span>
+                  {cartCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-white text-primary text-[10px] font-black px-1.5 rounded-full">
                       {cartCount}
                     </span>
-                  </div>
-                  <span className="font-bold text-sm">Voir mon panier</span>
+                  )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-black text-green-900/60 uppercase">Total:</span>
-                  <span className="font-black text-green-900">{cartTotal} CHF</span>
-                </div>
-              </Link>
-            </div>
+                <span className="font-bold text-sm">Voir mon panier</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black text-white/60 uppercase">Total:</span>
+                <span className="font-black text-white">{cartTotal} CHF</span>
+              </div>
+            </Link>
           </div>
+
         </div>
       </div>
     </>

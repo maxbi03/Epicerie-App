@@ -192,9 +192,9 @@ export default function IndexPage() {
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Déjà client ?</h2>
               <p className="text-sm text-gray-500">Connectez-vous pour accéder au magasin</p>
             </div>
-            <div className="space-y-4">
-              <input
-                type="email"
+            <div className="space-y-4" data-lpignore="true">
+              <input 
+                type="email" autoComplete="username"
                 placeholder="Adresse email"
                 value={loginEmail}
                 onChange={e => setLoginEmail(e.target.value)}
