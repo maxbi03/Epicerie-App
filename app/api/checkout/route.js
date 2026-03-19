@@ -39,7 +39,7 @@ export async function POST(request) {
     console.log('Creating Mollie payment:', JSON.stringify(paymentData));
     const payment = await mollieClient.payments.create(paymentData);
 
-    return NextResponse.json({ checkoutUrl: payment.getCheckoutUrl() });
+    return NextResponse.json({ checkoutUrl: payment.getCheckoutUrl(), paymentId: payment.id });
   } catch (error) {
     console.error('Mollie payment error:', error);
     return NextResponse.json(

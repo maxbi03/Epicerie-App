@@ -60,6 +60,10 @@ export default function PanierPage() {
       console.log('Checkout response:', data);
       if (!res.ok) throw new Error(data.error || 'Erreur de paiement');
       if (!data.checkoutUrl) throw new Error('Pas d\'URL de paiement reçue');
+      // Store payment ID for verification after redirect
+      if (data.paymentId) {
+        localStorage.setItem('pending_payment_id', data.paymentId);
+      }
       window.location.href = data.checkoutUrl;
     } catch (err) {
       console.error('Checkout error:', err);

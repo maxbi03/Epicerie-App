@@ -6,27 +6,23 @@ const mollieClient = createMollieClient({ apiKey: process.env.MOLLIE_API_KEY });
 
 export async function POST(request) {
   try {
-    const body = await request.text();
-    const params = new URLSearchParams(body);
-    const paymentId = params.get('id');
+    const { paymentId } = await request.json();
 
     if (!paymentId) {
       return NextResponse.json({ error: 'Missing payment ID' }, { status: 400 });
     }
 
     const payment = await mollieClient.payments.get(paymentId);
-    console.log(`Payment ${paymentId}: status=${payment.status}`);
 
     if (payment.status === 'paid') {
       const items = JSON.parse(payment.metadata.items);
-      console.log('Payment successful! Updating stock...');
       const result = await updateStockAfterPayment(items);
-      console.log('Stock update result:', result);
+      return NextResponse.json({ status: 'paid', stockUpdated: result.success });
     }
 
-    return NextResponse.json({ received: true });
+    return NextResponse.json({ status: payment.status });
   } catch (error) {
-    console.error('Webhook error:', error);
-    return NextResponse.json({ error: 'Webhook error' }, { status: 500 });
+    console.error('Verify error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
