@@ -61,8 +61,8 @@ export default function StockPage() {
 
   return (
     <>
-      <main className="relative flex min-h-screen max-w-md mx-auto flex-col">
-        <div className="flex-1 px-5 pt-4 pb-24">
+      <main className="relative flex h-screen max-w-md mx-auto flex-col overflow-hidden">
+        <div className="px-5 pt-4 shrink-0">
 
           <div className="flex justify-between items-end mb-6">
             <div>
@@ -97,7 +97,9 @@ export default function StockPage() {
               </button>
             ))}
           </div>
+        </div>
 
+        <div className="flex-1 overflow-y-auto px-5 pb-24">
           <div className="space-y-3">
             {loadingProducts ? (
               <div className="flex justify-center py-10">
