@@ -20,7 +20,7 @@ function normalizeProduct(row) {
 
 export async function GET() {
   const { data, error } = await getSupabaseAdmin()
-    .from('products_with_stock')
+    .from('products')
     .select('*')
     .order('name', { ascending: true });
 

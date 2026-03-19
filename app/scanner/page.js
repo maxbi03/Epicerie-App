@@ -6,10 +6,7 @@ import Link from 'next/link';
 import Script from 'next/script';
 
 function validateEAN13(barcode) {
-  if (!/^\d{13}$/.test(barcode)) return false;
-  const digits = barcode.split('').map(Number);
-  const sum = digits.slice(0, 12).reduce((acc, d, i) => acc + d * (i % 2 === 0 ? 1 : 3), 0);
-  return (10 - (sum % 10)) % 10 === digits[12];
+  return /^\d{13}$/.test(barcode);
 }
 
 export default function ScannerPage() {
@@ -26,6 +23,12 @@ export default function ScannerPage() {
     const visitor = sessionStorage.getItem('app_mode') === 'visitor';
     setIsVisitor(visitor);
     updateCartSummary();
+
+    // Load products into cache for barcode matching
+    fetchProducts().then(products => {
+      localStorage.setItem('products_cache', JSON.stringify(products));
+      console.log('Products cache refreshed:', products.length, 'products');
+    }).catch(err => console.error('Failed to load products:', err));
   }, []);
 
   function updateCartSummary() {
@@ -51,6 +54,9 @@ export default function ScannerPage() {
         fps: 10,
         qrbox: { width: 320, height: 150 },
         disableFlip: false,
+        formatsToSupport: [
+          window.Html5QrcodeSupportedFormats?.EAN_13,
+        ].filter(Boolean),
       },
       (decodedText) => {
         if (isScanning.current) return;
@@ -63,18 +69,25 @@ export default function ScannerPage() {
   }
 
   function handleScanSuccess(barcode) {
+    console.log('Scanned barcode:', barcode, 'length:', barcode.length);
+
     if (!validateEAN13(barcode)) {
-      showFeedback('error', 'Code-barres invalide.');
+      console.log('EAN13 validation failed for:', barcode);
+      showFeedback('error', `Code-barres invalide: ${barcode}`);
       return;
     }
+
     const products = JSON.parse(localStorage.getItem('products_cache') || '[]');
+    console.log('Products in cache:', products.length);
+    console.log('Barcodes in cache:', products.map(p => p.barcode).filter(Boolean));
+
     const product = products.find(p => String(p.barcode) === String(barcode));
     if (product) {
       if (navigator.vibrate) navigator.vibrate(100);
       addToBasket(product);
       showFeedback('success', `✓ ${product.name} ajouté !`);
     } else {
-      showFeedback('error', 'Produit non trouvé.');
+      showFeedback('error', `Produit non trouvé pour: ${barcode}`);
     }
   }
 
