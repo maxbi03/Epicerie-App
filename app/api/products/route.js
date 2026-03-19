@@ -2,7 +2,7 @@ import { getSupabaseAdmin } from '../../lib/supabaseServer';
 import { NextResponse } from 'next/server';
 
 function normalizeProduct(row) {
-  const stock = row.stock_total ?? row.stock ?? row.quantity ?? row.qty ?? 0;
+  const stock = row.stock_shelf ?? row.stock_total ?? row.stock ?? row.quantity ?? row.qty ?? 0;
   const barcode = row.barcode ?? row.ean ?? row.ean13 ?? row.code_barres ?? row.codebarres;
   return {
     id: row.id,
