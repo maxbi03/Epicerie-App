@@ -5,6 +5,8 @@ import Link from 'next/link';
 
 export default function PanierPage() {
   const [basket, setBasket] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem('user_basket') || '[]');
@@ -43,6 +45,28 @@ export default function PanierPage() {
 
   const groupedList = Object.values(grouped);
   const total = groupedList.reduce((sum, p) => sum + p.price * p.quantity, 0);
+
+  async function handleCheckout() {
+    console.log('handleCheckout called', { groupedList, total });
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: groupedList, total }),
+      });
+      const data = await res.json();
+      console.log('Checkout response:', data);
+      if (!res.ok) throw new Error(data.error || 'Erreur de paiement');
+      if (!data.checkoutUrl) throw new Error('Pas d\'URL de paiement reçue');
+      window.location.href = data.checkoutUrl;
+    } catch (err) {
+      console.error('Checkout error:', err);
+      setError(err.message);
+      setIsLoading(false);
+    }
+  }
 
   return (
     <div className="relative flex h-screen max-w-md mx-auto flex-col bg-white dark:bg-gray-900 shadow-2xl overflow-hidden border-x border-gray-200 dark:border-white/10">
@@ -116,16 +140,22 @@ export default function PanierPage() {
             <span>{total.toFixed(2)} CHF</span>
           </div>
         </div>
+        {error && (
+          <div className="mb-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+            <p className="text-xs text-red-600 dark:text-red-400 font-medium">{error}</p>
+          </div>
+        )}
         <div className="rounded-3xl p-1 border border-gray-100 dark:border-white/10">
           <button
-            disabled={groupedList.length === 0}
+            onClick={handleCheckout}
+            disabled={groupedList.length === 0 || isLoading}
             className={`w-full py-4 rounded-2xl font-black text-sm uppercase tracking-[0.1em] transition-all
-              ${groupedList.length === 0
+              ${groupedList.length === 0 || isLoading
                 ? 'bg-gray-200 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
                 : 'bg-green-600 text-white hover:brightness-105 active:scale-[0.98]'
               }`}
           >
-            {groupedList.length === 0 ? 'Panier vide' : `Payer ${total.toFixed(2)} CHF`}
+            {isLoading ? 'Redirection...' : groupedList.length === 0 ? 'Panier vide' : `Payer ${total.toFixed(2)} CHF`}
           </button>
         </div>
       </div>
