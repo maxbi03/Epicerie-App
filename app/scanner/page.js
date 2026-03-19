@@ -54,15 +54,18 @@ export default function ScannerPage() {
         fps: 10,
         qrbox: { width: 320, height: 150 },
         disableFlip: false,
-        formatsToSupport: [
-          window.Html5QrcodeSupportedFormats?.EAN_13,
-        ].filter(Boolean),
       },
       (decodedText) => {
+        // Ignore anything that's not 13 digits
+        if (!/^\d{13}$/.test(decodedText)) return;
         if (isScanning.current) return;
         isScanning.current = true;
-        handleScanSuccess(decodedText);
-        setTimeout(() => { isScanning.current = false; }, 3000);
+        try {
+          handleScanSuccess(decodedText);
+        } catch (e) {
+          console.error('Scan error:', e);
+        }
+        setTimeout(() => { isScanning.current = false; }, 1500);
       },
       () => {}
     ).catch(() => showFeedback('error', "Impossible d'accéder à la caméra."));
