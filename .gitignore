@@ -69,3 +69,5 @@ public/sw.js
 public/workbox-*.js
 # Legacy files
 /legacy/
+
+.claude/
