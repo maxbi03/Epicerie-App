@@ -70,4 +70,6 @@ public/workbox-*.js
 # Legacy files
 /legacy/
 
-certificates
+certificates/
+
+.claude/
