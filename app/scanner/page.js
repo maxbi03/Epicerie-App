@@ -16,6 +16,8 @@ export default function ScannerPage() {
   const [cartCount, setCartCount] = useState(0);
   const [cartTotal, setCartTotal] = useState(0);
   const [feedback, setFeedback] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [quantity, setQuantity] = useState(1);
   const scannerRef = useRef(null);
   const isScanning = useRef(false);
 
@@ -24,12 +26,32 @@ export default function ScannerPage() {
     setIsVisitor(visitor);
     updateCartSummary();
 
-    // Load products into cache for barcode matching
     fetchProducts().then(products => {
       localStorage.setItem('products_cache', JSON.stringify(products));
-      console.log('Products cache refreshed:', products.length, 'products');
     }).catch(err => console.error('Failed to load products:', err));
+
+    // Si le script Html5Qrcode est déjà chargé (retour sur la page),
+    // on relance le scanner directement sans attendre onLoad
+    if (window.Html5Qrcode) {
+      initScanner();
+    }
+
+    return () => {
+      stopScanner();
+    };
   }, []);
+
+  async function stopScanner() {
+    if (scannerRef.current) {
+      try {
+        await scannerRef.current.stop();
+        scannerRef.current.clear();
+      } catch (e) {
+        // Ignore les erreurs si déjà stoppé
+      }
+      scannerRef.current = null;
+    }
+  }
 
   function updateCartSummary() {
     const basket = JSON.parse(localStorage.getItem('user_basket') || '[]');
@@ -45,6 +67,7 @@ export default function ScannerPage() {
 
   function initScanner() {
     if (!window.Html5Qrcode || scannerRef.current) return;
+
     const html5QrCode = new window.Html5Qrcode('reader');
     scannerRef.current = html5QrCode;
 
@@ -56,7 +79,6 @@ export default function ScannerPage() {
         disableFlip: false,
       },
       (decodedText) => {
-        // Ignore anything that's not 13 digits
         if (!/^\d{13}$/.test(decodedText)) return;
         if (isScanning.current) return;
         isScanning.current = true;
@@ -72,34 +94,37 @@ export default function ScannerPage() {
   }
 
   function handleScanSuccess(barcode) {
-    console.log('Scanned barcode:', barcode, 'length:', barcode.length);
-
     if (!validateEAN13(barcode)) {
-      console.log('EAN13 validation failed for:', barcode);
       showFeedback('error', `Code-barres invalide: ${barcode}`);
       return;
     }
 
     const products = JSON.parse(localStorage.getItem('products_cache') || '[]');
-    console.log('Products in cache:', products.length);
-    console.log('Barcodes in cache:', products.map(p => p.barcode).filter(Boolean));
-
     const product = products.find(p => String(p.barcode) === String(barcode));
+
     if (product) {
       if (navigator.vibrate) navigator.vibrate(100);
-      addToBasket(product);
-      showFeedback('success', `✓ ${product.name} ajouté !`);
+      // Ouvre la fiche produit automatiquement
+      setQuantity(1);
+      setSelectedProduct(product);
     } else {
-      showFeedback('error', `Produit non trouvé pour: ${barcode}`);
+      showFeedback('error', `Produit non trouvé: ${barcode}`);
     }
   }
 
-  function addToBasket(product) {
+  function addToBasket(product, qty) {
     const basket = JSON.parse(localStorage.getItem('user_basket') || '[]');
-    basket.push(product);
+    for (let i = 0; i < qty; i++) basket.push(product);
     localStorage.setItem('user_basket', JSON.stringify(basket));
     updateCartSummary();
     window.dispatchEvent(new Event('cart-updated'));
+  }
+
+  function handleAddToCart() {
+    if (!selectedProduct) return;
+    addToBasket(selectedProduct, quantity);
+    showFeedback('success', `✓ ${quantity}× ${selectedProduct.name} ajouté !`);
+    setSelectedProduct(null);
   }
 
   function submitManualBarcode() {
@@ -144,11 +169,10 @@ export default function ScannerPage() {
 
       <div className="h-[calc(100vh-73px)] max-w-md mx-auto bg-gray-950 flex flex-col overflow-hidden">
 
-        {/* Zone caméra — prend 55% de l'écran */}
+        {/* Zone caméra */}
         <div className="relative flex-[6] overflow-hidden pt-30">
           <div id="reader" className="w-full h-full" />
 
-          {/* Feedback message */}
           {feedback && (
             <div className={`absolute bottom-3 left-4 right-4 px-4 py-3 rounded-2xl text-sm font-bold text-center z-20 ${
               feedback.type === 'success' ? 'bg-primary text-white' :
@@ -160,14 +184,12 @@ export default function ScannerPage() {
           )}
         </div>
 
-        {/* Zone contrôles — prend 44.5% de l'écran */}
+        {/* Zone contrôles */}
         <div className="flex-[4.5] flex flex-col justify-between px-5 py-4 bg-gray-950">
-
           <p className="text-white/50 text-xs text-center">
             Alignez le code-barres dans le cadre
           </p>
 
-          {/* Saisie manuelle */}
           {manualOpen && (
             <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20">
               <input
@@ -235,9 +257,151 @@ export default function ScannerPage() {
               </div>
             </Link>
           </div>
-
         </div>
       </div>
+
+      {/* Modal fiche produit */}
+      {selectedProduct && (
+        <div
+          className="fixed inset-0 backdrop-blur-sm bg-black/60 z-50 flex items-end justify-center"
+          onClick={() => setSelectedProduct(null)}
+        >
+          <div
+            className="bg-white dark:bg-gray-900 rounded-t-3xl w-full max-w-md overflow-y-auto max-h-[85vh]"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header modal */}
+            <div className="sticky top-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md px-5 py-4 flex items-center justify-between border-b border-gray-100 dark:border-white/10">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Fiche produit</h2>
+              <button
+                onClick={() => setSelectedProduct(null)}
+                className="size-9 flex items-center justify-center rounded-full bg-gray-100 dark:bg-white/10 text-gray-500 hover:bg-gray-200 transition-colors"
+              >✕</button>
+            </div>
+
+            <div className="p-5 space-y-5">
+              {/* Image */}
+              {selectedProduct.image && (
+                <div className="w-full h-52 rounded-2xl overflow-hidden bg-gray-50 dark:bg-white/5">
+                  <img
+                    src={selectedProduct.image}
+                    className="w-full h-full object-cover"
+                    alt={selectedProduct.name}
+                  />
+                </div>
+              )}
+
+              {/* Nom + badge */}
+              <div>
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
+                    {selectedProduct.name}
+                  </h3>
+                  {selectedProduct.badge && (
+                    <span className="shrink-0 text-[10px] font-black uppercase tracking-widest bg-green-100 text-green-700 px-2 py-1 rounded-lg">
+                      {selectedProduct.badge}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {selectedProduct.category}
+                </p>
+              </div>
+
+              {/* Prix + stock */}
+              <div className="flex items-center justify-between bg-gray-50 dark:bg-white/5 rounded-2xl p-4">
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Prix unitaire</p>
+                  <p className="text-2xl font-black text-gray-900 dark:text-white">
+                    {selectedProduct.price.toFixed(2)} <span className="text-sm font-bold">CHF</span>
+                  </p>
+                  {selectedProduct.unit && (
+                    <p className="text-xs text-gray-400">/ {selectedProduct.unit}</p>
+                  )}
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Stock</p>
+                  {selectedProduct.stock === 0 ? (
+                    <span className="text-xs font-black text-red-500 bg-red-50 px-2 py-1 rounded-lg">Rupture</span>
+                  ) : selectedProduct.stock <= 5 ? (
+                    <span className="text-xs font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg">
+                      {selectedProduct.stock} restants
+                    </span>
+                  ) : (
+                    <span className="text-xs font-black text-green-600 bg-green-50 px-2 py-1 rounded-lg">
+                      En stock
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Infos produit */}
+              <div className="space-y-3">
+                {selectedProduct.origin && (
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-white/5 rounded-xl">
+                    <span className="text-xl">🌍</span>
+                    <div>
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Provenance</p>
+                      <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{selectedProduct.origin}</p>
+                    </div>
+                  </div>
+                )}
+                {selectedProduct.barcode && (
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-white/5 rounded-xl">
+                    <span className="text-xl">📦</span>
+                    <div>
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Code-barres</p>
+                      <p className="text-sm font-bold text-gray-800 dark:text-gray-200 font-mono">{selectedProduct.barcode}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Note infos nutritionnelles */}
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-xl p-3">
+                <p className="text-xs text-amber-700 dark:text-amber-300">
+                  ℹ️ Les informations nutritionnelles détaillées seront disponibles prochainement.
+                </p>
+              </div>
+            </div>
+
+            {/* Footer — quantité + ajout panier */}
+            <div className="sticky bottom-0 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-white/10 p-5">
+              <div className="flex items-center justify-between gap-4">
+                {/* Sélecteur quantité */}
+                <div className="flex items-center gap-4 bg-gray-50 dark:bg-white/5 rounded-2xl px-4 py-2">
+                  <button
+                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                    className="size-9 flex items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-sm font-bold text-gray-700 dark:text-white text-lg active:scale-90 transition-all"
+                  >−</button>
+                  <span className="text-lg font-black text-gray-900 dark:text-white min-w-[2ch] text-center">
+                    {quantity}
+                  </span>
+                  <button
+                    onClick={() => setQuantity(q => q + 1)}
+                    className="size-9 flex items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-sm font-bold text-gray-700 dark:text-white text-lg active:scale-90 transition-all"
+                  >+</button>
+                </div>
+
+                {/* Bouton ajouter */}
+                <button
+                  onClick={handleAddToCart}
+                  disabled={selectedProduct.stock === 0}
+                  className="flex-1 bg-primary text-white font-black py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span>🛒</span>
+                  <span>
+                    {selectedProduct.stock === 0
+                      ? 'Indisponible'
+                      : `Ajouter · ${(selectedProduct.price * quantity).toFixed(2)} CHF`
+                    }
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
