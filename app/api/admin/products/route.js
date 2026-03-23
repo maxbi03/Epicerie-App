@@ -41,9 +41,23 @@ export async function POST(request) {
   const body = await request.json();
   const { name, barcode, price_chf, quantity, category, image_url, producer, description, badge, stock_shelf } = body;
 
+  const cleanName = (name || '').trim();
+  const cleanBarcode = barcode && barcode.trim() !== '' ? barcode.trim() : null;
+
+  // Check uniqueness
+  const sb = getSupabaseAdmin();
+  if (cleanName) {
+    const { count } = await sb.from('products').select('*', { count: 'exact', head: true }).ilike('name', cleanName);
+    if (count > 0) return NextResponse.json({ error: 'Un produit avec ce nom existe déjà' }, { status: 409 });
+  }
+  if (cleanBarcode) {
+    const { count } = await sb.from('products').select('*', { count: 'exact', head: true }).eq('barcode', cleanBarcode);
+    if (count > 0) return NextResponse.json({ error: 'Un produit avec ce code-barres existe déjà' }, { status: 409 });
+  }
+
   const product = {
-    name: name || '',
-    barcode: barcode || null,
+    name: cleanName,
+    barcode: cleanBarcode,
     price_chf: Number(price_chf || 0),
     category: category || 'Divers',
     image_url: image_url || '',
@@ -55,7 +69,7 @@ export async function POST(request) {
     is_active: isComplete(body),
   };
 
-  const { data, error } = await getSupabaseAdmin()
+  const { data, error } = await sb
     .from('products')
     .insert(product)
     .select()
@@ -86,12 +100,25 @@ export async function PATCH(request) {
   for (const key of ALLOWED) {
     if (rawFields[key] !== undefined) fields[key] = rawFields[key];
   }
+  if (fields.barcode !== undefined) fields.barcode = fields.barcode && String(fields.barcode).trim() !== '' ? String(fields.barcode).trim() : null;
+  if (fields.name !== undefined) fields.name = (fields.name || '').trim();
   if (fields.price_chf != null) fields.price_chf = Number(fields.price_chf);
   if (fields.stock_shelf != null) fields.stock_shelf = Number(fields.stock_shelf);
   if (fields.stock_back != null) fields.stock_back = Number(fields.stock_back);
 
+  // Check uniqueness
+  const sb = getSupabaseAdmin();
+  if (fields.name) {
+    const { count } = await sb.from('products').select('*', { count: 'exact', head: true }).ilike('name', fields.name).neq('id', id);
+    if (count > 0) return NextResponse.json({ error: 'Un produit avec ce nom existe déjà' }, { status: 409 });
+  }
+  if (fields.barcode) {
+    const { count } = await sb.from('products').select('*', { count: 'exact', head: true }).eq('barcode', fields.barcode).neq('id', id);
+    if (count > 0) return NextResponse.json({ error: 'Un produit avec ce code-barres existe déjà' }, { status: 409 });
+  }
+
   // Fetch current product to merge and recalculate is_active
-  const { data: current } = await getSupabaseAdmin()
+  const { data: current } = await sb
     .from('products')
     .select('*')
     .eq('id', id)
@@ -102,7 +129,7 @@ export async function PATCH(request) {
     fields.is_active = isComplete(merged);
   }
 
-  const { data, error } = await getSupabaseAdmin()
+  const { data, error } = await sb
     .from('products')
     .update(fields)
     .eq('id', id)

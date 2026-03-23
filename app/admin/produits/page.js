@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { fetchAdminProducts, createProduct, updateProduct, deleteProduct } from '../../lib/adminService';
-import { Pencil, X } from 'lucide-react';
+import { Pencil, X, AlertTriangle } from 'lucide-react';
 
 const CATEGORIES_FILTER = ['Tous', 'Crèmerie', 'Boulangerie', 'Boissons', 'Epicerie', 'Fruits & Légumes', 'Divers'];
 const CATEGORIES = ['Crèmerie', 'Boulangerie', 'Boissons', 'Epicerie', 'Fruits & Légumes', 'Divers'];
@@ -18,6 +18,7 @@ export default function AdminProduits() {
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('Tous');
+  const [stockFilter, setStockFilter] = useState('all');
   const [error, setError] = useState('');
 
   async function loadProducts() {
@@ -72,6 +73,7 @@ export default function AdminProduits() {
       setLoading(true);
       await loadProducts();
     } catch (err) {
+      setShowForm(false);
       setError(err.message);
     } finally {
       setSaving(false);
@@ -95,7 +97,19 @@ export default function AdminProduits() {
   const filtered = products.filter(p => {
     const matchCat = activeCategory === 'Tous' || p.category === activeCategory;
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
-    return matchCat && matchSearch;
+    if (!matchCat || !matchSearch) return false;
+    const s = p.stock_shelf ?? 0;
+    const b = p.stock_back ?? 0;
+    if (stockFilter === 'low') {
+      return p.is_active !== false && (s > 0 || b > 0) && (s <= 5 || b <= 5);
+    }
+    if (stockFilter === 'out') {
+      return p.is_active !== false && s === 0 && b === 0;
+    }
+    if (stockFilter === 'incomplete') {
+      return p.is_active === false;
+    }
+    return true;
   });
 
   return (
@@ -114,7 +128,15 @@ export default function AdminProduits() {
           </button>
         </div>
 
-        {error && <div className="text-red-500 text-xs font-medium mb-3 p-3 bg-red-50 rounded-xl">{error}</div>}
+        {error && (
+          <div className="mb-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl flex items-start gap-3">
+            <AlertTriangle size={18} className="text-red-500 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-bold text-red-600 dark:text-red-400">{error}</p>
+            </div>
+            <button onClick={() => setError('')} className="text-red-400 hover:text-red-600 shrink-0"><X size={16} /></button>
+          </div>
+        )}
 
         <input
           type="text"
@@ -124,7 +146,7 @@ export default function AdminProduits() {
           className="w-full px-4 py-3 rounded-2xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white mb-3"
         />
 
-        <div className="flex gap-2 overflow-x-auto pb-3 mb-3">
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-2">
           {CATEGORIES_FILTER.map(cat => (
             <button
               key={cat}
@@ -136,6 +158,31 @@ export default function AdminProduits() {
                 }`}
             >
               {cat}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex gap-2 pb-3 mb-3">
+          {[
+            { key: 'all', label: 'Tous' },
+            { key: 'low', label: 'Stock faible' },
+            { key: 'out', label: 'Rupture' },
+            { key: 'incomplete', label: 'Incomplets' },
+          ].map(f => (
+            <button
+              key={f.key}
+              onClick={() => setStockFilter(f.key)}
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl whitespace-nowrap shrink-0 transition-all
+                ${stockFilter === f.key
+                  ? f.key === 'low' ? 'bg-amber-500 text-white'
+                  : f.key === 'out' ? 'bg-red-500 text-white'
+                  : f.key === 'incomplete' ? 'bg-red-400 text-white'
+                  : 'bg-primary text-white'
+                  : 'bg-card-bg text-text-secondary border border-border-light'
+                }`}
+            >
+              {f.key !== 'all' && <AlertTriangle size={12} />}
+              {f.label}
             </button>
           ))}
         </div>
@@ -206,7 +253,7 @@ export default function AdminProduits() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">Code-barres</label>
-                  <input type="text" placeholder="EAN-13" value={form.barcode} onChange={e => updateField('barcode', e.target.value)}
+                  <input type="text" placeholder="EAN-13" maxLength={13} value={form.barcode} onChange={e => updateField('barcode', e.target.value.replace(/\D/g, '').slice(0, 13))}
                     className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
                 </div>
                 <div>
