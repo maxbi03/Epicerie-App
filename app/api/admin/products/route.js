@@ -66,7 +66,7 @@ export async function POST(request) {
     description: description || '',
     badge: badge || '',
     quantity: quantity || '',
-    stock_shelf: Number(stock_shelf ?? 0),
+    stock_shelf: Math.max(0, Number(stock_shelf ?? 0)),
     is_active: isComplete(body),
   };
 
@@ -104,8 +104,8 @@ export async function PATCH(request) {
   if (fields.barcode !== undefined) fields.barcode = fields.barcode && String(fields.barcode).trim() !== '' ? String(fields.barcode).trim() : null;
   if (fields.name !== undefined) fields.name = (fields.name || '').trim();
   if (fields.price_chf != null) fields.price_chf = Number(fields.price_chf);
-  if (fields.stock_shelf != null) fields.stock_shelf = Number(fields.stock_shelf);
-  if (fields.stock_back != null) fields.stock_back = Number(fields.stock_back);
+  if (fields.stock_shelf != null) fields.stock_shelf = Math.max(0, Number(fields.stock_shelf));
+  if (fields.stock_back != null) fields.stock_back = Math.max(0, Number(fields.stock_back));
 
   // Check uniqueness
   const sb = getSupabaseAdmin();

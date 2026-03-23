@@ -302,12 +302,12 @@ export default function AdminProduits() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">Stock rayon</label>
-                  <input type="number" placeholder="0" value={form.stock_shelf} onChange={e => updateField('stock_shelf', e.target.value)}
+                  <input type="number" min="0" placeholder="0" value={form.stock_shelf} onChange={e => updateField('stock_shelf', Math.max(0, e.target.value))}
                     className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">Stock réserve</label>
-                  <input type="number" placeholder="0" value={form.stock_back} onChange={e => updateField('stock_back', e.target.value)}
+                  <input type="number" min="0" placeholder="0" value={form.stock_back} onChange={e => updateField('stock_back', Math.max(0, e.target.value))}
                     className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
                 </div>
               </div>
