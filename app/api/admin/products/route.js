@@ -10,6 +10,7 @@ function isComplete(product) {
     if (val == null) return false;
     if (typeof val === 'string' && val.trim() === '') return false;
     if (f === 'price_chf' && Number(val) <= 0) return false;
+    if (f === 'barcode' && !/^\d{13}$/.test(String(val).trim())) return false;
     return true;
   });
 }

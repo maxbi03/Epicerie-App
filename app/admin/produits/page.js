@@ -45,7 +45,7 @@ export default function AdminProduits() {
     setEditingId(product.id);
     setForm({
       name: product.name || '',
-      barcode: product.barcode || '',
+      barcode: String(product.barcode || ''),
       price_chf: String(product.price_chf ?? ''),
       quantity: product.quantity || '',
       description: product.description || '',
@@ -254,7 +254,10 @@ export default function AdminProduits() {
                 <div>
                   <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">Code-barres</label>
                   <input type="text" placeholder="EAN-13" maxLength={13} value={form.barcode} onChange={e => updateField('barcode', e.target.value.replace(/\D/g, '').slice(0, 13))}
-                    className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
+                    className={`w-full px-4 py-3 rounded-xl border text-sm dark:bg-white/5 dark:text-white ${form.barcode && form.barcode.length !== 13 ? 'border-red-300 dark:border-red-700' : 'border-border dark:border-white/10'}`} />
+                  {form.barcode && form.barcode.length !== 13 && (
+                    <p className="text-[10px] text-red-500 mt-1">{form.barcode.length}/13 chiffres</p>
+                  )}
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">Prix CHF</label>
