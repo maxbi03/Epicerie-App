@@ -200,44 +200,43 @@ export default function ScannerPage() {
             </button>
 
             {manualOpen && (
-              <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20">
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={13}
-                  value={barcodeInput}
-                  onChange={e => setBarcodeInput(e.target.value.replace(/\D/g, ''))}
-                  className="w-full p-3 rounded-xl text-center text-lg font-bold bg-white/20 border border-white/30 text-white placeholder-white/40 mb-3"
-                  placeholder="2000000000000"
-                  autoFocus
-                />
+              <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 space-y-3">
+                <div className="w-full p-3 rounded-xl text-center text-lg font-bold bg-white/20 border border-white/30 text-white min-h-[50px] flex items-center justify-center select-none">
+                  {barcodeInput ? (
+                    <span className="tracking-[0.15em]">{barcodeInput}<span className="animate-pulse">|</span></span>
+                  ) : (
+                    <span className="text-white/40">2000000000xxx</span>
+                  )}
+                </div>
+                <p className="text-center text-[10px] text-white/40 font-bold">{barcodeInput.length}/13 chiffres</p>
                 <div className="grid grid-cols-3 gap-2">
                   {['1','2','3','4','5','6','7','8','9'].map(n => (
                     <button
                       key={n}
                       onClick={() => setBarcodeInput(v => v.length < 13 ? v + n : v)}
-                      className="py-3 text-lg font-bold rounded-xl bg-white/20 text-white active:bg-primary transition-colors"
+                      className="py-3.5 text-lg font-bold rounded-xl bg-white/20 text-white active:bg-primary transition-colors"
                     >
                       {n}
                     </button>
                   ))}
                   <button
                     onClick={() => setBarcodeInput(v => v.slice(0, -1))}
-                    className="py-3 rounded-xl bg-white/10 text-white active:bg-white/20 flex items-center justify-center"
+                    className="py-3.5 rounded-xl bg-red-500/30 text-red-300 active:bg-red-500/50 flex items-center justify-center font-bold text-sm gap-1.5"
                   >
-                    <Delete size={20} />
+                    <Delete size={18} />
                   </button>
                   <button
                     onClick={() => setBarcodeInput(v => v.length < 13 ? v + '0' : v)}
-                    className="py-3 text-lg font-bold rounded-xl bg-white/20 text-white active:bg-primary transition-colors"
+                    className="py-3.5 text-lg font-bold rounded-xl bg-white/20 text-white active:bg-primary transition-colors"
                   >
                     0
                   </button>
                   <button
                     onClick={submitManualBarcode}
-                    className="py-3 text-sm font-black rounded-xl bg-primary text-white uppercase tracking-widest active:scale-95 transition-all"
+                    disabled={barcodeInput.length !== 13}
+                    className="py-3.5 text-sm font-black rounded-xl bg-primary text-white uppercase tracking-widest active:scale-95 transition-all disabled:opacity-30 disabled:active:scale-100"
                   >
-                    Valider
+                    OK
                   </button>
                 </div>
               </div>
