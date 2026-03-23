@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { supabase } from '../lib/supabaseClient';
 
 const PAGE_TITLES = {
   '/home': 'Accueil',
@@ -12,6 +13,8 @@ const PAGE_TITLES = {
   '/map': 'Carte des épiceries',
   '/stock': 'État des stocks',
   '/profil': 'Mon Profil',
+  '/admin': 'Administration',
+  '/admin/produits': 'Gestion Produits',
 };
 
 const NAV_LINKS = [
@@ -33,6 +36,7 @@ const ACCOUNT_LINKS = [
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const [isAdminUser, setIsAdminUser] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -51,6 +55,14 @@ export default function Header() {
       window.removeEventListener('cart-updated', updateCart);
     };
   }, [pathname]);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session?.user?.email) return;
+      const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+      setIsAdminUser(adminEmail && session.user.email.toLowerCase() === adminEmail.toLowerCase());
+    });
+  }, []);
 
   function toggleMenu() {
     setMenuOpen(o => !o);
@@ -150,6 +162,24 @@ export default function Header() {
               <span className="font-bold text-sm">{link.label}</span>
             </Link>
           ))}
+
+          {isAdminUser && (
+            <>
+              <div className="py-4 px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Administration</div>
+              <Link href="/admin" onClick={closeMenu}
+                className={`flex items-center gap-4 p-4 rounded-2xl transition-colors text-gray-700 dark:text-gray-200
+                  ${pathname === '/admin' ? 'bg-green-50 dark:bg-green-900/30 text-green-700' : 'hover:bg-green-50 dark:hover:bg-green-900/20'}`}>
+                <span>📊</span>
+                <span className="font-bold text-sm">Tableau de bord</span>
+              </Link>
+              <Link href="/admin/produits" onClick={closeMenu}
+                className={`flex items-center gap-4 p-4 rounded-2xl transition-colors text-gray-700 dark:text-gray-200
+                  ${pathname === '/admin/produits' ? 'bg-green-50 dark:bg-green-900/30 text-green-700' : 'hover:bg-green-50 dark:hover:bg-green-900/20'}`}>
+                <span>🏷️</span>
+                <span className="font-bold text-sm">Gestion Produits</span>
+              </Link>
+            </>
+          )}
         </div>
 
         <div className="p-6 border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-black/20">
