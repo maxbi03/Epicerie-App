@@ -15,6 +15,8 @@ function normalizeProduct(row) {
     category: row.category ?? row.categorie ?? 'Divers',
     badge: row.badge ?? row.label ?? '',
     stock: Number(stock ?? 0),
+    quantity: row.quantity ?? '',
+    description: row.description ?? '',
   };
 }
 
@@ -22,6 +24,7 @@ export async function GET() {
   const { data, error } = await getSupabaseAdmin()
     .from('products')
     .select('*')
+    .eq('is_active', true)
     .order('name', { ascending: true });
 
   if (error) {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { fetchProducts } from '../../lib/productsService';
 import { updateStocks } from '../../lib/adminService';
+import { Minus, Plus } from 'lucide-react';
 
 const CATEGORIES = ['Tous', 'Crèmerie', 'Boulangerie', 'Boissons', 'Epicerie', 'Fruits & Légumes', 'Divers'];
 
@@ -139,7 +140,7 @@ export default function AdminStocks() {
                     onClick={() => decrement(product.id, product.stock)}
                     className="size-9 flex items-center justify-center rounded-xl bg-app-bg hover:bg-border-light transition-colors font-bold text-text-primary"
                   >
-                    −
+                    <Minus size={16} />
                   </button>
                   <input
                     type="number"
@@ -151,7 +152,7 @@ export default function AdminStocks() {
                     onClick={() => increment(product.id, product.stock)}
                     className="size-9 flex items-center justify-center rounded-xl bg-app-bg hover:bg-border-light transition-colors font-bold text-text-primary"
                   >
-                    +
+                    <Plus size={16} />
                   </button>
                 </div>
               </div>

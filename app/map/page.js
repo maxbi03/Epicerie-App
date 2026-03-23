@@ -1,3 +1,5 @@
+import { MapPin } from 'lucide-react';
+
 export default function MapPage() {
   return (
     <main className="flex-1 relative max-w-md mx-auto w-full bg-white shadow-2xl border-x border-gray-200 overflow-hidden h-screen">
@@ -8,7 +10,7 @@ export default function MapPage() {
       <div className="absolute bottom-10 left-4 right-4 bg-white dark:bg-gray-900 p-5 rounded-3xl shadow-2xl border border-gray-100 dark:border-white/10 z-20">
         <div className="flex items-start gap-4">
           <div className="size-12 bg-green-600 rounded-2xl flex items-center justify-center text-white shrink-0">
-            📍
+            <MapPin size={24} />
           </div>
           <div>
             <h3 className="font-bold text-lg dark:text-white">Épicerie de Semsales</h3>

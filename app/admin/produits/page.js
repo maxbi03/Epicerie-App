@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { fetchAdminProducts, createProduct, updateProduct, deleteProduct } from '../../lib/adminService';
+import { Pencil, X } from 'lucide-react';
 
 const CATEGORIES_FILTER = ['Tous', 'Crèmerie', 'Boulangerie', 'Boissons', 'Epicerie', 'Fruits & Légumes', 'Divers'];
 const CATEGORIES = ['Crèmerie', 'Boulangerie', 'Boissons', 'Epicerie', 'Fruits & Légumes', 'Divers'];
 
-const EMPTY_FORM = { name: '', barcode: '', price_chf: '', description: '', category: 'Divers', image_url: '', producer: '', stock_shelf: '0', stock_back: '0' };
+const EMPTY_FORM = { name: '', barcode: '', price_chf: '', quantity: '', description: '', category: 'Divers', image_url: '', producer: '', stock_shelf: '0', stock_back: '0' };
 
 export default function AdminProduits() {
   const [products, setProducts] = useState([]);
@@ -45,6 +46,7 @@ export default function AdminProduits() {
       name: product.name || '',
       barcode: product.barcode || '',
       price_chf: String(product.price_chf ?? ''),
+      quantity: product.quantity || '',
       description: product.description || '',
       category: product.category || 'Divers',
       image_url: product.image_url || '',
@@ -146,21 +148,44 @@ export default function AdminProduits() {
           </div>
         ) : (
           <div className="space-y-2">
-            {filtered.map(product => (
-              <div key={product.id} className="flex items-center gap-3 bg-card-bg rounded-2xl p-3 border border-border-light shadow-sm">
-                <div className="size-12 rounded-xl overflow-hidden bg-app-bg shrink-0">
-                  {product.image_url && <img src={product.image_url} className="w-full h-full object-cover" alt={product.name} />}
+            {filtered.map(product => {
+              const inactive = product.is_active === false;
+              const shelfStock = product.stock_shelf ?? 0;
+              const backStock = product.stock_back ?? 0;
+              const outOfStock = shelfStock === 0 && backStock === 0;
+              const lowStock = !outOfStock && (shelfStock <= 5 || backStock <= 5);
+              const stockIssue = outOfStock || lowStock;
+              return (
+                <div key={product.id} className={`flex items-center gap-3 rounded-2xl p-3 border shadow-sm ${
+                  inactive ? 'bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800'
+                  : outOfStock ? 'bg-red-50/50 border-red-200 dark:bg-red-950/20 dark:border-red-800/50'
+                  : lowStock ? 'bg-amber-50/50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800/50'
+                  : 'bg-card-bg border-border-light'
+                }`}>
+                  <div className="size-12 rounded-xl overflow-hidden bg-app-bg shrink-0">
+                    {product.image_url && <img src={product.image_url} className={`w-full h-full object-cover ${inactive ? 'opacity-50' : ''}`} alt={product.name} />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className={`font-bold text-sm truncate ${inactive ? 'text-red-400' : 'text-text-primary'}`}>{product.name || 'Sans nom'}</h4>
+                      {inactive && <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-red-100 text-red-500 shrink-0">Incomplet</span>}
+                      {!inactive && outOfStock && <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-red-100 text-red-500 shrink-0">Rupture</span>}
+                      {!inactive && lowStock && <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-amber-100 text-amber-600 shrink-0">Stock faible</span>}
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-[10px] text-text-muted">{Number(product.price_chf || 0).toFixed(2)} CHF</span>
+                      <span className="text-[10px] text-text-muted">·</span>
+                      <span className={`text-[10px] font-bold ${shelfStock === 0 ? 'text-red-500' : shelfStock <= 5 ? 'text-amber-500' : 'text-green-600'}`}>RAYON: {shelfStock}</span>
+                      <span className={`text-[10px] font-bold ${backStock === 0 ? 'text-red-500' : backStock <= 5 ? 'text-amber-500' : 'text-green-600'}`}>STOCK: {backStock}</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <button onClick={() => openEdit(product)} className="size-9 flex items-center justify-center rounded-xl bg-blue-50 text-blue-500 text-sm active:scale-90 transition-all"><Pencil size={16} /></button>
+                    <button onClick={() => handleDelete(product.id)} className="size-9 flex items-center justify-center rounded-xl bg-red-50 text-red-500 text-sm active:scale-90 transition-all"><X size={16} /></button>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-sm text-text-primary truncate">{product.name}</h4>
-                  <p className="text-[10px] text-text-muted">{Number(product.price_chf).toFixed(2)} CHF · Rayon: {product.stock_shelf ?? 0} · Réserve: {product.stock_back ?? 0}</p>
-                </div>
-                <div className="flex gap-1 shrink-0">
-                  <button onClick={() => openEdit(product)} className="size-9 flex items-center justify-center rounded-xl bg-blue-50 text-blue-500 text-sm active:scale-90 transition-all">✎</button>
-                  <button onClick={() => handleDelete(product.id)} className="size-9 flex items-center justify-center rounded-xl bg-red-50 text-red-500 text-sm active:scale-90 transition-all">✕</button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -170,29 +195,60 @@ export default function AdminProduits() {
           <div className="bg-card-bg rounded-t-3xl w-full max-w-md overflow-y-auto max-h-[85vh]" onClick={e => e.stopPropagation()}>
             <div className="sticky top-0 bg-card-bg/95 backdrop-blur-md px-4 py-3 flex items-center justify-between border-b border-border-light">
               <h2 className="text-lg font-bold text-text-primary">{editingId ? 'Modifier' : 'Nouveau produit'}</h2>
-              <button onClick={() => setShowForm(false)} className="size-10 flex items-center justify-center rounded-full hover:bg-app-bg transition-colors text-text-secondary">✕</button>
+              <button onClick={() => setShowForm(false)} className="size-10 flex items-center justify-center rounded-full hover:bg-app-bg transition-colors text-text-secondary"><X size={18} /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-3">
-              <input type="text" placeholder="Nom *" value={form.name} onChange={e => updateField('name', e.target.value)} required
-                className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
-              <div className="grid grid-cols-2 gap-3">
-                <input type="text" placeholder="Code-barres" value={form.barcode} onChange={e => updateField('barcode', e.target.value)}
-                  className="px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
-                <input type="number" step="0.01" placeholder="Prix CHF *" value={form.price_chf} onChange={e => updateField('price_chf', e.target.value)} required
-                  className="px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
+              <div>
+                <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">Nom</label>
+                <input type="text" placeholder="Nom du produit" value={form.name} onChange={e => updateField('name', e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <input type="text" placeholder="Description" value={form.description} onChange={e => updateField('description', e.target.value)}
-                  className="px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
-                <select value={form.category} onChange={e => updateField('category', e.target.value)}
-                  className="px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
-                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+                <div>
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">Code-barres</label>
+                  <input type="text" placeholder="EAN-13" value={form.barcode} onChange={e => updateField('barcode', e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">Prix CHF</label>
+                  <input type="number" step="0.01" placeholder="0.00" value={form.price_chf} onChange={e => updateField('price_chf', e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
+                </div>
               </div>
-              <input type="text" placeholder="Producteur / Origine" value={form.producer} onChange={e => updateField('producer', e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
-              <input type="text" placeholder="URL image" value={form.image_url} onChange={e => updateField('image_url', e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">Catégorie</label>
+                  <select value={form.category} onChange={e => updateField('category', e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
+                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">Quantité</label>
+                  <input type="text" placeholder="ex: 500g" value={form.quantity} onChange={e => updateField('quantity', e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">Producteur / Marque</label>
+                <input type="text" placeholder="Nom du producteur ou de la marque" value={form.producer} onChange={e => updateField('producer', e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">Description</label>
+                <textarea placeholder="Description du produit" value={form.description} onChange={e => updateField('description', e.target.value)} rows={3}
+                  className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm resize-none" />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">URL image</label>
+                <input type="text" placeholder="https://..." value={form.image_url} onChange={e => updateField('image_url', e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
+              </div>
+              {form.image_url && (
+                <div className="w-full h-36 rounded-xl overflow-hidden bg-app-bg border border-border-light">
+                  <img src={form.image_url} alt="Aperçu" className="w-full h-full object-cover" onError={e => { e.target.style.display = 'none'; }} />
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">Stock rayon</label>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 
 function getStrength(pwd) {
   let s = 0;
@@ -13,7 +14,7 @@ function getStrength(pwd) {
 }
 
 const STRENGTH_COLORS = ['', 'bg-red-400', 'bg-orange-400', 'bg-yellow-400', 'bg-green-500'];
-const STRENGTH_LABELS = ['', 'Trop faible', 'Faible', 'Moyen', 'Fort ✓'];
+const STRENGTH_LABELS = ['', 'Trop faible', 'Faible', 'Moyen', 'Fort'];
 
 export default function InscriptionPage() {
   const [form, setForm] = useState({
@@ -57,7 +58,7 @@ export default function InscriptionPage() {
 
       <div className="flex items-center gap-4 mt-4 mb-8">
         <Link href="/" className="p-2 rounded-full bg-white dark:bg-white/5 text-gray-900 dark:text-white shadow">
-          ←
+          <ArrowLeft size={20} />
         </Link>
         <h1 className="text-xl font-bold dark:text-white">Créer mon compte</h1>
       </div>

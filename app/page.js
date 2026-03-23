@@ -4,6 +4,7 @@ import { supabase } from './lib/supabaseClient';
 import { createUserProfile } from './lib/userService';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { X, Check, MessageCircle, CheckCircle } from 'lucide-react';
 
 function clearVisitorMode() {
   try { sessionStorage.removeItem('app_mode'); } catch {}
@@ -19,7 +20,7 @@ function getStrength(pwd) {
 }
 
 const STRENGTH_COLORS = ['', 'bg-red-400', 'bg-orange-400', 'bg-yellow-400', 'bg-green-500'];
-const STRENGTH_LABELS = ['', 'Trop faible', 'Faible', 'Moyen', 'Fort ✓'];
+const STRENGTH_LABELS = ['', 'Trop faible', 'Faible', 'Moyen', 'Fort'];
 
 export default function IndexPage() {
   const router = useRouter();
@@ -284,15 +285,15 @@ export default function IndexPage() {
                 <h2 className="text-2xl font-bold dark:text-white">
                   {step === 1 ? 'Créer un compte' : step === 2 ? 'Vérification SMS' : 'Compte activé'}
                 </h2>
-                <button onClick={() => setModalOpen(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+                <button onClick={() => setModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2 flex-1">
-                  <div className={stepDotClass(1)}>{step > 1 ? '✓' : '1'}</div>
+                  <div className={stepDotClass(1)}>{step > 1 ? <Check size={14} /> : '1'}</div>
                   <div className={stepBarClass(1)} />
                 </div>
                 <div className="flex items-center gap-2 flex-1">
-                  <div className={stepDotClass(2)}>{step > 2 ? '✓' : '2'}</div>
+                  <div className={stepDotClass(2)}>{step > 2 ? <Check size={14} /> : '2'}</div>
                   <div className={stepBarClass(2)} />
                 </div>
                 <div className={stepDotClass(3)}>3</div>
@@ -357,7 +358,7 @@ export default function IndexPage() {
               {step === 2 && (
                 <div className="space-y-6">
                   <div className="text-center">
-                    <div className="size-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">💬</div>
+                    <div className="size-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"><MessageCircle size={28} className="text-green-600" /></div>
                     <h3 className="font-bold text-green-900 dark:text-white text-lg">Code envoyé !</h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                       Un code à 6 chiffres a été envoyé au<br />
@@ -405,7 +406,7 @@ export default function IndexPage() {
 
               {step === 3 && (
                 <div className="text-center space-y-6 py-4">
-                  <div className="size-20 bg-green-100 rounded-full flex items-center justify-center mx-auto text-4xl">✅</div>
+                  <div className="size-20 bg-green-100 rounded-full flex items-center justify-center mx-auto"><CheckCircle size={36} className="text-green-600" /></div>
                   <div>
                     <h3 className="text-xl font-black text-green-900 dark:text-white">Compte créé !</h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">

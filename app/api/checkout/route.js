@@ -5,7 +5,7 @@ const mollieClient = createMollieClient({ apiKey: process.env.MOLLIE_API_KEY });
 
 export async function POST(request) {
   try {
-    const { items, total } = await request.json();
+    const { items, total, client_name, client_email } = await request.json();
 
     if (!items || items.length === 0) {
       return NextResponse.json({ error: 'Panier vide' }, { status: 400 });
@@ -27,6 +27,8 @@ export async function POST(request) {
       redirectUrl: `${baseUrl}/panier/confirmation?status=success`,
       metadata: {
         items: JSON.stringify(items.map(i => ({ id: i.id, name: i.name, qty: i.quantity, price: i.price }))),
+        client_name: client_name || null,
+        client_email: client_email || null,
       },
     };
 

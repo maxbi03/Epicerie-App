@@ -4,6 +4,7 @@ import { fetchProducts } from '../lib/productsService';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Script from 'next/script';
+import { X, Minus, Plus, MapPin, Weight, FileText, Info, ShoppingCart, Lock, Keyboard, Delete } from 'lucide-react';
 
 function validateEAN13(barcode) {
   return /^\d{13}$/.test(barcode);
@@ -123,7 +124,7 @@ export default function ScannerPage() {
   function handleAddToCart() {
     if (!selectedProduct) return;
     addToBasket(selectedProduct, quantity);
-    showFeedback('success', `✓ ${quantity}× ${selectedProduct.name} ajouté !`);
+    showFeedback('success', `${quantity}x ${selectedProduct.name} ajouté !`);
     setSelectedProduct(null);
   }
 
@@ -140,7 +141,7 @@ export default function ScannerPage() {
   if (isVisitor) return (
     <div className="h-[calc(100vh-73px)] max-w-md mx-auto bg-black flex items-center justify-center px-6">
       <div className="w-full bg-card-bg rounded-[2rem] p-6 text-center">
-        <div className="mx-auto size-14 rounded-2xl bg-primary-light flex items-center justify-center mb-4 text-3xl">🔒</div>
+        <div className="mx-auto size-14 rounded-2xl bg-primary-light flex items-center justify-center mb-4"><Lock size={28} className="text-primary" /></div>
         <h2 className="text-lg font-black text-text-primary mb-2">Scanner désactivé</h2>
         <p className="text-sm text-text-secondary leading-relaxed mb-6">Créez un compte pour utiliser cette fonctionnalité.</p>
         <div className="grid grid-cols-2 gap-3">
@@ -216,7 +217,7 @@ export default function ScannerPage() {
                   onClick={() => setBarcodeInput(v => v.slice(0, -1))}
                   className="py-2.5 text-lg font-bold rounded-xl bg-white/10 text-white active:bg-white/20"
                 >
-                  ⌫
+                  <Delete size={18} />
                 </button>
                 <button
                   onClick={submitManualBarcode}
@@ -233,7 +234,7 @@ export default function ScannerPage() {
               onClick={() => setManualOpen(o => !o)}
               className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-white/10 border border-white/20 rounded-2xl text-white text-xs font-bold uppercase tracking-widest active:scale-95 transition-all"
             >
-              ⌨️ {manualOpen ? 'Fermer la saisie' : 'Saisie manuelle'}
+              <Keyboard size={16} /> {manualOpen ? 'Fermer la saisie' : 'Saisie manuelle'}
             </button>
 
             <Link
@@ -242,7 +243,7 @@ export default function ScannerPage() {
             >
               <div className="flex items-center gap-3 text-white">
                 <div className="relative">
-                  <span className="text-xl">🛒</span>
+                  <ShoppingCart size={20} />
                   {cartCount > 0 && (
                     <span className="absolute -top-2 -right-2 bg-white text-primary text-[10px] font-black px-1.5 rounded-full">
                       {cartCount}
@@ -276,7 +277,7 @@ export default function ScannerPage() {
               <button
                 onClick={() => setSelectedProduct(null)}
                 className="size-9 flex items-center justify-center rounded-full bg-gray-100 dark:bg-white/10 text-gray-500 hover:bg-gray-200 transition-colors"
-              >✕</button>
+              ><X size={18} /></button>
             </div>
 
             <div className="p-5 space-y-5">
@@ -308,9 +309,9 @@ export default function ScannerPage() {
                 </p>
               </div>
 
-              {/* Prix + stock */}
-              <div className="flex items-center justify-between bg-gray-50 dark:bg-white/5 rounded-2xl p-4">
-                <div>
+              {/* Prix + Stock */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gray-50 dark:bg-white/5 rounded-2xl p-4">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Prix unitaire</p>
                   <p className="text-2xl font-black text-gray-900 dark:text-white">
                     {selectedProduct.price.toFixed(2)} <span className="text-sm font-bold">CHF</span>
@@ -319,39 +320,52 @@ export default function ScannerPage() {
                     <p className="text-xs text-gray-400">/ {selectedProduct.unit}</p>
                   )}
                 </div>
-                <div className="text-right">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Stock</p>
+                <div className={`rounded-2xl p-4 ${
+                  selectedProduct.stock === 0 ? 'bg-red-50 dark:bg-red-900/20'
+                  : selectedProduct.stock <= 5 ? 'bg-amber-50 dark:bg-amber-900/20'
+                  : 'bg-green-50 dark:bg-green-900/20'
+                }`}>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Disponibilité</p>
                   {selectedProduct.stock === 0 ? (
-                    <span className="text-xs font-black text-red-500 bg-red-50 px-2 py-1 rounded-lg">Rupture</span>
+                    <p className="text-lg font-black text-red-500">Rupture</p>
                   ) : selectedProduct.stock <= 5 ? (
-                    <span className="text-xs font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg">
-                      {selectedProduct.stock} restants
-                    </span>
+                    <p className="text-lg font-black text-amber-500">{selectedProduct.stock} restant{selectedProduct.stock > 1 ? 's' : ''}</p>
                   ) : (
-                    <span className="text-xs font-black text-green-600 bg-green-50 px-2 py-1 rounded-lg">
-                      En stock
-                    </span>
+                    <p className="text-lg font-black text-green-600">En stock</p>
                   )}
                 </div>
               </div>
 
               {/* Infos produit */}
               <div className="space-y-3">
-                {selectedProduct.origin && (
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-white/5 rounded-xl">
-                    <span className="text-xl">🌍</span>
-                    <div>
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Provenance</p>
-                      <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{selectedProduct.origin}</p>
-                    </div>
+                {(selectedProduct.origin || selectedProduct.quantity) && (
+                  <div className="grid grid-cols-2 gap-3">
+                    {selectedProduct.origin && (
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-white/5 rounded-xl">
+                        <MapPin size={20} className="text-gray-500 shrink-0" />
+                        <div>
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Provenance</p>
+                          <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{selectedProduct.origin}</p>
+                        </div>
+                      </div>
+                    )}
+                    {selectedProduct.quantity && (
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-white/5 rounded-xl">
+                        <Weight size={20} className="text-gray-500 shrink-0" />
+                        <div>
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Poids</p>
+                          <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{selectedProduct.quantity}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
-                {selectedProduct.barcode && (
+                {selectedProduct.description && (
                   <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-white/5 rounded-xl">
-                    <span className="text-xl">📦</span>
+                    <FileText size={20} className="text-gray-500 shrink-0" />
                     <div>
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Code-barres</p>
-                      <p className="text-sm font-bold text-gray-800 dark:text-gray-200 font-mono">{selectedProduct.barcode}</p>
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Description</p>
+                      <p className="text-sm text-gray-800 dark:text-gray-200">{selectedProduct.description}</p>
                     </div>
                   </div>
                 )}
@@ -360,7 +374,7 @@ export default function ScannerPage() {
               {/* Note infos nutritionnelles */}
               <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-xl p-3">
                 <p className="text-xs text-amber-700 dark:text-amber-300">
-                  ℹ️ Les informations nutritionnelles détaillées seront disponibles prochainement.
+                  <Info size={14} className="inline mr-1" /> Les informations nutritionnelles détaillées seront disponibles prochainement.
                 </p>
               </div>
             </div>
@@ -373,14 +387,14 @@ export default function ScannerPage() {
                   <button
                     onClick={() => setQuantity(q => Math.max(1, q - 1))}
                     className="size-9 flex items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-sm font-bold text-gray-700 dark:text-white text-lg active:scale-90 transition-all"
-                  >−</button>
+                  ><Minus size={18} /></button>
                   <span className="text-lg font-black text-gray-900 dark:text-white min-w-[2ch] text-center">
                     {quantity}
                   </span>
                   <button
-                    onClick={() => setQuantity(q => q + 1)}
+                    onClick={() => setQuantity(q => Math.min(q + 1, selectedProduct.stock))}
                     className="size-9 flex items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-sm font-bold text-gray-700 dark:text-white text-lg active:scale-90 transition-all"
-                  >+</button>
+                  ><Plus size={18} /></button>
                 </div>
 
                 {/* Bouton ajouter */}
@@ -389,7 +403,7 @@ export default function ScannerPage() {
                   disabled={selectedProduct.stock === 0}
                   className="flex-1 bg-primary text-white font-black py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <span>🛒</span>
+                  <ShoppingCart size={18} />
                   <span>
                     {selectedProduct.stock === 0
                       ? 'Indisponible'

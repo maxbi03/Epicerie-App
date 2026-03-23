@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { supabase } from '../lib/supabaseClient';
+import { fetchUserProfile } from '../lib/userService';
+import { ShoppingCart, Minus, Plus } from 'lucide-react';
 
 export default function PanierPage() {
   const [basket, setBasket] = useState([]);
@@ -51,10 +54,23 @@ export default function PanierPage() {
     setIsLoading(true);
     setError(null);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      let clientName = null;
+      if (session?.user?.id) {
+        try {
+          const profile = await fetchUserProfile(session.user.id);
+          clientName = profile?.name || null;
+        } catch {}
+      }
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: groupedList, total }),
+        body: JSON.stringify({
+          items: groupedList,
+          total,
+          client_name: clientName,
+          client_email: session?.user?.email || null,
+        }),
       });
       const data = await res.json();
       console.log('Checkout response:', data);
@@ -87,7 +103,7 @@ export default function PanierPage() {
         {groupedList.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-10 text-center py-20">
             <div className="size-20 bg-green-50 rounded-full flex items-center justify-center mb-4">
-              <span className="text-4xl">🛒</span>
+              <ShoppingCart size={36} className="text-green-600" />
             </div>
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Votre panier est vide</h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed max-w-[200px] mx-auto">
@@ -119,11 +135,11 @@ export default function PanierPage() {
                 <div className="flex items-center justify-between mt-3">
                   <div className="flex items-center gap-3">
                     <button onClick={() => decreaseQuantity(product.id)} className="size-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 transition-colors">
-                      <span className="text-green-900 font-bold">−</span>
+                      <Minus size={14} className="text-green-900" />
                     </button>
                     <span className="text-sm font-bold text-green-900 dark:text-white">{product.quantity}</span>
                     <button onClick={() => increaseQuantity(product.id)} className="size-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 transition-colors">
-                      <span className="text-green-900 font-bold">+</span>
+                      <Plus size={14} className="text-green-900" />
                     </button>
                   </div>
                   <button onClick={() => removeProduct(product.id)} className="text-red-500 text-xs font-bold uppercase tracking-widest">

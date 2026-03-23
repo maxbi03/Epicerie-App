@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../lib/supabaseClient';
 import { fetchUserProfile, updateUserProfile } from '../lib/userService';
+import { User, Lock } from 'lucide-react';
 
 export default function ProfilPage() {
   const router = useRouter();
@@ -94,7 +95,7 @@ export default function ProfilPage() {
   if (isVisitor) return (
     <main className="max-w-md mx-auto px-5 pt-6 pb-24 min-h-screen">
       <div className="flex flex-col items-center mb-8">
-        <div className="size-28 rounded-[2rem] bg-app-bg flex items-center justify-center border-2 border-primary shadow-xl text-5xl">👤</div>
+        <div className="size-28 rounded-[2rem] bg-app-bg flex items-center justify-center border-2 border-primary shadow-xl"><User size={48} className="text-text-muted" /></div>
         <h2 className="text-2xl font-bold mt-5 text-text-primary">Visiteur</h2>
         <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Visiteur</p>
       </div>
@@ -192,7 +193,7 @@ export default function ProfilPage() {
         </div>
 
         <button onClick={handleResetPassword} className="w-full py-4 rounded-3xl bg-card-bg text-text-secondary font-black text-xs uppercase tracking-widest active:scale-[0.98] transition-all flex items-center justify-center gap-2 border border-border-light">
-          🔒 Réinitialiser mon mot de passe
+          <Lock size={16} /> Réinitialiser mon mot de passe
         </button>
 
         <button onClick={handleLogout} className="w-full py-4 rounded-3xl bg-red-50 text-red-600 font-black text-xs uppercase tracking-widest active:scale-[0.98] transition-all">

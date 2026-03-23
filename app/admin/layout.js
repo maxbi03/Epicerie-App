@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '../lib/supabaseClient';
+import { LayoutDashboard, Tag } from 'lucide-react';
 
 const TABS = [
-  { href: '/admin', label: 'Tableau de bord', icon: '📊' },
-  { href: '/admin/produits', label: 'Produits', icon: '🏷️' },
+  { href: '/admin', label: 'Tableau de bord', Icon: LayoutDashboard },
+  { href: '/admin/produits', label: 'Produits', Icon: Tag },
 ];
 
 export default function AdminLayout({ children }) {
@@ -51,7 +52,7 @@ export default function AdminLayout({ children }) {
                 : 'bg-card-bg text-text-secondary border border-border-light'
               }`}
           >
-            <span>{tab.icon}</span>
+            <tab.Icon size={16} />
             {tab.label}
           </Link>
         ))}

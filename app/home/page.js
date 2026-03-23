@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 import { fetchUserProfile } from '../lib/userService';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { AlertTriangle, MapPin, Lock } from 'lucide-react';
 
 export default function HomePage() {
   const [isVisitor, setIsVisitor] = useState(false);
@@ -28,7 +29,7 @@ export default function HomePage() {
       {emailUnverified && (
         <div className="max-w-md mx-auto w-full">
           <div className="mx-4 mt-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 flex items-start gap-3">
-            <span className="text-amber-500 text-xl mt-0.5 shrink-0">⚠️</span>
+            <AlertTriangle size={20} className="text-amber-500 mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-amber-800">Email non confirmé</p>
               <p className="text-xs text-amber-600 mt-0.5">Vérifiez votre boîte mail et cliquez sur le lien de confirmation.</p>
@@ -55,7 +56,7 @@ export default function HomePage() {
             <div className="bg-card-bg rounded-3xl p-6 flex flex-col items-center text-center relative border border-border-light shadow-sm">
               <div className="mb-6">
                 <div className="size-16 bg-app-bg rounded-full flex items-center justify-center border border-border">
-                  <span className="text-text-muted text-3xl">📍</span>
+                  <MapPin size={32} className="text-text-muted" />
                 </div>
               </div>
 
@@ -65,7 +66,7 @@ export default function HomePage() {
               </div>
 
               <button disabled className="w-full py-5 rounded-2xl flex items-center justify-center gap-3 opacity-60 bg-app-bg cursor-not-allowed">
-                <span className="text-text-muted font-bold text-2xl">🔒</span>
+                <Lock size={24} className="text-text-muted" />
                 <span className="text-text-muted font-bold text-lg uppercase tracking-wider">
                   {isVisitor ? 'Compte requis' : 'Porte verrouillée'}
                 </span>
@@ -75,7 +76,7 @@ export default function HomePage() {
                 <div className="w-full mt-4 bg-primary-light border border-border-light rounded-2xl p-4 text-left">
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 size-10 rounded-xl bg-primary-light flex items-center justify-center">
-                      <span className="text-primary">🔒</span>
+                      <Lock size={20} className="text-primary" />
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-bold text-text-primary">Déverrouillage désactivé</p>
@@ -102,7 +103,7 @@ export default function HomePage() {
             <div className="bg-primary-light border border-border-light rounded-2xl p-4">
               <div className="flex flex-col">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-primary text-sm">📍</span>
+                  <MapPin size={14} className="text-primary" />
                   <span className="text-[10px] font-black text-primary uppercase tracking-widest">Semsales</span>
                 </div>
                 <span className="text-sm font-bold text-text-primary">Affluence : 3 personnes</span>
@@ -115,7 +116,7 @@ export default function HomePage() {
             <Link href="/news" className="block bg-card-bg rounded-2xl overflow-hidden shadow-sm border border-border-light active:scale-[0.98] transition-all">
               <div className="h-32 bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1550989460-0adf9ea622e2?q=80&w=500&auto=format&fit=crop')"}} />
               <div className="p-4">
-                <h3 className="font-bold text-text-primary text-base">Arrivage de fraises de pays 🍓</h3>
+                <h3 className="font-bold text-text-primary text-base">Arrivage de fraises de pays</h3>
               </div>
             </Link>
           </div>

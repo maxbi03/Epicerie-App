@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { supabase } from '../lib/supabaseClient';
+import { Home, Newspaper, Camera, ShoppingCart, Map, Package, User, LayoutDashboard, Tag, LogOut, Menu } from 'lucide-react';
 
 const PAGE_TITLES = {
   '/home': 'Accueil',
@@ -18,19 +19,19 @@ const PAGE_TITLES = {
 };
 
 const NAV_LINKS = [
-  { href: '/home', label: 'Accueil', icon: '🏠' },
-  { href: '/news', label: 'Le Fil Rouge', icon: '📰' },
-  { href: '/scanner', label: 'Scanner un produit', icon: '📷' },
-  { href: '/panier', label: 'Mon Panier', icon: '🛒' },
+  { href: '/home', label: 'Accueil', Icon: Home },
+  { href: '/news', label: 'Le Fil Rouge', Icon: Newspaper },
+  { href: '/scanner', label: 'Scanner un produit', Icon: Camera },
+  { href: '/panier', label: 'Mon Panier', Icon: ShoppingCart },
 ];
 
 const INFO_LINKS = [
-  { href: '/map', label: 'Carte & Localisation', icon: '🗺️' },
-  { href: '/stock', label: 'État des stocks', icon: '📦' },
+  { href: '/map', label: 'Carte & Localisation', Icon: Map },
+  { href: '/stock', label: 'État des stocks', Icon: Package },
 ];
 
 const ACCOUNT_LINKS = [
-  { href: '/profil', label: 'Mon Profil', icon: '👤' },
+  { href: '/profil', label: 'Mon Profil', Icon: User },
 ];
 
 export default function Header() {
@@ -95,7 +96,7 @@ export default function Header() {
             onClick={toggleMenu}
             className="size-10 flex items-center justify-center rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-white/10 active:scale-90 transition-all"
           >
-            ☰
+            <Menu size={20} />
           </button>
           <div>
             <h1 className="text-lg font-bold leading-none tracking-tight dark:text-white">{title}</h1>
@@ -105,7 +106,7 @@ export default function Header() {
 
         <div className="flex items-center gap-2">
           <Link href="/panier" className="relative size-10 rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-white/10 flex items-center justify-center active:scale-90 transition-all">
-            <span>🛒</span>
+            <ShoppingCart size={20} />
             {cartCount > 0 && (
               <span className="absolute -top-1.5 -right-1.5 size-5 bg-green-500 text-white text-[10px] font-black rounded-full flex items-center justify-center">
                 {cartCount}
@@ -113,7 +114,7 @@ export default function Header() {
             )}
           </Link>
           <Link href="/profil" className="size-10 rounded-full bg-green-100 flex items-center justify-center border border-green-200">
-            <span>👤</span>
+            <User size={20} />
           </Link>
         </div>
       </header>
@@ -136,7 +137,7 @@ export default function Header() {
             <Link key={link.href} href={link.href} onClick={closeMenu}
               className={`flex items-center gap-4 p-4 rounded-2xl transition-colors text-gray-700 dark:text-gray-200
                 ${pathname === link.href ? 'bg-green-50 dark:bg-green-900/30 text-green-700' : 'hover:bg-green-50 dark:hover:bg-green-900/20'}`}>
-              <span>{link.icon}</span>
+              <link.Icon size={20} />
               <span className="font-bold text-sm">{link.label}</span>
             </Link>
           ))}
@@ -147,7 +148,7 @@ export default function Header() {
             <Link key={link.href} href={link.href} onClick={closeMenu}
               className={`flex items-center gap-4 p-4 rounded-2xl transition-colors text-gray-700 dark:text-gray-200
                 ${pathname === link.href ? 'bg-green-50 dark:bg-green-900/30 text-green-700' : 'hover:bg-green-50 dark:hover:bg-green-900/20'}`}>
-              <span>{link.icon}</span>
+              <link.Icon size={20} />
               <span className="font-bold text-sm">{link.label}</span>
             </Link>
           ))}
@@ -158,7 +159,7 @@ export default function Header() {
             <Link key={link.href} href={link.href} onClick={closeMenu}
               className={`flex items-center gap-4 p-4 rounded-2xl transition-colors text-gray-700 dark:text-gray-200
                 ${pathname === link.href ? 'bg-green-50 dark:bg-green-900/30 text-green-700' : 'hover:bg-green-50 dark:hover:bg-green-900/20'}`}>
-              <span>{link.icon}</span>
+              <link.Icon size={20} />
               <span className="font-bold text-sm">{link.label}</span>
             </Link>
           ))}
@@ -169,13 +170,13 @@ export default function Header() {
               <Link href="/admin" onClick={closeMenu}
                 className={`flex items-center gap-4 p-4 rounded-2xl transition-colors text-gray-700 dark:text-gray-200
                   ${pathname === '/admin' ? 'bg-green-50 dark:bg-green-900/30 text-green-700' : 'hover:bg-green-50 dark:hover:bg-green-900/20'}`}>
-                <span>📊</span>
+                <LayoutDashboard size={20} />
                 <span className="font-bold text-sm">Tableau de bord</span>
               </Link>
               <Link href="/admin/produits" onClick={closeMenu}
                 className={`flex items-center gap-4 p-4 rounded-2xl transition-colors text-gray-700 dark:text-gray-200
                   ${pathname === '/admin/produits' ? 'bg-green-50 dark:bg-green-900/30 text-green-700' : 'hover:bg-green-50 dark:hover:bg-green-900/20'}`}>
-                <span>🏷️</span>
+                <Tag size={20} />
                 <span className="font-bold text-sm">Gestion Produits</span>
               </Link>
             </>
@@ -187,7 +188,7 @@ export default function Header() {
             onClick={handleLogout}
             className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl bg-red-50 text-red-600 font-bold text-xs uppercase tracking-widest hover:bg-red-100 transition-colors"
           >
-            🚪 Déconnexion
+            <LogOut size={16} /> Déconnexion
           </button>
         </div>
       </nav>

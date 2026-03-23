@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { Clock, XCircle, CheckCircle } from 'lucide-react';
 
 export default function ConfirmationPage() {
   const [status, setStatus] = useState('loading');
@@ -62,7 +63,7 @@ export default function ConfirmationPage() {
       <div className="relative flex h-screen max-w-md mx-auto flex-col bg-white dark:bg-gray-900 shadow-2xl overflow-hidden border-x border-gray-200 dark:border-white/10">
         <div className="flex-1 flex flex-col items-center justify-center px-10 text-center">
           <div className="size-24 bg-yellow-50 dark:bg-yellow-900/20 rounded-full flex items-center justify-center mb-6">
-            <span className="text-5xl">⏳</span>
+            <Clock size={48} className="text-yellow-500" />
           </div>
           <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-2">Paiement en cours</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed max-w-[260px]">
@@ -81,7 +82,7 @@ export default function ConfirmationPage() {
       <div className="relative flex h-screen max-w-md mx-auto flex-col bg-white dark:bg-gray-900 shadow-2xl overflow-hidden border-x border-gray-200 dark:border-white/10">
         <div className="flex-1 flex flex-col items-center justify-center px-10 text-center">
           <div className="size-24 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-6">
-            <span className="text-5xl">❌</span>
+            <XCircle size={48} className="text-red-500" />
           </div>
           <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-2">Erreur</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed max-w-[260px]">
@@ -99,7 +100,7 @@ export default function ConfirmationPage() {
     <div className="relative flex h-screen max-w-md mx-auto flex-col bg-white dark:bg-gray-900 shadow-2xl overflow-hidden border-x border-gray-200 dark:border-white/10">
       <div className="flex-1 flex flex-col items-center justify-center px-10 text-center">
         <div className="size-24 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center mb-6">
-          <span className="text-5xl">✅</span>
+          <CheckCircle size={48} className="text-green-600" />
         </div>
         <h1 className="text-2xl font-black text-green-900 dark:text-white mb-2">
           Paiement confirmé !

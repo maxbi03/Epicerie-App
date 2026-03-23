@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { Eye, EyeOff, Link2, CheckCircle } from 'lucide-react';
 
 const STRENGTH_COLORS = ['', 'bg-red-400', 'bg-orange-400', 'bg-yellow-400', 'bg-green-500'];
-const STRENGTH_LABELS = ['', 'Trop faible', 'Faible', 'Moyen', 'Fort ✓'];
+const STRENGTH_LABELS = ['', 'Trop faible', 'Faible', 'Moyen', 'Fort'];
 
 function getStrength(pwd) {
   let s = 0;
@@ -85,7 +86,7 @@ export default function ResetPage() {
                 onClick={() => setShowPassword(v => !v)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"
               >
-                {showPassword ? '🙈' : '👁️'}
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
 
@@ -128,8 +129,8 @@ export default function ResetPage() {
 
       {state === 'invalid' && (
         <div className="text-center space-y-4">
-          <div className="size-16 bg-red-50 dark:bg-red-500/10 rounded-full flex items-center justify-center mx-auto text-3xl">
-            🔗
+          <div className="size-16 bg-red-50 dark:bg-red-500/10 rounded-full flex items-center justify-center mx-auto">
+            <Link2 size={28} className="text-red-500" />
           </div>
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">Lien invalide ou expiré</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -144,8 +145,8 @@ export default function ResetPage() {
 
       {state === 'success' && (
         <div className="text-center space-y-4">
-          <div className="size-16 bg-green-50 rounded-full flex items-center justify-center mx-auto text-3xl">
-            ✅
+          <div className="size-16 bg-green-50 rounded-full flex items-center justify-center mx-auto">
+            <CheckCircle size={28} className="text-green-600" />
           </div>
           <h2 className="text-lg font-bold text-green-900 dark:text-white">Mot de passe mis à jour !</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">Vous allez être redirigé vers la connexion…</p>

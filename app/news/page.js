@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Star, CakeSlice, Leaf, Info } from 'lucide-react';
 
 const newsItems = [
   { id: 1, category: 'offres', type: 'featured', title: '-20% sur tout le rayon Vrac', subtitle: 'Valable jusqu\'à dimanche soir.' },
@@ -61,7 +62,7 @@ export default function NewsPage() {
             );
             if (item.type === 'icon') return (
               <div key={item.id} className="flex items-center gap-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-4">
-                <div className="size-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 shrink-0 text-xl">★</div>
+                <div className="size-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 shrink-0"><Star size={22} /></div>
                 <div>
                   <h3 className="font-bold dark:text-white">{item.title}</h3>
                   <p className="text-xs text-gray-500">{item.subtitle}</p>
@@ -70,7 +71,7 @@ export default function NewsPage() {
             );
             if (item.type === 'event') return (
               <div key={item.id} className="rounded-2xl overflow-hidden bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
-                <div className="w-full h-32 bg-amber-500 flex items-center justify-center text-white text-5xl">🍞</div>
+                <div className="w-full h-32 bg-amber-500 flex items-center justify-center text-white"><CakeSlice size={48} /></div>
                 <div className="p-4">
                   <span className="text-amber-500 text-[10px] font-bold uppercase">{item.label}</span>
                   <h3 className="font-bold dark:text-white">{item.title}</h3>
@@ -81,7 +82,7 @@ export default function NewsPage() {
             if (item.type === 'partner') return (
               <div key={item.id} className="rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-4">
                 <div className="flex gap-4">
-                  <div className="size-14 rounded-full border-2 border-green-500 overflow-hidden shrink-0 bg-green-100 flex items-center justify-center text-2xl">🌿</div>
+                  <div className="size-14 rounded-full border-2 border-green-500 overflow-hidden shrink-0 bg-green-100 flex items-center justify-center text-green-600"><Leaf size={24} /></div>
                   <div>
                     <span className="text-[10px] font-bold text-green-600 uppercase">Nouveau Partenaire</span>
                     <h3 className="font-bold dark:text-white">{item.title}</h3>
@@ -92,7 +93,7 @@ export default function NewsPage() {
             );
             if (item.type === 'info') return (
               <div key={item.id} className="flex items-center gap-4 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-2xl border border-blue-100 dark:border-blue-800">
-                <div className="size-12 rounded-full bg-blue-500 flex items-center justify-center text-white shrink-0 text-xl">ℹ</div>
+                <div className="size-12 rounded-full bg-blue-500 flex items-center justify-center text-white shrink-0"><Info size={22} /></div>
                 <div>
                   <h3 className="font-bold text-blue-900 dark:text-blue-200 text-sm">{item.title}</h3>
                   <p className="text-[11px] text-blue-700/70 dark:text-blue-300/60">{item.subtitle}</p>
