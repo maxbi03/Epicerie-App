@@ -191,44 +191,6 @@ export default function ScannerPage() {
             Alignez le code-barres dans le cadre
           </p>
 
-          {manualOpen && (
-            <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20">
-              <input
-                type="text"
-                inputMode="numeric"
-                maxLength={13}
-                value={barcodeInput}
-                onChange={e => setBarcodeInput(e.target.value.replace(/\D/g, ''))}
-                className="w-full p-3 rounded-xl text-center text-lg font-bold bg-white/20 border border-white/30 text-white placeholder-white/40 mb-3"
-                placeholder="2000000000000"
-                autoFocus
-              />
-              <div className="grid grid-cols-3 gap-2">
-                {['1','2','3','4','5','6','7','8','9','0'].map(n => (
-                  <button
-                    key={n}
-                    onClick={() => setBarcodeInput(v => v.length < 13 ? v + n : v)}
-                    className="py-2.5 text-lg font-bold rounded-xl bg-white/20 text-white active:bg-primary transition-colors"
-                  >
-                    {n}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setBarcodeInput(v => v.slice(0, -1))}
-                  className="py-2.5 text-lg font-bold rounded-xl bg-white/10 text-white active:bg-white/20"
-                >
-                  <Delete size={18} />
-                </button>
-                <button
-                  onClick={submitManualBarcode}
-                  className="col-span-2 py-2.5 text-sm font-black rounded-xl bg-primary text-white uppercase tracking-widest active:scale-95 transition-all"
-                >
-                  Valider
-                </button>
-              </div>
-            </div>
-          )}
-
           <div className="space-y-3">
             <button
               onClick={() => setManualOpen(o => !o)}
@@ -236,6 +198,50 @@ export default function ScannerPage() {
             >
               <Keyboard size={16} /> {manualOpen ? 'Fermer la saisie' : 'Saisie manuelle'}
             </button>
+
+            {manualOpen && (
+              <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={13}
+                  value={barcodeInput}
+                  onChange={e => setBarcodeInput(e.target.value.replace(/\D/g, ''))}
+                  className="w-full p-3 rounded-xl text-center text-lg font-bold bg-white/20 border border-white/30 text-white placeholder-white/40 mb-3"
+                  placeholder="2000000000000"
+                  autoFocus
+                />
+                <div className="grid grid-cols-3 gap-2">
+                  {['1','2','3','4','5','6','7','8','9'].map(n => (
+                    <button
+                      key={n}
+                      onClick={() => setBarcodeInput(v => v.length < 13 ? v + n : v)}
+                      className="py-3 text-lg font-bold rounded-xl bg-white/20 text-white active:bg-primary transition-colors"
+                    >
+                      {n}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setBarcodeInput(v => v.slice(0, -1))}
+                    className="py-3 rounded-xl bg-white/10 text-white active:bg-white/20 flex items-center justify-center"
+                  >
+                    <Delete size={20} />
+                  </button>
+                  <button
+                    onClick={() => setBarcodeInput(v => v.length < 13 ? v + '0' : v)}
+                    className="py-3 text-lg font-bold rounded-xl bg-white/20 text-white active:bg-primary transition-colors"
+                  >
+                    0
+                  </button>
+                  <button
+                    onClick={submitManualBarcode}
+                    className="py-3 text-sm font-black rounded-xl bg-primary text-white uppercase tracking-widest active:scale-95 transition-all"
+                  >
+                    Valider
+                  </button>
+                </div>
+              </div>
+            )}
 
             <Link
               href="/panier"
