@@ -2,21 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Star, CakeSlice, Leaf, Info, ArrowRight, X } from 'lucide-react';
+import { Star, Leaf, Info, ArrowRight, X } from 'lucide-react';
 import { fetchProducts } from '../lib/productsService';
 import ProductModal from '../components/ProductModal';
 
 const filters = [
   { key: 'all', label: 'Tout' },
   { key: 'offres', label: 'Offres' },
-  { key: 'evenements', label: 'Événements' },
   { key: 'partenaires', label: 'Partenaires' },
   { key: 'com', label: 'Infos' },
 ];
 
 const categoryConfig = {
   offres: { Icon: Star, badge: 'Offre' },
-  evenements: { Icon: CakeSlice, badge: 'Événement' },
   partenaires: { Icon: Leaf, badge: 'Partenaire' },
   com: { Icon: Info, badge: 'Info' },
 };
@@ -111,7 +109,6 @@ export default function NewsPage() {
                   <div className="p-4">
                     <span className={`text-[10px] font-black uppercase tracking-widest ${
                       item.category === 'offres' ? 'text-green-600' :
-                      item.category === 'evenements' ? 'text-amber-500' :
                       item.category === 'partenaires' ? 'text-green-600' :
                       'text-blue-500'
                     }`}>{badge}{item.type ? ` · ${item.type}` : ''}</span>
@@ -176,7 +173,6 @@ export default function NewsPage() {
               <div>
                 <span className={`text-[10px] font-black uppercase tracking-widest ${
                   selectedNews.category === 'offres' ? 'text-green-600' :
-                  selectedNews.category === 'evenements' ? 'text-amber-500' :
                   selectedNews.category === 'partenaires' ? 'text-green-600' :
                   'text-blue-500'
                 }`}>{(categoryConfig[selectedNews.category] || categoryConfig.com).badge}{selectedNews.type ? ` · ${selectedNews.type}` : ''}</span>

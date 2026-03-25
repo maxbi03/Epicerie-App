@@ -134,10 +134,9 @@ export default function HomePage() {
                 <div className="p-4">
                   <span className={`text-[10px] font-black uppercase tracking-widest ${
                     latestNews.category === 'offres' ? 'text-green-600' :
-                    latestNews.category === 'evenements' ? 'text-amber-500' :
                     latestNews.category === 'partenaires' ? 'text-green-600' :
                     'text-blue-500'
-                  }`}>{latestNews.category === 'offres' ? 'Offre' : latestNews.category === 'evenements' ? 'Événement' : latestNews.category === 'partenaires' ? 'Partenaire' : 'Info'}</span>
+                  }`}>{latestNews.category === 'offres' ? 'Offre' : latestNews.category === 'partenaires' ? 'Partenaire' : 'Info'}</span>
                   <h3 className="font-bold text-text-primary text-base mt-1">{latestNews.title}</h3>
                   {latestNews.subtitle && (
                     <p className="text-xs text-text-secondary mt-0.5">{latestNews.subtitle}</p>

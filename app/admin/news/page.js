@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { fetchAdminNews, createNews, updateNews, deleteNews } from '../../lib/adminService';
-import { Plus, Pencil, Trash2, X, Eye, EyeOff, Star, CakeSlice, Leaf, Info, ImageIcon } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Eye, EyeOff, Star, Leaf, Info, ImageIcon } from 'lucide-react';
 
 const CATEGORIES = [
   { key: 'offres', label: 'Offres' },
-  { key: 'evenements', label: 'Événements' },
   { key: 'partenaires', label: 'Partenaires' },
   { key: 'com', label: 'Infos' },
 ];
@@ -113,7 +112,6 @@ export default function AdminNewsPage() {
   const categoryLabel = (cat) => CATEGORIES.find(c => c.key === cat)?.label || cat;
   const CategoryIcon = (cat) => {
     if (cat === 'offres') return Star;
-    if (cat === 'evenements') return CakeSlice;
     if (cat === 'partenaires') return Leaf;
     return Info;
   };
@@ -172,7 +170,6 @@ export default function AdminNewsPage() {
               ) : (
                 <div className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${
                   item.category === 'offres' ? 'bg-green-100 text-green-600' :
-                  item.category === 'evenements' ? 'bg-amber-100 text-amber-600' :
                   item.category === 'partenaires' ? 'bg-green-100 text-green-600' :
                   'bg-blue-100 text-blue-600'
                 }`}>
