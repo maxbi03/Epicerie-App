@@ -19,6 +19,7 @@ export default function ScannerPage() {
   const [cartTotal, setCartTotal] = useState(0);
   const [feedback, setFeedback] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [quantity, setQuantity] = useState(1);
 
   const scannerRef = useRef(null);
   const isScanning = useRef(false);
@@ -70,18 +71,31 @@ export default function ScannerPage() {
   function initScanner() {
     if (!window.Html5Qrcode || scannerRef.current) return;
 
-    const html5QrCode = new window.Html5Qrcode('reader');
+    const formats = window.Html5QrcodeSupportedFormats;
+    const formatsToSupport = formats ? [
+      formats.EAN_13,
+      formats.EAN_8,
+      formats.UPC_A,
+      formats.UPC_E,
+      formats.CODE_128,
+    ] : undefined;
+
+    const html5QrCode = new window.Html5Qrcode('reader', formatsToSupport ? { formatsToSupport } : undefined);
     scannerRef.current = html5QrCode;
 
     html5QrCode.start(
       { facingMode: 'environment' },
       {
-        fps: 10,
-        qrbox: { width: 320, height: 150 },
+        fps: 15,
+        qrbox: (viewfinderWidth, viewfinderHeight) => ({
+          width: Math.min(viewfinderWidth * 0.85, 400),
+          height: Math.min(viewfinderHeight * 0.3, 180),
+        }),
+        aspectRatio: 1.0,
         disableFlip: false,
       },
       (decodedText) => {
-        if (!/^\d{13}$/.test(decodedText)) return;
+        if (!/^\d{8,13}$/.test(decodedText)) return;
         if (isScanning.current) return;
         isScanning.current = true;
         try {
@@ -154,7 +168,7 @@ export default function ScannerPage() {
 
   return (
     <>
-      <Script src="https://unpkg.com/html5-qrcode" onLoad={initScanner} />
+      <Script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" onLoad={initScanner} />
 
       <style>{`
         #reader { border: none !important; }
