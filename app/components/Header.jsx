@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { supabase } from '../lib/supabaseClient';
-import { Home, Newspaper, Camera, ShoppingCart, Map, Package, User, LayoutDashboard, Tag, LogOut, Menu } from 'lucide-react';
+import { Home, Newspaper, Camera, ShoppingCart, Package, User, LayoutDashboard, LogOut, Menu } from 'lucide-react';
 
 const PAGE_TITLES = {
   '/home': 'Accueil',
@@ -12,7 +12,7 @@ const PAGE_TITLES = {
   '/scanner': 'Scanner',
   '/panier': 'Mon Panier',
   '/map': 'Carte des épiceries',
-  '/stock': 'État des stocks',
+  '/stock': 'Liste des produits',
   '/profil': 'Mon Profil',
   '/admin': 'Administration',
   '/admin/produits': 'Gestion Produits',
@@ -24,11 +24,7 @@ const NAV_LINKS = [
   { href: '/news', label: 'Le Fil Rouge', Icon: Newspaper },
   { href: '/scanner', label: 'Scanner un produit', Icon: Camera },
   { href: '/panier', label: 'Mon Panier', Icon: ShoppingCart },
-];
-
-const INFO_LINKS = [
-  { href: '/map', label: 'Carte & Localisation', Icon: Map },
-  { href: '/stock', label: 'État des stocks', Icon: Package },
+  { href: '/stock', label: 'Liste des produits', Icon: Package },
 ];
 
 const ACCOUNT_LINKS = [
@@ -135,17 +131,6 @@ export default function Header() {
 
         <div className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
           {NAV_LINKS.map(link => (
-            <Link key={link.href} href={link.href} onClick={closeMenu}
-              className={`flex items-center gap-4 p-4 rounded-2xl transition-colors text-gray-700 dark:text-gray-200
-                ${pathname === link.href ? 'bg-green-50 dark:bg-green-900/30 text-green-700' : 'hover:bg-green-50 dark:hover:bg-green-900/20'}`}>
-              <link.Icon size={20} />
-              <span className="font-bold text-sm">{link.label}</span>
-            </Link>
-          ))}
-
-          <div className="py-4 px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Informations</div>
-
-          {INFO_LINKS.map(link => (
             <Link key={link.href} href={link.href} onClick={closeMenu}
               className={`flex items-center gap-4 p-4 rounded-2xl transition-colors text-gray-700 dark:text-gray-200
                 ${pathname === link.href ? 'bg-green-50 dark:bg-green-900/30 text-green-700' : 'hover:bg-green-50 dark:hover:bg-green-900/20'}`}>

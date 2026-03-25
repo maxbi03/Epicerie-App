@@ -4,7 +4,7 @@ import { fetchProducts } from '../lib/productsService';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Script from 'next/script';
-import { Lock, Keyboard, Delete } from 'lucide-react';
+import { Lock, Keyboard, Delete, ShoppingCart } from 'lucide-react';
 import ProductModal from '../components/ProductModal';
 
 function validateEAN13(barcode) {

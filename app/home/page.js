@@ -4,24 +4,30 @@ import { supabase } from '../lib/supabaseClient';
 import { fetchUserProfile } from '../lib/userService';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, MapPin, Lock } from 'lucide-react';
+import { AlertTriangle, MapPin, Lock, Camera, Package, ArrowRight } from 'lucide-react';
 
 export default function HomePage() {
   const [isVisitor, setIsVisitor] = useState(false);
   const [greeting, setGreeting] = useState('…');
   const [emailUnverified, setEmailUnverified] = useState(false);
+  const [latestNews, setLatestNews] = useState(null);
 
   useEffect(() => {
     const visitor = sessionStorage.getItem('app_mode') === 'visitor';
     setIsVisitor(visitor);
     if (visitor) { setGreeting('Visiteur'); return; }
-    
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { setGreeting('Visiteur'); return; }
       fetchUserProfile(session.user.id).then(profile => {
         if (profile?.name) setGreeting(profile.name.split(' ')[0]);
       });
     });
+
+    fetch('/api/news')
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data) && data.length > 0) setLatestNews(data[0]); })
+      .catch(() => {});
   }, []);
 
   return (
@@ -98,28 +104,51 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* INFO AFFLUENCE */}
+          {/* RACCOURCIS */}
           <div className="px-5 mb-6">
-            <div className="bg-primary-light border border-border-light rounded-2xl p-4">
-              <div className="flex flex-col">
-                <div className="flex items-center gap-2 mb-1">
-                  <MapPin size={14} className="text-primary" />
-                  <span className="text-[10px] font-black text-primary uppercase tracking-widest">Semsales</span>
+            <h3 className="text-xs font-black text-text-muted uppercase tracking-widest mb-3">Raccourcis</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <Link href="/scanner" className="flex items-center gap-3 bg-card-bg rounded-2xl p-4 border border-border-light shadow-sm active:scale-[0.98] transition-all">
+                <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Camera size={20} className="text-primary" />
                 </div>
-                <span className="text-sm font-bold text-text-primary">Affluence : 3 personnes</span>
-              </div>
+                <span className="font-bold text-sm text-text-primary">Scanner</span>
+              </Link>
+              <Link href="/stock" className="flex items-center gap-3 bg-card-bg rounded-2xl p-4 border border-border-light shadow-sm active:scale-[0.98] transition-all">
+                <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Package size={20} className="text-primary" />
+                </div>
+                <span className="font-bold text-sm text-text-primary">Produits</span>
+              </Link>
             </div>
           </div>
 
-          {/* NEWS TEASER */}
-          <div className="px-5">
-            <Link href="/news" className="block bg-card-bg rounded-2xl overflow-hidden shadow-sm border border-border-light active:scale-[0.98] transition-all">
-              <div className="h-32 bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1550989460-0adf9ea622e2?q=80&w=500&auto=format&fit=crop')"}} />
-              <div className="p-4">
-                <h3 className="font-bold text-text-primary text-base">Arrivage de fraises de pays</h3>
-              </div>
-            </Link>
-          </div>
+          {/* DERNIÈRE NEWS */}
+          {latestNews && (
+            <div className="px-5 mb-6">
+              <h3 className="text-xs font-black text-text-muted uppercase tracking-widest mb-3">Actualité</h3>
+              <Link href="/news" className="block bg-card-bg rounded-2xl overflow-hidden shadow-sm border border-border-light active:scale-[0.98] transition-all">
+                {latestNews.image1 && (
+                  <img src={latestNews.image1} className="w-full h-36 object-cover" alt="" />
+                )}
+                <div className="p-4">
+                  <span className={`text-[10px] font-black uppercase tracking-widest ${
+                    latestNews.category === 'offres' ? 'text-green-600' :
+                    latestNews.category === 'evenements' ? 'text-amber-500' :
+                    latestNews.category === 'partenaires' ? 'text-green-600' :
+                    'text-blue-500'
+                  }`}>{latestNews.category === 'offres' ? 'Offre' : latestNews.category === 'evenements' ? 'Événement' : latestNews.category === 'partenaires' ? 'Partenaire' : 'Info'}</span>
+                  <h3 className="font-bold text-text-primary text-base mt-1">{latestNews.title}</h3>
+                  {latestNews.subtitle && (
+                    <p className="text-xs text-text-secondary mt-0.5">{latestNews.subtitle}</p>
+                  )}
+                  <span className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-primary">
+                    Lire la suite <ArrowRight size={12} />
+                  </span>
+                </div>
+              </Link>
+            </div>
+          )}
 
         </div>
       </main>
