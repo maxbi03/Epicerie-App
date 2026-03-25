@@ -113,7 +113,7 @@ export default function AdminProduits() {
   });
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-x-hidden">
       <div className="px-5 pt-4 shrink-0">
         <div className="flex justify-between items-center mb-4">
           <div>
@@ -162,7 +162,7 @@ export default function AdminProduits() {
           ))}
         </div>
 
-        <div className="flex gap-2 pb-3 mb-3">
+        <div className="flex gap-2 pb-3 mb-3 overflow-x-auto">
           {[
             { key: 'all', label: 'Tous' },
             { key: 'low', label: 'Stock faible' },
