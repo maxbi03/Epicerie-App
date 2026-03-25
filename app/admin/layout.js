@@ -32,7 +32,7 @@ export default function AdminLayout({ children }) {
 
   if (loading) {
     return (
-      <main className="flex h-screen max-w-md mx-auto items-center justify-center">
+      <main className="flex h-full max-w-md mx-auto items-center justify-center">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
       </main>
     );
@@ -41,7 +41,7 @@ export default function AdminLayout({ children }) {
   if (!authorized) return null;
 
   return (
-    <main className="relative flex h-screen max-w-md mx-auto flex-col overflow-hidden">
+    <main className="relative flex h-full max-w-md mx-auto flex-col overflow-hidden">
       <div className="flex gap-1 px-4 pt-4 pb-2 overflow-x-auto shrink-0">
         {TABS.map(tab => (
           <Link

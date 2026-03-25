@@ -43,7 +43,7 @@ export default function StockPage() {
 
   return (
     <>
-      <main className="relative flex h-screen max-w-md mx-auto flex-col overflow-hidden">
+      <main className="relative flex h-full max-w-md mx-auto flex-col overflow-hidden">
         <div className="px-5 pt-4 shrink-0">
 
           <div className="flex justify-between items-end mb-6">

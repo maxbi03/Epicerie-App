@@ -54,7 +54,7 @@ export default function InscriptionPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col p-6 max-w-md mx-auto">
+    <div className="h-full flex flex-col p-6 max-w-md mx-auto overflow-y-auto">
 
       <div className="flex items-center gap-4 mt-4 mb-8">
         <Link href="/" className="p-2 rounded-full bg-white dark:bg-white/5 text-gray-900 dark:text-white shadow">

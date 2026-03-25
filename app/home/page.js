@@ -47,7 +47,7 @@ export default function HomePage() {
         </div>
       )}
 
-      <main className="relative flex min-h-screen max-w-md mx-auto flex-col overflow-x-hidden">
+      <main className="relative flex h-full max-w-md mx-auto flex-col overflow-hidden">
         <div className="flex-1 overflow-y-auto pb-10">
 
           <div className="px-5 pt-6 pb-2">

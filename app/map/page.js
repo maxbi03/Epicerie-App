@@ -2,7 +2,7 @@ import { MapPin } from 'lucide-react';
 
 export default function MapPage() {
   return (
-    <main className="flex-1 relative max-w-md mx-auto w-full bg-white shadow-2xl border-x border-gray-200 overflow-hidden h-screen">
+    <main className="relative max-w-md mx-auto w-full bg-white shadow-2xl border-x border-gray-200 overflow-hidden h-full">
       <iframe
         className="w-full h-full border-none"
         src="https://www.openstreetmap.org/export/embed.html?bbox=6.90,46.55,6.96,46.59&layer=mapnik&marker=46.57316,6.92736&zoom=15"

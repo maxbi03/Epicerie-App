@@ -138,7 +138,7 @@ export default function ScannerPage() {
   }
 
   if (isVisitor) return (
-    <div className="h-[calc(100vh-73px)] max-w-md mx-auto bg-black flex items-center justify-center px-6">
+    <div className="h-full max-w-md mx-auto bg-black flex items-center justify-center px-6">
       <div className="w-full bg-card-bg rounded-[2rem] p-6 text-center">
         <div className="mx-auto size-14 rounded-2xl bg-primary-light flex items-center justify-center mb-4"><Lock size={28} className="text-primary" /></div>
         <h2 className="text-lg font-black text-text-primary mb-2">Scanner désactivé</h2>
@@ -167,7 +167,7 @@ export default function ScannerPage() {
         #reader video { border-radius: 0px; height: 100% !important; width: 100% !important; object-fit: cover !important; }
       `}</style>
 
-      <div className="h-[calc(100vh-73px)] max-w-md mx-auto bg-gray-950 flex flex-col overflow-hidden">
+      <div className="h-full max-w-md mx-auto bg-gray-950 flex flex-col overflow-hidden">
 
         {/* Zone caméra */}
         <div className="relative flex-[6] overflow-hidden pt-30">

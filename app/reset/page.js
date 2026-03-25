@@ -58,7 +58,7 @@ export default function ResetPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-center px-6 max-w-md mx-auto">
+    <div className="h-full flex flex-col justify-center px-6 max-w-md mx-auto overflow-y-auto">
 
       <div className="text-center mb-8">
         <div className="size-16 rounded-[1.2rem] bg-green-700 flex items-center justify-center mx-auto mb-4 shadow-lg">

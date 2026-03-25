@@ -87,7 +87,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-[100] max-w-md mx-auto flex items-center justify-between px-4 py-4 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-white/5">
+      <header className="shrink-0 z-[100] max-w-md mx-auto w-full flex items-center justify-between px-4 py-4 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-white/5">
         <div className="flex items-center gap-3">
           <button
             onClick={toggleMenu}

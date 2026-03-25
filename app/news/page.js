@@ -54,15 +54,13 @@ export default function NewsPage() {
 
   return (
     <>
-      <main className="relative flex min-h-screen max-w-md mx-auto flex-col bg-white dark:bg-gray-900 shadow-2xl overflow-x-hidden border-x border-gray-200 dark:border-white/10">
-        <div className="flex-1 overflow-y-auto pb-32">
+      <main className="relative flex h-full max-w-md mx-auto flex-col bg-white dark:bg-gray-900 shadow-2xl overflow-hidden border-x border-gray-200 dark:border-white/10">
+        <div className="shrink-0 px-4 pt-6 pb-2">
+          <h2 className="text-2xl font-bold flex items-center gap-2">Le Fil Rouge</h2>
+          <p className="text-xs text-gray-500 mt-1">L'actualité de votre épicerie locale</p>
+        </div>
 
-          <div className="px-4 pt-6 pb-2">
-            <h2 className="text-2xl font-bold flex items-center gap-2">Le Fil Rouge</h2>
-            <p className="text-xs text-gray-500 mt-1">L'actualité de votre épicerie locale</p>
-          </div>
-
-          <div className="flex gap-2 p-4 overflow-x-auto sticky top-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md z-20">
+        <div className="shrink-0 flex gap-2 px-4 pb-3 overflow-x-auto">
             {filters.map(f => (
               <button key={f.key} onClick={() => setActive(f.key)}
                 className={`shrink-0 flex h-9 items-center justify-center rounded-xl px-5 border text-sm font-medium transition-all
@@ -73,8 +71,9 @@ export default function NewsPage() {
                 {f.label}
               </button>
             ))}
-          </div>
+        </div>
 
+        <div className="flex-1 overflow-y-auto">
           <div className="flex flex-col gap-6 px-4 pb-10 mt-2">
             {loading && (
               <div className="flex justify-center py-12">

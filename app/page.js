@@ -216,7 +216,7 @@ export default function IndexPage() {
         </div>
       )}
 
-      <div className={`min-h-screen flex flex-col p-6 max-w-md mx-auto transition-all duration-500 ${splashDone ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
+      <div className={`h-full flex flex-col p-6 max-w-md mx-auto overflow-y-auto transition-all duration-500 ${splashDone ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
 
         <div className="flex justify-end mt-4">
           <button

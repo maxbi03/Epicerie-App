@@ -87,13 +87,13 @@ export default function ProfilPage() {
   }
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="h-full flex items-center justify-center">
       <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
   if (isVisitor) return (
-    <main className="max-w-md mx-auto px-5 pt-6 pb-24 min-h-screen">
+    <main className="max-w-md mx-auto px-5 pt-6 pb-24 h-full overflow-y-auto">
       <div className="flex flex-col items-center mb-8">
         <div className="size-28 rounded-[2rem] bg-app-bg flex items-center justify-center border-2 border-primary shadow-xl"><User size={48} className="text-text-muted" /></div>
         <h2 className="text-2xl font-bold mt-5 text-text-primary">Visiteur</h2>
@@ -117,7 +117,7 @@ export default function ProfilPage() {
   );
 
   return (
-    <main className="max-w-md mx-auto px-5 pt-6 pb-24 min-h-screen">
+    <main className="max-w-md mx-auto px-5 pt-6 pb-24 h-full overflow-y-auto">
 
       <div className="flex flex-col items-center mb-8">
         <div className="size-28 rounded-[2rem] bg-card-bg flex items-center justify-center border-2 border-primary shadow-xl overflow-hidden">
