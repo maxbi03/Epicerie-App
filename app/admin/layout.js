@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '../lib/supabaseClient';
-import { LayoutDashboard, Tag } from 'lucide-react';
+import { LayoutDashboard, Tag, Newspaper } from 'lucide-react';
 
 const TABS = [
   { href: '/admin', label: 'Tableau de bord', Icon: LayoutDashboard },
   { href: '/admin/produits', label: 'Produits', Icon: Tag },
+  { href: '/admin/news', label: 'News', Icon: Newspaper },
 ];
 
 export default function AdminLayout({ children }) {

@@ -71,6 +71,58 @@ export async function deleteProduct(id) {
   return res.json();
 }
 
+export async function fetchAdminNews() {
+  const headers = await getAdminHeaders();
+  const res = await fetch('/api/admin/news', { headers });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || 'Erreur serveur (admin news)');
+  }
+  return res.json();
+}
+
+export async function createNews(data) {
+  const headers = await getAdminHeaders();
+  const res = await fetch('/api/admin/news', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || 'Erreur serveur (create news)');
+  }
+  return res.json();
+}
+
+export async function updateNews(id, data) {
+  const headers = await getAdminHeaders();
+  const res = await fetch('/api/admin/news', {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ id, ...data }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || 'Erreur serveur (update news)');
+  }
+  return res.json();
+}
+
+export async function deleteNews(id) {
+  const headers = await getAdminHeaders();
+  const res = await fetch('/api/admin/news', {
+    method: 'DELETE',
+    headers,
+    body: JSON.stringify({ id }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || 'Erreur serveur (delete news)');
+  }
+  return res.json();
+}
+
 export async function updateStocks(updates) {
   const headers = await getAdminHeaders();
   const res = await fetch('/api/admin/stocks', {

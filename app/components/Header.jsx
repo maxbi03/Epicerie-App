@@ -16,6 +16,7 @@ const PAGE_TITLES = {
   '/profil': 'Mon Profil',
   '/admin': 'Administration',
   '/admin/produits': 'Gestion Produits',
+  '/admin/news': 'Gestion News',
 };
 
 const NAV_LINKS = [
@@ -169,15 +170,9 @@ export default function Header() {
               <div className="py-4 px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Administration</div>
               <Link href="/admin" onClick={closeMenu}
                 className={`flex items-center gap-4 p-4 rounded-2xl transition-colors text-gray-700 dark:text-gray-200
-                  ${pathname === '/admin' ? 'bg-green-50 dark:bg-green-900/30 text-green-700' : 'hover:bg-green-50 dark:hover:bg-green-900/20'}`}>
+                  ${pathname.startsWith('/admin') ? 'bg-green-50 dark:bg-green-900/30 text-green-700' : 'hover:bg-green-50 dark:hover:bg-green-900/20'}`}>
                 <LayoutDashboard size={20} />
-                <span className="font-bold text-sm">Tableau de bord</span>
-              </Link>
-              <Link href="/admin/produits" onClick={closeMenu}
-                className={`flex items-center gap-4 p-4 rounded-2xl transition-colors text-gray-700 dark:text-gray-200
-                  ${pathname === '/admin/produits' ? 'bg-green-50 dark:bg-green-900/30 text-green-700' : 'hover:bg-green-50 dark:hover:bg-green-900/20'}`}>
-                <Tag size={20} />
-                <span className="font-bold text-sm">Gestion Produits</span>
+                <span className="font-bold text-sm">Administration</span>
               </Link>
             </>
           )}
