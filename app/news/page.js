@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Star, CakeSlice, Leaf, Info, ArrowRight } from 'lucide-react';
+import { Star, CakeSlice, Leaf, Info, ArrowRight, X } from 'lucide-react';
 import { fetchProducts } from '../lib/productsService';
 import ProductModal from '../components/ProductModal';
 
@@ -15,10 +15,10 @@ const filters = [
 ];
 
 const categoryConfig = {
-  offres: { Icon: Star, color: 'green', badge: 'Offre', bgCard: 'bg-green-700' },
-  evenements: { Icon: CakeSlice, color: 'amber', badge: 'Événement', bgCard: 'bg-amber-500' },
-  partenaires: { Icon: Leaf, color: 'green', badge: 'Partenaire', bgCard: 'bg-green-600' },
-  com: { Icon: Info, color: 'blue', badge: 'Info', bgCard: 'bg-blue-500' },
+  offres: { Icon: Star, badge: 'Offre' },
+  evenements: { Icon: CakeSlice, badge: 'Événement' },
+  partenaires: { Icon: Leaf, badge: 'Partenaire' },
+  com: { Icon: Info, badge: 'Info' },
 };
 
 export default function NewsPage() {
@@ -27,6 +27,7 @@ export default function NewsPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedNews, setSelectedNews] = useState(null);
 
   useEffect(() => {
     Promise.all([
@@ -42,6 +43,7 @@ export default function NewsPage() {
     if (!link) return;
     if (link.startsWith('product:')) {
       e.preventDefault();
+      e.stopPropagation();
       const productName = link.slice('product:'.length).trim();
       const found = products.find(p => p.name.toLowerCase() === productName.toLowerCase());
       if (found) setSelectedProduct(found);
@@ -86,12 +88,15 @@ export default function NewsPage() {
 
             {visible.map(item => {
               const config = categoryConfig[item.category] || categoryConfig.com;
-              const { Icon, badge, bgCard } = config;
+              const { badge } = config;
               const hasImages = item.image1 || item.image2;
               const isProductLink = item.link && item.link.startsWith('product:');
 
               return (
-                <div key={item.id} className="rounded-2xl overflow-hidden bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm">
+                <div key={item.id}
+                  onClick={() => item.content && setSelectedNews(item)}
+                  className={`rounded-2xl overflow-hidden bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm ${item.content ? 'cursor-pointer active:scale-[0.98] transition-all' : ''}`}
+                >
                   {hasImages && (
                     <div className="w-full">
                       {item.image1 && item.image2 ? (
@@ -102,11 +107,6 @@ export default function NewsPage() {
                       ) : (
                         <img src={item.image1 || item.image2} className="w-full h-48 object-cover" alt="" />
                       )}
-                    </div>
-                  )}
-                  {!hasImages && (
-                    <div className={`w-full h-24 ${bgCard} flex items-center justify-center text-white`}>
-                      <Icon size={36} />
                     </div>
                   )}
                   <div className="p-4">
@@ -120,18 +120,23 @@ export default function NewsPage() {
                     {item.subtitle && (
                       <p className="text-sm text-gray-500 mt-0.5">{item.subtitle}</p>
                     )}
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 leading-relaxed whitespace-pre-line">{item.content}</p>
-                    {item.link && (
+                    {item.content && (
+                      <div className="relative mt-2">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line line-clamp-2">{item.content}</p>
+                        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white dark:from-gray-900 to-transparent" />
+                      </div>
+                    )}
+                    {item.link && item.category === 'offres' && (
                       isProductLink ? (
                         <button
                           onClick={(e) => handleLink(e, item.link)}
                           className="inline-flex items-center gap-1.5 mt-3 text-sm font-bold text-green-600 hover:text-green-700"
                         >
-                          Voir le produit <ArrowRight size={14} />
+                          {item.link_name || 'Voir le produit'} <ArrowRight size={14} />
                         </button>
                       ) : (
-                        <Link href={item.link} className="inline-flex items-center gap-1.5 mt-3 text-sm font-bold text-green-600 hover:text-green-700">
-                          Voir plus <ArrowRight size={14} />
+                        <Link href={item.link} onClick={e => e.stopPropagation()} className="inline-flex items-center gap-1.5 mt-3 text-sm font-bold text-green-600 hover:text-green-700">
+                          {item.link_name || 'Voir plus'} <ArrowRight size={14} />
                         </Link>
                       )
                     )}
@@ -142,6 +147,69 @@ export default function NewsPage() {
           </div>
         </div>
       </main>
+
+      {/* Modal fiche news */}
+      {selectedNews && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/60 z-50 flex items-end justify-center animate-fade-in" onClick={() => setSelectedNews(null)}>
+          <div className="bg-white dark:bg-gray-900 rounded-t-3xl w-full max-w-md overflow-y-auto max-h-[85vh] animate-slide-up" onClick={e => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md px-5 py-4 flex items-center justify-between border-b border-gray-100 dark:border-white/10">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Actualité</h2>
+              <button onClick={() => setSelectedNews(null)}
+                className="size-9 flex items-center justify-center rounded-full bg-gray-100 dark:bg-white/10 text-gray-500 hover:bg-gray-200 transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              {(selectedNews.image1 || selectedNews.image2) && (
+                <div className="w-full">
+                  {selectedNews.image1 && selectedNews.image2 ? (
+                    <div className="flex gap-2 h-48">
+                      <img src={selectedNews.image1} className="w-1/2 object-cover rounded-2xl" alt="" />
+                      <img src={selectedNews.image2} className="w-1/2 object-cover rounded-2xl" alt="" />
+                    </div>
+                  ) : (
+                    <img src={selectedNews.image1 || selectedNews.image2} className="w-full h-52 object-cover rounded-2xl" alt="" />
+                  )}
+                </div>
+              )}
+
+              <div>
+                <span className={`text-[10px] font-black uppercase tracking-widest ${
+                  selectedNews.category === 'offres' ? 'text-green-600' :
+                  selectedNews.category === 'evenements' ? 'text-amber-500' :
+                  selectedNews.category === 'partenaires' ? 'text-green-600' :
+                  'text-blue-500'
+                }`}>{(categoryConfig[selectedNews.category] || categoryConfig.com).badge}{selectedNews.type ? ` · ${selectedNews.type}` : ''}</span>
+                <h3 className="text-xl font-bold mt-1 dark:text-white">{selectedNews.title}</h3>
+                {selectedNews.subtitle && (
+                  <p className="text-sm text-gray-500 mt-1">{selectedNews.subtitle}</p>
+                )}
+              </div>
+
+              {selectedNews.content && (
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line">{selectedNews.content}</p>
+              )}
+
+              {selectedNews.link && (
+                selectedNews.link.startsWith('product:') ? (
+                  <button
+                    onClick={(e) => { handleLink(e, selectedNews.link); setSelectedNews(null); }}
+                    className="inline-flex items-center gap-1.5 text-sm font-bold text-green-600 hover:text-green-700"
+                  >
+                    {selectedNews.link_name || 'Voir le produit'} <ArrowRight size={14} />
+                  </button>
+                ) : (
+                  <Link href={selectedNews.link} onClick={() => setSelectedNews(null)}
+                    className="inline-flex items-center gap-1.5 text-sm font-bold text-green-600 hover:text-green-700">
+                    {selectedNews.link_name || 'Voir plus'} <ArrowRight size={14} />
+                  </Link>
+                )
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />
     </>

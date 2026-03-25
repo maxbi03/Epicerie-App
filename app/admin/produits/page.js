@@ -238,8 +238,8 @@ export default function AdminProduits() {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 backdrop-blur-sm z-50 flex items-end justify-center" onClick={() => setShowForm(false)}>
-          <div className="bg-card-bg rounded-t-3xl w-full max-w-md overflow-y-auto max-h-[85vh]" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 backdrop-blur-sm z-50 flex items-end justify-center animate-fade-in" onClick={() => setShowForm(false)}>
+          <div className="bg-card-bg rounded-t-3xl w-full max-w-md overflow-y-auto max-h-[85vh] animate-slide-up" onClick={e => e.stopPropagation()}>
             <div className="sticky top-0 bg-card-bg/95 backdrop-blur-md px-4 py-3 flex items-center justify-between border-b border-border-light">
               <h2 className="text-lg font-bold text-text-primary">{editingId ? 'Modifier' : 'Nouveau produit'}</h2>
               <button onClick={() => setShowForm(false)} className="size-10 flex items-center justify-center rounded-full hover:bg-app-bg transition-colors text-text-secondary"><X size={18} /></button>

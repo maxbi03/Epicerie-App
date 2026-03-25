@@ -32,20 +32,17 @@ export async function POST(request) {
   if (!title || !title.trim()) {
     return NextResponse.json({ error: 'Le titre est requis' }, { status: 400 });
   }
-  if (!content || !content.trim()) {
-    return NextResponse.json({ error: 'Le contenu est requis' }, { status: 400 });
-  }
-
   const news = {
     created_at: new Date().toISOString(),
     category: category || 'com',
     type: type && type.trim() ? type.trim() : null,
     title: title.trim(),
     subtitle: subtitle && subtitle.trim() ? subtitle.trim() : null,
-    content: content.trim(),
+    content: content && content.trim() ? content.trim() : null,
     image1: image1 && image1.trim() ? image1.trim() : null,
     image2: image2 && image2.trim() ? image2.trim() : null,
     link: link && link.trim() ? link.trim() : null,
+    link_name: body.link_name && body.link_name.trim() ? body.link_name.trim() : null,
     is_published: true,
   };
 
@@ -78,11 +75,11 @@ export async function PATCH(request) {
     return NextResponse.json({ error: 'ID requis' }, { status: 400 });
   }
 
-  const ALLOWED = ['category', 'type', 'title', 'subtitle', 'content', 'image1', 'image2', 'link', 'is_published'];
+  const ALLOWED = ['category', 'type', 'title', 'subtitle', 'content', 'image1', 'image2', 'link', 'link_name', 'is_published'];
   const update = {};
   for (const key of ALLOWED) {
     if (fields[key] !== undefined) {
-      if (key === 'type' || key === 'subtitle' || key === 'image1' || key === 'image2' || key === 'link') {
+      if (key === 'type' || key === 'subtitle' || key === 'content' || key === 'image1' || key === 'image2' || key === 'link' || key === 'link_name') {
         update[key] = fields[key] && String(fields[key]).trim() ? String(fields[key]).trim() : null;
       } else {
         update[key] = fields[key];

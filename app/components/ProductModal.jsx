@@ -22,11 +22,11 @@ export default function ProductModal({ product, onClose, onAdd }) {
 
   return (
     <div
-      className="fixed inset-0 backdrop-blur-sm bg-black/60 z-50 flex items-end justify-center"
+      className="fixed inset-0 backdrop-blur-sm bg-black/60 z-50 flex items-end justify-center animate-fade-in"
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-gray-900 rounded-t-3xl w-full max-w-md overflow-y-auto max-h-[85vh]"
+        className="bg-white dark:bg-gray-900 rounded-t-3xl w-full max-w-md overflow-y-auto max-h-[85vh] animate-slide-up"
         onClick={e => e.stopPropagation()}
       >
         <div className="sticky top-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md px-5 py-4 flex items-center justify-between border-b border-gray-100 dark:border-white/10">

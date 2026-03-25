@@ -11,7 +11,7 @@ const CATEGORIES = [
   { key: 'com', label: 'Infos' },
 ];
 
-const EMPTY_FORM = { category: 'com', type: '', title: '', subtitle: '', content: '', image1: '', image2: '', link: '' };
+const EMPTY_FORM = { category: 'com', type: '', title: '', subtitle: '', content: '', image1: '', image2: '', link: '', link_name: '' };
 
 export default function AdminNewsPage() {
   const [news, setNews] = useState([]);
@@ -51,6 +51,7 @@ export default function AdminNewsPage() {
       image1: item.image1 || '',
       image2: item.image2 || '',
       link: item.link || '',
+      link_name: item.link_name || '',
     });
     setError('');
     setModal(item);
@@ -68,10 +69,6 @@ export default function AdminNewsPage() {
   async function handleSave() {
     if (!form.title.trim()) {
       setError('Le titre est requis');
-      return;
-    }
-    if (!form.content.trim()) {
-      setError('Le contenu est requis');
       return;
     }
     setSaving(true);
@@ -213,9 +210,9 @@ export default function AdminNewsPage() {
       </div>
 
       {modal && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
+        <div className="fixed inset-0 z-50 flex items-end justify-center animate-fade-in">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={closeModal} />
-          <div className="relative w-full max-w-md bg-white dark:bg-gray-900 rounded-t-3xl p-6 space-y-4 max-h-[85vh] overflow-y-auto">
+          <div className="relative w-full max-w-md bg-white dark:bg-gray-900 rounded-t-3xl p-6 space-y-4 max-h-[85vh] overflow-y-auto animate-slide-up">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold">{modal === 'new' ? 'Nouvelle publication' : 'Modifier'}</h3>
               <button onClick={closeModal} className="size-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
@@ -266,9 +263,14 @@ export default function AdminNewsPage() {
 
             <div>
               <label className="text-xs font-bold text-text-secondary mb-1 block">Lien interne (optionnel)</label>
-              <input type="text" placeholder="Ex: /stock, /scanner" value={form.link}
-                onChange={e => updateField('link', e.target.value)}
-                className="w-full p-3 rounded-xl border border-border-light bg-card-bg text-sm" />
+              <div className="grid grid-cols-2 gap-3">
+                <input type="text" placeholder="Ex: /stock, product:Gruyère" value={form.link}
+                  onChange={e => updateField('link', e.target.value)}
+                  className="w-full p-3 rounded-xl border border-border-light bg-card-bg text-sm" />
+                <input type="text" placeholder="Nom du lien (défaut: auto)" value={form.link_name}
+                  onChange={e => updateField('link_name', e.target.value)}
+                  className="w-full p-3 rounded-xl border border-border-light bg-card-bg text-sm" />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
