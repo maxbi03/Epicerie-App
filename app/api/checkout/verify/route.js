@@ -2,6 +2,7 @@ import { createMollieClient } from '@mollie/api-client';
 import { NextResponse } from 'next/server';
 import { updateStockAfterPayment } from '../../../lib/updateStock';
 import { getSupabaseAdmin } from '../../../lib/supabaseServer';
+import { SALES_TABLE } from '../../../lib/config';
 
 const mollieClient = createMollieClient({ apiKey: process.env.MOLLIE_API_KEY });
 
@@ -22,7 +23,7 @@ export async function POST(request) {
 
       // Check if sale already recorded (by webhook) to avoid duplicates
       const { count } = await sb
-        .from('sales')
+        .from(SALES_TABLE)
         .select('*', { count: 'exact', head: true })
         .eq('price', Math.round(Number(payment.amount.value) * 100))
         .eq('receipt', receipt)
@@ -32,7 +33,7 @@ export async function POST(request) {
         const result = await updateStockAfterPayment(items);
 
         const { error: saleError } = await sb
-          .from('sales')
+          .from(SALES_TABLE)
           .insert({
             created_at: new Date().toISOString(),
             client_name: payment.metadata.client_name || null,

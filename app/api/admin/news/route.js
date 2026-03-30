@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from '../../../lib/supabaseServer';
 import { requireAdmin } from '../../../lib/adminUtils';
 import { NextResponse } from 'next/server';
+import { NEWS_TABLE } from '../../../lib/config';
 
 export async function GET(request) {
   const { authorized } = await requireAdmin(request);
@@ -9,7 +10,7 @@ export async function GET(request) {
   }
 
   const { data, error } = await getSupabaseAdmin()
-    .from('news')
+    .from(NEWS_TABLE)
     .select('*')
     .order('created_at', { ascending: false });
 
@@ -47,7 +48,7 @@ export async function POST(request) {
   };
 
   const { data, error } = await getSupabaseAdmin()
-    .from('news')
+    .from(NEWS_TABLE)
     .insert(news)
     .select()
     .single();
@@ -88,7 +89,7 @@ export async function PATCH(request) {
   }
 
   const { data, error } = await getSupabaseAdmin()
-    .from('news')
+    .from(NEWS_TABLE)
     .update(update)
     .eq('id', id)
     .select()
@@ -117,7 +118,7 @@ export async function DELETE(request) {
   }
 
   const { error } = await getSupabaseAdmin()
-    .from('news')
+    .from(NEWS_TABLE)
     .delete()
     .eq('id', id);
 

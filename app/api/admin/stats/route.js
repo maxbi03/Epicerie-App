@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from '../../../lib/supabaseServer';
 import { requireAdmin } from '../../../lib/adminUtils';
 import { NextResponse } from 'next/server';
+import { PRODUCTS_TABLE, SALES_TABLE } from '../../../lib/config';
 
 export async function GET(request) {
   const { authorized } = await requireAdmin(request);
@@ -11,27 +12,27 @@ export async function GET(request) {
   const sb = getSupabaseAdmin();
 
   const { count: totalProducts } = await sb
-    .from('products')
+    .from(PRODUCTS_TABLE)
     .select('*', { count: 'exact', head: true });
 
   const { count: activeProducts } = await sb
-    .from('products')
+    .from(PRODUCTS_TABLE)
     .select('*', { count: 'exact', head: true })
     .eq('is_active', true);
 
   const { count: incomplete } = await sb
-    .from('products')
+    .from(PRODUCTS_TABLE)
     .select('*', { count: 'exact', head: true })
     .eq('is_active', false);
 
   const { count: outOfStock } = await sb
-    .from('products')
+    .from(PRODUCTS_TABLE)
     .select('*', { count: 'exact', head: true })
     .eq('is_active', true)
     .eq('stock_shelf', 0);
 
   const { count: lowStock } = await sb
-    .from('products')
+    .from(PRODUCTS_TABLE)
     .select('*', { count: 'exact', head: true })
     .eq('is_active', true)
     .gt('stock_shelf', 0)
@@ -39,51 +40,51 @@ export async function GET(request) {
 
   // Stock shelf stats
   const { count: shelfOutOfStock } = await sb
-    .from('products')
+    .from(PRODUCTS_TABLE)
     .select('*', { count: 'exact', head: true })
     .eq('is_active', true)
     .eq('stock_shelf', 0);
 
   const { count: shelfLow } = await sb
-    .from('products')
+    .from(PRODUCTS_TABLE)
     .select('*', { count: 'exact', head: true })
     .eq('is_active', true)
     .gt('stock_shelf', 0)
     .lte('stock_shelf', 5);
 
   const { count: shelfOk } = await sb
-    .from('products')
+    .from(PRODUCTS_TABLE)
     .select('*', { count: 'exact', head: true })
     .eq('is_active', true)
     .gt('stock_shelf', 5);
 
   // Stock back stats
   const { count: backOutOfStock } = await sb
-    .from('products')
+    .from(PRODUCTS_TABLE)
     .select('*', { count: 'exact', head: true })
     .eq('is_active', true)
     .eq('stock_back', 0);
 
   const { count: backLow } = await sb
-    .from('products')
+    .from(PRODUCTS_TABLE)
     .select('*', { count: 'exact', head: true })
     .eq('is_active', true)
     .gt('stock_back', 0)
     .lte('stock_back', 5);
 
   const { count: backOk } = await sb
-    .from('products')
+    .from(PRODUCTS_TABLE)
     .select('*', { count: 'exact', head: true })
     .eq('is_active', true)
     .gt('stock_back', 5);
 
   // Sales stats
   const { count: totalSales } = await sb
-    .from('sales')
+    .from(SALES_TABLE)
     .select('*', { count: 'exact', head: true });
 
   const { data: salesData } = await sb
-    .from('sales')
+    .from(SALES_TABLE)
     .select('price, created_at');
 
   // Prices are stored in centimes (bigint), divide by 100 for display

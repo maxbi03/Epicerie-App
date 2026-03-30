@@ -5,7 +5,10 @@ import { fetchProducts } from '../../lib/productsService';
 import { updateStocks } from '../../lib/adminService';
 import { Minus, Plus } from 'lucide-react';
 
-const CATEGORIES = ['Tous', 'Crèmerie', 'Boulangerie', 'Boissons', 'Epicerie', 'Fruits & Légumes', 'Divers'];
+function getCategories(products) {
+  const cats = [...new Set(products.map(p => p.category).filter(Boolean))].sort();
+  return ['Tous', ...cats];
+}
 
 export default function AdminStocks() {
   const [products, setProducts] = useState([]);
@@ -68,7 +71,7 @@ export default function AdminStocks() {
 
   const filtered = products.filter(p => {
     const matchCat = activeCategory === 'Tous' || p.category === activeCategory;
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = (p.name || '').toLowerCase().includes(search.toLowerCase());
     return matchCat && matchSearch;
   });
 
@@ -104,7 +107,7 @@ export default function AdminStocks() {
       />
 
       <div className="flex gap-2 overflow-x-auto pb-3 mb-3">
-        {CATEGORIES.map(cat => (
+        {getCategories(products).map(cat => (
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}

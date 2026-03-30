@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from '../../../lib/supabaseServer';
 import { requireAdmin } from '../../../lib/adminUtils';
 import { NextResponse } from 'next/server';
+import { PRODUCTS_TABLE, PRODUCTS_ID } from '../../../lib/config';
 
 const REQUIRED_FIELDS = ['name', 'barcode', 'price_chf', 'quantity', 'category', 'image_url', 'producer', 'description'];
 
@@ -22,7 +23,7 @@ export async function GET(request) {
   }
 
   const { data, error } = await getSupabaseAdmin()
-    .from('products')
+    .from(PRODUCTS_TABLE)
     .select('*')
     .order('name', { ascending: true });
 
@@ -30,7 +31,9 @@ export async function GET(request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data || []);
+  // Map PRODUCTS_ID → id pour compatibilité front
+  const mapped = (data || []).map(p => ({ ...p, id: p[PRODUCTS_ID] ?? p.id }));
+  return NextResponse.json(mapped);
 }
 
 export async function POST(request) {
@@ -48,11 +51,11 @@ export async function POST(request) {
   // Check uniqueness
   const sb = getSupabaseAdmin();
   if (cleanName) {
-    const { count } = await sb.from('products').select('*', { count: 'exact', head: true }).ilike('name', cleanName);
+    const { count } = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true }).ilike('name', cleanName);
     if (count > 0) return NextResponse.json({ error: 'Un produit avec ce nom existe déjà' }, { status: 409 });
   }
   if (cleanBarcode) {
-    const { count } = await sb.from('products').select('*', { count: 'exact', head: true }).eq('barcode', cleanBarcode);
+    const { count } = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true }).eq('barcode', cleanBarcode);
     if (count > 0) return NextResponse.json({ error: 'Un produit avec ce code-barres existe déjà' }, { status: 409 });
   }
 
@@ -71,7 +74,7 @@ export async function POST(request) {
   };
 
   const { data, error } = await sb
-    .from('products')
+    .from(PRODUCTS_TABLE)
     .insert(product)
     .select()
     .single();
@@ -110,19 +113,19 @@ export async function PATCH(request) {
   // Check uniqueness
   const sb = getSupabaseAdmin();
   if (fields.name) {
-    const { count } = await sb.from('products').select('*', { count: 'exact', head: true }).ilike('name', fields.name).neq('id', id);
+    const { count } = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true }).ilike('name', fields.name).neq(PRODUCTS_ID, id);
     if (count > 0) return NextResponse.json({ error: 'Un produit avec ce nom existe déjà' }, { status: 409 });
   }
   if (fields.barcode) {
-    const { count } = await sb.from('products').select('*', { count: 'exact', head: true }).eq('barcode', fields.barcode).neq('id', id);
+    const { count } = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true }).eq('barcode', fields.barcode).neq(PRODUCTS_ID, id);
     if (count > 0) return NextResponse.json({ error: 'Un produit avec ce code-barres existe déjà' }, { status: 409 });
   }
 
   // Fetch current product to merge and recalculate is_active
   const { data: current } = await sb
-    .from('products')
+    .from(PRODUCTS_TABLE)
     .select('*')
-    .eq('id', id)
+    .eq(PRODUCTS_ID, id)
     .single();
 
   if (current) {
@@ -131,9 +134,9 @@ export async function PATCH(request) {
   }
 
   const { data, error } = await sb
-    .from('products')
+    .from(PRODUCTS_TABLE)
     .update(fields)
-    .eq('id', id)
+    .eq(PRODUCTS_ID, id)
     .select()
     .single();
 
@@ -158,9 +161,9 @@ export async function DELETE(request) {
   }
 
   const { error } = await getSupabaseAdmin()
-    .from('products')
+    .from(PRODUCTS_TABLE)
     .delete()
-    .eq('id', id);
+    .eq(PRODUCTS_ID, id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

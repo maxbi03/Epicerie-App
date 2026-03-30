@@ -4,8 +4,12 @@ import { useEffect, useState } from 'react';
 import { fetchAdminProducts, createProduct, updateProduct, deleteProduct } from '../../lib/adminService';
 import { Pencil, X, AlertTriangle } from 'lucide-react';
 
-const CATEGORIES_FILTER = ['Tous', 'Crèmerie', 'Boulangerie', 'Boissons', 'Epicerie', 'Fruits & Légumes', 'Divers'];
-const CATEGORIES = ['Crèmerie', 'Boulangerie', 'Boissons', 'Epicerie', 'Fruits & Légumes', 'Divers'];
+function getCategories(products) {
+  return [...new Set(products.map(p => p.category).filter(Boolean))].sort();
+}
+function getCategoriesFilter(products) {
+  return ['Tous', ...getCategories(products)];
+}
 
 const EMPTY_FORM = { name: '', barcode: '', price_chf: '', quantity: '', description: '', category: 'Divers', image_url: '', producer: '', stock_shelf: '0', stock_back: '0' };
 
@@ -96,7 +100,7 @@ export default function AdminProduits() {
 
   const filtered = products.filter(p => {
     const matchCat = activeCategory === 'Tous' || p.category === activeCategory;
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = (p.name || '').toLowerCase().includes(search.toLowerCase());
     if (!matchCat || !matchSearch) return false;
     const s = p.stock_shelf ?? 0;
     const b = p.stock_back ?? 0;
@@ -147,7 +151,7 @@ export default function AdminProduits() {
         />
 
         <div className="flex gap-2 overflow-x-auto pb-2 mb-2">
-          {CATEGORIES_FILTER.map(cat => (
+          {getCategoriesFilter(products).map(cat => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
@@ -270,7 +274,7 @@ export default function AdminProduits() {
                   <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">Catégorie</label>
                   <select value={form.category} onChange={e => updateField('category', e.target.value)}
                     className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm">
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    {getCategories(products).map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>

@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from '../../../lib/supabaseServer';
 import { requireAdmin } from '../../../lib/adminUtils';
 import { NextResponse } from 'next/server';
+import { PRODUCTS_TABLE, PRODUCTS_ID } from '../../../lib/config';
 
 export async function PATCH(request) {
   const { authorized } = await requireAdmin(request);
@@ -19,9 +20,9 @@ export async function PATCH(request) {
 
   for (const { id, stock_shelf } of updates) {
     const { error } = await sb
-      .from('products')
+      .from(PRODUCTS_TABLE)
       .update({ stock_shelf: Math.max(0, Number(stock_shelf)) })
-      .eq('id', id);
+      .eq(PRODUCTS_ID, id);
 
     if (error) {
       errors.push({ id, error: error.message });

@@ -2,6 +2,7 @@ import { createMollieClient } from '@mollie/api-client';
 import { NextResponse } from 'next/server';
 import { updateStockAfterPayment } from '../../../lib/updateStock';
 import { getSupabaseAdmin } from '../../../lib/supabaseServer';
+import { SALES_TABLE } from '../../../lib/config';
 
 const mollieClient = createMollieClient({ apiKey: process.env.MOLLIE_API_KEY });
 
@@ -27,7 +28,7 @@ export async function POST(request) {
       // Record sale
       const receipt = items.map(i => `${i.name} x${i.qty}`).join(', ');
       const { error: saleError } = await getSupabaseAdmin()
-        .from('sales')
+        .from(SALES_TABLE)
         .insert({
           created_at: new Date().toISOString(),
           client_name: payment.metadata.client_name || null,

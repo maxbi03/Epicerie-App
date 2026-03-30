@@ -4,7 +4,10 @@ import { fetchProducts } from '../lib/productsService';
 import { useState, useEffect } from 'react';
 import ProductModal from '../components/ProductModal';
 
-const CATEGORIES = ['Tous', 'Crèmerie', 'Boulangerie', 'Boissons', 'Epicerie', 'Fruits & Légumes'];
+function getCategories(products) {
+  const cats = [...new Set(products.map(p => p.category).filter(Boolean))].sort();
+  return ['Tous', ...cats];
+}
 
 function StockBadge({ stock }) {
   if (stock === 0) return (
@@ -37,7 +40,7 @@ export default function StockPage() {
 
   const filtered = products.filter(p => {
     const matchCat = activeCategory === 'Tous' || p.category === activeCategory;
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = (p.name || '').toLowerCase().includes(search.toLowerCase());
     return matchCat && matchSearch;
   });
 
@@ -65,7 +68,7 @@ export default function StockPage() {
           />
 
           <div className="flex gap-2 overflow-x-auto pb-4 mb-4">
-            {CATEGORIES.map(cat => (
+            {getCategories(products).map(cat => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}

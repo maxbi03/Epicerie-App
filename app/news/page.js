@@ -43,7 +43,7 @@ export default function NewsPage() {
       e.preventDefault();
       e.stopPropagation();
       const productName = link.slice('product:'.length).trim();
-      const found = products.find(p => p.name.toLowerCase() === productName.toLowerCase());
+      const found = products.find(p => (p.name || '').toLowerCase() === productName.toLowerCase());
       if (found) setSelectedProduct(found);
     }
   }

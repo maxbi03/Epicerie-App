@@ -1,9 +1,10 @@
 import { getSupabaseAdmin } from '../../lib/supabaseServer';
 import { NextResponse } from 'next/server';
+import { NEWS_TABLE } from '../../lib/config';
 
 export async function GET() {
   const { data, error } = await getSupabaseAdmin()
-    .from('news')
+    .from(NEWS_TABLE)
     .select('*')
     .eq('is_published', true)
     .order('created_at', { ascending: false });

@@ -1,11 +1,12 @@
 import { getSupabaseAdmin } from '../../lib/supabaseServer';
 import { NextResponse } from 'next/server';
+import { PRODUCTS_TABLE, PRODUCTS_ID } from '../../lib/config';
 
 function normalizeProduct(row) {
   const stock = row.stock_shelf ?? row.stock_total ?? row.stock ?? row.quantity ?? row.qty ?? 0;
   const barcode = row.barcode ?? row.ean ?? row.ean13 ?? row.code_barres ?? row.codebarres;
   return {
-    id: row.id,
+    id: row[PRODUCTS_ID] ?? row.id,
     name: row.name ?? row.title ?? row.nom ?? '',
     barcode: barcode == null ? null : String(barcode),
     price: Number(row.price_chf ?? row.price ?? row.prix ?? 0),
@@ -22,7 +23,7 @@ function normalizeProduct(row) {
 
 export async function GET() {
   const { data, error } = await getSupabaseAdmin()
-    .from('products')
+    .from(PRODUCTS_TABLE)
     .select('*')
     .eq('is_active', true)
     .order('name', { ascending: true });
