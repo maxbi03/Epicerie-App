@@ -4,7 +4,7 @@ import { fetchProducts } from '../lib/productsService';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Script from 'next/script';
-import { Lock, Keyboard, Delete, ShoppingCart } from 'lucide-react';
+import { Lock, Keyboard, Delete, ShoppingCart, X } from 'lucide-react';
 import ProductModal from '../components/ProductModal';
 
 function validateEAN13(barcode) {
@@ -20,6 +20,7 @@ export default function ScannerPage() {
   const [feedback, setFeedback] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [unknownBarcode, setUnknownBarcode] = useState(null);
 
   const scannerRef = useRef(null);
   const isScanning = useRef(false);
@@ -120,11 +121,13 @@ export default function ScannerPage() {
 
     if (product) {
       if (navigator.vibrate) navigator.vibrate(100);
-      // Ouvre la fiche produit automatiquement
       setQuantity(1);
       setSelectedProduct(product);
+      setUnknownBarcode(null);
     } else {
-      showFeedback('error', `Produit non trouvé: ${barcode}`);
+      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+      setUnknownBarcode(barcode);
+      setTimeout(() => setUnknownBarcode(null), 5000);
     }
   }
 
@@ -200,9 +203,25 @@ export default function ScannerPage() {
 
         {/* Zone contrôles */}
         <div className="flex-[4.5] flex flex-col justify-between px-5 py-4 bg-gray-950">
-          <p className="text-white/50 text-xs text-center">
-            Alignez le code-barres dans le cadre
-          </p>
+          {unknownBarcode ? (
+            <div className="bg-red-500/20 border border-red-500/40 rounded-2xl p-4 flex items-start gap-3">
+              <div className="size-10 rounded-xl bg-red-500/20 flex items-center justify-center shrink-0">
+                <span className="text-lg">?</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-red-300">Produit non référencé</p>
+                <p className="text-xs text-red-300/70 mt-0.5 font-mono">{unknownBarcode}</p>
+                <p className="text-xs text-white/50 mt-1">Ce code-barres ne correspond à aucun produit en magasin.</p>
+              </div>
+              <button onClick={() => setUnknownBarcode(null)} className="text-white/40 hover:text-white shrink-0">
+                <X size={16} />
+              </button>
+            </div>
+          ) : (
+            <p className="text-white/50 text-xs text-center">
+              Alignez le code-barres dans le cadre
+            </p>
+          )}
 
           <div className="space-y-3">
             <button
