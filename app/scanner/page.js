@@ -87,13 +87,16 @@ export default function ScannerPage() {
     html5QrCode.start(
       { facingMode: 'environment' },
       {
-        fps: 15,
+        fps: 30,
         qrbox: (viewfinderWidth, viewfinderHeight) => ({
-          width: Math.min(viewfinderWidth * 0.85, 400),
-          height: Math.min(viewfinderHeight * 0.3, 180),
+          width: Math.min(viewfinderWidth * 0.9, 500),
+          height: Math.min(viewfinderHeight * 0.45, 250),
         }),
-        aspectRatio: 1.0,
+        aspectRatio: 1.7777,
         disableFlip: false,
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true,
+        },
       },
       (decodedText) => {
         if (!/^\d{8,13}$/.test(decodedText)) return;
@@ -174,14 +177,12 @@ export default function ScannerPage() {
       <Script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" onLoad={initScanner} />
 
       <style>{`
-        #reader { border: none !important; }
-        #reader video { border-radius: 16px; }
-        #reader__scan_region { background: transparent !important; }
+        #reader { border: none !important; width: 100% !important; height: 100% !important; }
+        #reader video { border-radius: 0px; width: 100% !important; height: 100% !important; object-fit: contain !important; }
+        #reader__scan_region { background: transparent !important; width: 100% !important; height: 100% !important; }
+        #reader__scan_region > div { box-shadow: 0 0 0 9999px rgba(0,0,0,0.5) !important; border: 2px solid rgba(255,255,255,0.6) !important; border-radius: 12px !important; }
         #reader__dashboard { display: none !important; }
         #reader__header_message { display: none !important; }
-        #reader img { display: none !important; }
-        #reader__scan_region img { display: none !important; }
-        #reader video { border-radius: 0px; height: 100% !important; width: 100% !important; object-fit: cover !important; }
       `}</style>
 
       <div className="h-full max-w-md mx-auto bg-gray-950 flex flex-col overflow-hidden">
