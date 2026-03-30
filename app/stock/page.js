@@ -99,8 +99,8 @@ export default function StockPage() {
                   onClick={() => setSelectedProduct(product)}
                   className="w-full flex items-center gap-4 bg-card-bg rounded-2xl p-4 border border-border-light shadow-sm active:scale-[0.98] transition-all text-left"
                 >
-                  <div className="size-14 rounded-2xl overflow-hidden bg-app-bg shrink-0">
-                    {product.image && <img src={product.image} className="w-full h-full object-cover" alt={product.name} />}
+                  <div className="size-14 rounded-2xl overflow-hidden bg-white border border-gray-200 dark:border-white/10 shrink-0">
+                    {product.image && <img src={product.image} className="w-full h-full object-contain" alt={product.name} />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-bold text-sm text-text-primary truncate">{product.name}</h4>

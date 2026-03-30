@@ -1,10 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Minus, Plus, MapPin, Weight, FileText, Info, ShoppingCart } from 'lucide-react';
 
 export default function ProductModal({ product, onClose, onAdd }) {
   const [quantity, setQuantity] = useState(1);
+
+  useEffect(() => {
+    setQuantity(1);
+  }, [product]);
 
   if (!product) return null;
 
@@ -39,8 +43,8 @@ export default function ProductModal({ product, onClose, onAdd }) {
 
         <div className="p-5 space-y-5">
           {product.image && (
-            <div className="w-full h-52 rounded-2xl overflow-hidden bg-gray-50 dark:bg-white/5">
-              <img src={product.image} className="w-full h-full object-cover" alt={product.name} />
+            <div className="w-full h-52 rounded-2xl overflow-hidden bg-white border border-gray-200 dark:border-white/10">
+              <img src={product.image} className="w-full h-full object-contain" alt={product.name} />
             </div>
           )}
 
@@ -77,7 +81,7 @@ export default function ProductModal({ product, onClose, onAdd }) {
               ) : product.stock <= 5 ? (
                 <p className="text-lg font-black text-amber-500">{product.stock} restant{product.stock > 1 ? 's' : ''}</p>
               ) : (
-                <p className="text-lg font-black text-green-600">En stock</p>
+                <p className="text-lg font-black text-green-600">{product.stock} en stock</p>
               )}
             </div>
           </div>

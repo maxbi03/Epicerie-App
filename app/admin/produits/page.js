@@ -213,8 +213,8 @@ export default function AdminProduits() {
                   : lowStock ? 'bg-amber-50/50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800/50'
                   : 'bg-card-bg border-border-light'
                 }`}>
-                  <div className="size-12 rounded-xl overflow-hidden bg-app-bg shrink-0">
-                    {product.image_url && <img src={product.image_url} className={`w-full h-full object-cover ${inactive ? 'opacity-50' : ''}`} alt={product.name} />}
+                  <div className="size-12 rounded-xl overflow-hidden bg-white border border-gray-200 dark:border-white/10 shrink-0">
+                    {product.image_url && <img src={product.image_url} className={`w-full h-full object-contain ${inactive ? 'opacity-50' : ''}`} alt={product.name} />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -299,8 +299,8 @@ export default function AdminProduits() {
                   className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
               </div>
               {form.image_url && (
-                <div className="w-full h-36 rounded-xl overflow-hidden bg-app-bg border border-border-light">
-                  <img src={form.image_url} alt="Aperçu" className="w-full h-full object-cover" onError={e => { e.target.style.display = 'none'; }} />
+                <div className="w-full h-36 rounded-xl overflow-hidden bg-white border border-gray-200 dark:border-white/10">
+                  <img src={form.image_url} alt="Aperçu" className="w-full h-full object-contain" onError={e => { e.target.style.display = 'none'; }} />
                 </div>
               )}
               <div className="grid grid-cols-2 gap-3">
