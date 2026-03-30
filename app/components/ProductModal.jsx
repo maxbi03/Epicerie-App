@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Minus, Plus, MapPin, Weight, FileText, Info, ShoppingCart } from 'lucide-react';
+import { X, Minus, Plus, Store, Weight, FileText, Info, ShoppingCart } from 'lucide-react';
+import { BoxIcon } from 'lucide-react';
+import { Box } from 'lucide-react';
 
 export default function ProductModal({ product, onClose, onAdd }) {
   const [quantity, setQuantity] = useState(1);
@@ -91,18 +93,18 @@ export default function ProductModal({ product, onClose, onAdd }) {
               <div className="grid grid-cols-2 gap-3">
                 {product.origin && (
                   <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-white/5 rounded-xl">
-                    <MapPin size={20} className="text-gray-500 shrink-0" />
+                    <Store size={20} className="text-gray-500 shrink-0" />
                     <div>
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Provenance</p>
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Marque / Producteur</p>
                       <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{product.origin}</p>
                     </div>
                   </div>
                 )}
                 {product.quantity && (
                   <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-white/5 rounded-xl">
-                    <Weight size={20} className="text-gray-500 shrink-0" />
+                    <Box size={20} className="text-gray-500 shrink-0" />
                     <div>
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Poids</p>
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Poids / Volume</p>
                       <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{product.quantity}</p>
                     </div>
                   </div>
