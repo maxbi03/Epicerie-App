@@ -89,7 +89,7 @@ export default function PanierPage() {
   }
 
   return (
-    <div className="relative flex h-full max-w-md mx-auto flex-col bg-white dark:bg-gray-900 shadow-2xl overflow-hidden border-x border-gray-200 dark:border-white/10">
+    <main className="relative flex h-full max-w-md mx-auto flex-col bg-white dark:bg-gray-900 shadow-2xl overflow-hidden border-x border-gray-200 dark:border-white/10">
 
       <div className="px-6 pt-6 pb-2 flex justify-between items-center shrink-0">
         <h2 className="text-2xl font-bold tracking-tight dark:text-white">Mon Panier</h2>
@@ -98,7 +98,7 @@ export default function PanierPage() {
         </span>
       </div>
 
-      <main className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto">
 
         {groupedList.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-10 text-center py-20">
@@ -150,7 +150,7 @@ export default function PanierPage() {
             ))}
           </div>
         )}
-      </main>
+      </div>
 
       <div className="shrink-0 bg-white dark:bg-gray-900 px-6 pb-6 pt-4 border-t border-gray-100 dark:border-white/10">
         <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3">Résumé</h3>
@@ -180,6 +180,6 @@ export default function PanierPage() {
         </div>
       </div>
 
-    </div>
+    </main>
   );
 }
