@@ -5,8 +5,8 @@ import Header from './components/Header';
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'] });
 
 export const metadata = {
-  title: "L'Épicerie du Village",
-  description: 'Épicerie autonome de Semsales',
+  title: "Épico",
+  description: "L'épicerie ouverte 24/7",
   manifest: '/manifest.json',
 };
 

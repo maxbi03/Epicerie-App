@@ -31,8 +31,26 @@ export async function GET(request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Map PRODUCTS_ID → id pour compatibilité front
-  const mapped = (data || []).map(p => ({ ...p, id: p[PRODUCTS_ID] ?? p.id }));
+  // Recalculate is_active for all products and fix any mismatches
+  const sb = getSupabaseAdmin();
+  const toFix = [];
+  const mapped = (data || []).map(p => {
+    const correct = isComplete(p);
+    if (p.is_active !== correct) {
+      toFix.push({ id: p[PRODUCTS_ID] ?? p.id, is_active: correct });
+    }
+    return { ...p, id: p[PRODUCTS_ID] ?? p.id, is_active: correct };
+  });
+
+  // Batch fix mismatched products in background
+  if (toFix.length > 0) {
+    Promise.all(
+      toFix.map(({ id, is_active }) =>
+        sb.from(PRODUCTS_TABLE).update({ is_active }).eq(PRODUCTS_ID, id)
+      )
+    ).catch(err => console.error('Failed to fix is_active:', err));
+  }
+
   return NextResponse.json(mapped);
 }
 
@@ -93,7 +111,7 @@ export async function PATCH(request) {
   }
 
   const body = await request.json();
-  const { id, ...rawFields } = body;
+  const { id, _manual_toggle, ...rawFields } = body;
 
   if (!id) {
     return NextResponse.json({ error: 'ID requis' }, { status: 400 });
@@ -128,7 +146,7 @@ export async function PATCH(request) {
     .eq(PRODUCTS_ID, id)
     .single();
 
-  if (current) {
+  if (current && !_manual_toggle) {
     const merged = { ...current, ...fields };
     fields.is_active = isComplete(merged);
   }

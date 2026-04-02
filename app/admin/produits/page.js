@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { fetchAdminProducts, createProduct, updateProduct, deleteProduct } from '../../lib/adminService';
-import { Pencil, X, AlertTriangle } from 'lucide-react';
+import { Pencil, X, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 
 function getCategories(products) {
   return [...new Set(products.map(p => p.category).filter(Boolean))].sort();
@@ -94,6 +94,29 @@ export default function AdminProduits() {
     }
   }
 
+  const REQUIRED_FIELDS = ['name', 'barcode', 'price_chf', 'quantity', 'category', 'image_url', 'producer', 'description'];
+
+  function isProductComplete(p) {
+    return REQUIRED_FIELDS.every(f => {
+      const val = p[f];
+      if (val == null) return false;
+      if (typeof val === 'string' && val.trim() === '') return false;
+      if (f === 'price_chf' && Number(val) <= 0) return false;
+      if (f === 'barcode' && !/^\d{13}$/.test(String(val).trim())) return false;
+      return true;
+    });
+  }
+
+  async function handleToggleActive(product) {
+    if (!isProductComplete(product)) return;
+    try {
+      const updated = await updateProduct(product.id, { is_active: !product.is_active, _manual_toggle: true });
+      setProducts(prev => prev.map(p => p.id === product.id ? { ...p, ...updated } : p));
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   function updateField(field, value) {
     setForm(prev => ({ ...prev, [field]: value }));
   }
@@ -104,16 +127,33 @@ export default function AdminProduits() {
     if (!matchCat || !matchSearch) return false;
     const s = p.stock_shelf ?? 0;
     const b = p.stock_back ?? 0;
-    if (stockFilter === 'low') {
-      return p.is_active !== false && (s > 0 || b > 0) && (s <= 5 || b <= 5);
+    const complete = isProductComplete(p);
+    if (stockFilter === 'active') {
+      return p.is_active === true;
     }
-    if (stockFilter === 'out') {
-      return p.is_active !== false && s === 0 && b === 0;
+    if (stockFilter === 'inactive') {
+      return complete && p.is_active === false;
     }
     if (stockFilter === 'incomplete') {
-      return p.is_active === false;
+      return !complete;
+    }
+    if (stockFilter === 'low') {
+      return complete && (s > 0 || b > 0) && (s <= 5 || b <= 5);
+    }
+    if (stockFilter === 'out') {
+      return complete && s === 0 && b === 0;
     }
     return true;
+  }).sort((a, b) => {
+    const aInactive = a.is_active === false ? 0 : 1;
+    const bInactive = b.is_active === false ? 0 : 1;
+    if (aInactive !== bInactive) return aInactive - bInactive;
+    const aOut = (a.stock_shelf ?? 0) === 0 && (a.stock_back ?? 0) === 0 ? 0 : 1;
+    const bOut = (b.stock_shelf ?? 0) === 0 && (b.stock_back ?? 0) === 0 ? 0 : 1;
+    if (aOut !== bOut) return aOut - bOut;
+    const aLow = (a.stock_shelf ?? 0) <= 5 || (a.stock_back ?? 0) <= 5 ? 0 : 1;
+    const bLow = (b.stock_shelf ?? 0) <= 5 || (b.stock_back ?? 0) <= 5 ? 0 : 1;
+    return aLow - bLow;
   });
 
   return (
@@ -169,9 +209,11 @@ export default function AdminProduits() {
         <div className="flex gap-2 pb-3 mb-3 overflow-x-auto">
           {[
             { key: 'all', label: 'Tous' },
+            { key: 'active', label: 'Actifs' },
+            { key: 'inactive', label: 'Inactifs' },
+            { key: 'incomplete', label: 'Incomplets' },
             { key: 'low', label: 'Stock faible' },
             { key: 'out', label: 'Rupture' },
-            { key: 'incomplete', label: 'Incomplets' },
           ].map(f => (
             <button
               key={f.key}
@@ -185,7 +227,6 @@ export default function AdminProduits() {
                   : 'bg-card-bg text-text-secondary border border-border-light'
                 }`}
             >
-              {f.key !== 'all' && <AlertTriangle size={12} />}
               {f.label}
             </button>
           ))}
@@ -231,6 +272,11 @@ export default function AdminProduits() {
                     </div>
                   </div>
                   <div className="flex gap-1 shrink-0">
+                    {isProductComplete(product) && (
+                      <button onClick={() => handleToggleActive(product)} className={`size-9 flex items-center justify-center rounded-xl text-sm active:scale-90 transition-all ${product.is_active ? 'bg-green-50 text-green-500' : 'bg-gray-100 text-gray-400'}`}>
+                        {product.is_active ? <Eye size={16} /> : <EyeOff size={16} />}
+                      </button>
+                    )}
                     <button onClick={() => openEdit(product)} className="size-9 flex items-center justify-center rounded-xl bg-blue-50 text-blue-500 text-sm active:scale-90 transition-all"><Pencil size={16} /></button>
                     <button onClick={() => handleDelete(product.id)} className="size-9 flex items-center justify-center rounded-xl bg-red-50 text-red-500 text-sm active:scale-90 transition-all"><X size={16} /></button>
                   </div>
