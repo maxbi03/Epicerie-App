@@ -4,6 +4,13 @@ import Header from './components/Header';
 
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'] });
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export const metadata = {
   title: "Épico",
   description: "L'épicerie ouverte 24/7",

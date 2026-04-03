@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X, Minus, Plus, Store, Weight, FileText, Info, ShoppingCart } from 'lucide-react';
 import { BoxIcon } from 'lucide-react';
+import SwissFlag from './SwissFlag';
 import { Box } from 'lucide-react';
 
 export default function ProductModal({ product, onClose, onAdd }) {
@@ -54,9 +55,13 @@ export default function ProductModal({ product, onClose, onAdd }) {
             <div className="flex items-start justify-between gap-3">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">{product.name}</h3>
               {product.badge && (
-                <span className="shrink-0 text-[10px] font-black uppercase tracking-widest bg-green-100 text-green-700 px-2 py-1 rounded-lg">
-                  {product.badge}
-                </span>
+                product.badge === 'swiss_flag' ? (
+                  <SwissFlag size={20} className="shrink-0" />
+                ) : (
+                  <span className="shrink-0 text-[10px] font-black uppercase tracking-widest bg-green-100 text-green-700 px-2 py-1 rounded-lg">
+                    {product.badge}
+                  </span>
+                )
               )}
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{product.category}</p>

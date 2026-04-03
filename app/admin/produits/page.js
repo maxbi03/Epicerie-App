@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { fetchAdminProducts, createProduct, updateProduct, deleteProduct } from '../../lib/adminService';
 import { Pencil, X, AlertTriangle, Eye, EyeOff } from 'lucide-react';
+import SwissFlag from '../../components/SwissFlag';
 
 function getCategories(products) {
   return [...new Set(products.map(p => p.category).filter(Boolean))].sort();
@@ -11,7 +12,7 @@ function getCategoriesFilter(products) {
   return ['Tous', ...getCategories(products)];
 }
 
-const EMPTY_FORM = { name: '', barcode: '', price_chf: '', quantity: '', description: '', category: 'Divers', image_url: '', producer: '', stock_shelf: '0', stock_back: '0' };
+const EMPTY_FORM = { name: '', barcode: '', price_chf: '', quantity: '', description: '', category: 'Divers', image_url: '', producer: '', badge: '', stock_shelf: '0', stock_back: '0' };
 
 export default function AdminProduits() {
   const [products, setProducts] = useState([]);
@@ -56,6 +57,7 @@ export default function AdminProduits() {
       category: product.category || 'Divers',
       image_url: product.image_url || '',
       producer: product.producer || '',
+      badge: product.badge || '',
       stock_shelf: String(product.stock_shelf ?? 0),
       stock_back: String(product.stock_back ?? 0),
     });
@@ -260,6 +262,7 @@ export default function AdminProduits() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h4 className={`font-bold text-sm truncate ${inactive ? 'text-red-400' : 'text-text-primary'}`}>{product.name || 'Sans nom'}</h4>
+                      {product.badge === 'swiss_flag' && <SwissFlag size={14} className="shrink-0" />}
                       {inactive && <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-red-100 text-red-500 shrink-0">Incomplet</span>}
                       {!inactive && outOfStock && <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-red-100 text-red-500 shrink-0">Rupture</span>}
                       {!inactive && lowStock && <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-amber-100 text-amber-600 shrink-0">Stock faible</span>}
@@ -329,10 +332,17 @@ export default function AdminProduits() {
                     className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
                 </div>
               </div>
-              <div>
-                <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">Producteur / Marque</label>
-                <input type="text" placeholder="Nom du producteur ou de la marque" value={form.producer} onChange={e => updateField('producer', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">Producteur / Marque</label>
+                  <input type="text" placeholder="Nom du producteur" value={form.producer} onChange={e => updateField('producer', e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">Badge</label>
+                  <input type="text" placeholder="ex: swiss_flag" value={form.badge} onChange={e => updateField('badge', e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
+                </div>
               </div>
               <div>
                 <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">Description</label>

@@ -3,6 +3,7 @@
 import { fetchProducts } from '../lib/productsService';
 import { useState, useEffect } from 'react';
 import ProductModal from '../components/ProductModal';
+import SwissFlag from '../components/SwissFlag';
 
 function getCategories(products) {
   const cats = [...new Set(products.map(p => p.category).filter(Boolean))].sort();
@@ -103,7 +104,10 @@ export default function StockPage() {
                     {product.image && <img src={product.image} className="w-full h-full object-contain" alt={product.name} />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-sm text-text-primary truncate">{product.name}</h4>
+                    <div className="flex items-center gap-1.5">
+                      <h4 className="font-bold text-sm text-text-primary truncate">{product.name}</h4>
+                      {product.badge === 'swiss_flag' && <SwissFlag size={14} className="shrink-0" />}
+                    </div>
                     <p className="text-[10px] text-text-muted mt-0.5">{product.origin}</p>
                     <div className="mt-1.5">
                       <StockBadge stock={product.stock} />
