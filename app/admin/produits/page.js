@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { fetchAdminProducts, createProduct, updateProduct, deleteProduct } from '../../lib/adminService';
 import { Pencil, X, AlertTriangle, Eye, EyeOff } from 'lucide-react';
-import SwissFlag from '../../components/SwissFlag';
 
 function getCategories(products) {
   return [...new Set(products.map(p => p.category).filter(Boolean))].sort();
@@ -262,7 +261,6 @@ export default function AdminProduits() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h4 className={`font-bold text-sm truncate ${inactive ? 'text-red-400' : 'text-text-primary'}`}>{product.name || 'Sans nom'}</h4>
-                      {product.badge === 'swiss_flag' && <SwissFlag size={14} className="shrink-0" />}
                       {inactive && <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-red-100 text-red-500 shrink-0">Incomplet</span>}
                       {!inactive && outOfStock && <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-red-100 text-red-500 shrink-0">Rupture</span>}
                       {!inactive && lowStock && <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-amber-100 text-amber-600 shrink-0">Stock faible</span>}
