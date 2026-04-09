@@ -1,6 +1,7 @@
 'use client';
 
 import { fetchProducts } from '../lib/productsService';
+import { getBasket, saveBasket } from '../lib/basket';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Script from 'next/script';
@@ -58,7 +59,7 @@ export default function ScannerPage() {
   }
 
   function updateCartSummary() {
-    const basket = JSON.parse(localStorage.getItem('user_basket') || '[]');
+    const basket = getBasket();
     setCartCount(basket.length);
     const total = basket.reduce((sum, p) => sum + (p.price || 0), 0);
     setCartTotal(total.toFixed(2));
@@ -135,11 +136,10 @@ export default function ScannerPage() {
   }
 
   function addToBasket(product, qty) {
-    const basket = JSON.parse(localStorage.getItem('user_basket') || '[]');
+    const basket = getBasket();
     for (let i = 0; i < qty; i++) basket.push(product);
-    localStorage.setItem('user_basket', JSON.stringify(basket));
+    saveBasket(basket);
     updateCartSummary();
-    window.dispatchEvent(new Event('cart-updated'));
   }
 
   function handleAddToCart(product, qty) {

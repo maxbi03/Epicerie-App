@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '../../../lib/supabaseServer';
+import { getSession } from '../../../lib/auth';
 import { STORE_LAT, STORE_LNG, DOOR_UNLOCK_RADIUS_M } from '../../../lib/config';
 import mqtt from 'mqtt';
 
@@ -45,23 +46,17 @@ function publishMQTT(message) {
 
 export async function POST(request) {
   try {
-    // 1. Vérifier l'authentification
-    const auth = request.headers.get('authorization');
-    if (!auth?.startsWith('Bearer ')) {
+    // 1. Vérifier l'authentification via cookie JWT
+    const session = await getSession();
+    if (!session) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
-    }
-
-    const token = auth.slice(7);
-    const { data: authData, error: authError } = await getSupabaseAdmin().auth.getUser(token);
-    if (authError || !authData?.user) {
-      return NextResponse.json({ error: 'Session invalide' }, { status: 401 });
     }
 
     // 2. Vérifier phone_verified
     const { data: profile, error: profileError } = await getSupabaseAdmin()
       .from('users')
       .select('phone_verified')
-      .eq('id', authData.user.id)
+      .eq('id', session.userId)
       .single();
 
     if (profileError || !profile?.phone_verified) {
@@ -85,7 +80,7 @@ export async function POST(request) {
     // 4. Envoyer la commande MQTT
     await publishMQTT(`unlock:${DOOR_SECRET}`);
 
-    console.log(`Door unlocked by ${authData.user.email} (${Math.round(distance)}m)`);
+    console.log(`Door unlocked by ${session.email} (${Math.round(distance)}m)`);
 
     return NextResponse.json({ status: 'ok', distance: Math.round(distance) });
   } catch (error) {

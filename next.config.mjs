@@ -8,6 +8,8 @@ const pwaConfig = withPWA({
 });
 
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+  serverExternalPackages: ['argon2'],
+};
 
 export default pwaConfig(nextConfig);

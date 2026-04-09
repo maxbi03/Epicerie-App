@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '../lib/supabaseClient';
 import { LayoutDashboard, Tag, Newspaper } from 'lucide-react';
 
 const TABS = [
@@ -19,15 +18,17 @@ export default function AdminLayout({ children }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-      if (session?.user?.email && adminEmail && session.user.email.toLowerCase() === adminEmail.toLowerCase()) {
-        setAuthorized(true);
-      } else {
-        router.push('/home');
-      }
-      setLoading(false);
-    });
+    fetch('/api/auth/me')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+        if (data?.user?.email && adminEmail && data.user.email.toLowerCase() === adminEmail.toLowerCase()) {
+          setAuthorized(true);
+        } else {
+          router.push('/home');
+        }
+        setLoading(false);
+      });
   }, [router]);
 
   if (loading) {

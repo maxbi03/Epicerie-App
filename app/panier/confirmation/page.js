@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Clock, XCircle, CheckCircle } from 'lucide-react';
+import { clearBasket } from '../../lib/basket';
 
 export default function ConfirmationPage() {
   const [status, setStatus] = useState('loading');
@@ -43,8 +44,7 @@ export default function ConfirmationPage() {
   }, []);
 
   function clearCart() {
-    localStorage.removeItem('user_basket');
-    window.dispatchEvent(new Event('cart-updated'));
+    clearBasket();
   }
 
   if (status === 'loading') {

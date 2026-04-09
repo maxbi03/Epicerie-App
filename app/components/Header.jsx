@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { supabase } from '../lib/supabaseClient';
 import { Home, Newspaper, Camera, ShoppingCart, Package, User, LayoutDashboard, LogOut, Menu } from 'lucide-react';
+import { getBasket, clearBasket } from '../lib/basket';
 
 const PAGE_TITLES = {
   '/home': 'Accueil',
@@ -41,9 +41,9 @@ export default function Header() {
   const title = PAGE_TITLES[pathname] || "L'Épicerie";
 
   useEffect(() => {
+    setMenuOpen(false);
     function updateCart() {
-      const basket = JSON.parse(localStorage.getItem('user_basket') || '[]');
-      setCartCount(basket.length);
+      setCartCount(getBasket().length);
     }
     updateCart();
     window.addEventListener('storage', updateCart);
@@ -55,12 +55,15 @@ export default function Header() {
   }, [pathname]);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session?.user?.email) return;
-      const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-      setIsAdminUser(adminEmail && session.user.email.toLowerCase() === adminEmail.toLowerCase());
-    });
-  }, []);
+    setIsAdminUser(false);
+    fetch('/api/auth/me')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data?.user?.email) return;
+        const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+        setIsAdminUser(!!(adminEmail && data.user.email.toLowerCase() === adminEmail.toLowerCase()));
+      });
+  }, [pathname]);
 
   function toggleMenu() {
     setMenuOpen(o => !o);
@@ -71,14 +74,10 @@ export default function Header() {
   }
 
   async function handleLogout() {
-    try {
-      sessionStorage.removeItem('app_mode');
-      localStorage.removeItem('user_basket');
-      // TODO : pb.authStore.clear() lors de la migration Pocketbase
-      router.push('/');
-    } catch (e) {
-      router.push('/');
-    }
+    await fetch('/api/auth/logout', { method: 'POST' });
+    sessionStorage.removeItem('app_mode');
+    clearBasket();
+    router.push('/');
   }
 
   if (pathname === '/' || pathname === '/inscription' || pathname === '/reset') {

@@ -1,10 +1,8 @@
 'use client';
 
-import { supabase } from './lib/supabaseClient';
-import { createUserProfile } from './lib/userService';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Check, MessageCircle, CheckCircle } from 'lucide-react';
+import { X, Check, CheckCircle, MapPin } from 'lucide-react';
 
 function clearVisitorMode() {
   try { sessionStorage.removeItem('app_mode'); } catch {}
@@ -31,16 +29,23 @@ export default function IndexPage() {
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [registerError, setRegisterError] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [otpError, setOtpError] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const resendTimer = useRef(null);
+  const otpInputRefs = useRef([]);
+  const [addressFromTopo, setAddressFromTopo] = useState(false);
   const [form, setForm] = useState({
     firstname: '', lastname: '', email: '',
     address: '', npa: '', city: '',
     phone: '', password: '', passwordConfirm: '',
   });
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [otpError, setOtpError] = useState('');
-  const [resendCountdown, setResendCountdown] = useState(30);
-  const [resendReady, setResendReady] = useState(false);
-  const otpRefs = useRef([]);
+  const [addressQuery, setAddressQuery] = useState('');
+  const [addressSuggestions, setAddressSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const addressDebounce = useRef(null);
   const strength = getStrength(form.password);
 
   useEffect(() => {
@@ -63,22 +68,6 @@ export default function IndexPage() {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    if (!modalOpen) return;
-    let t;
-    if (step === 2) {
-      setResendCountdown(30);
-      setResendReady(false);
-      const interval = setInterval(() => {
-        setResendCountdown(c => {
-          if (c <= 1) { clearInterval(interval); setResendReady(true); return 0; }
-          return c - 1;
-        });
-      }, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [step, modalOpen]);
-
   function setField(field) {
     return e => setForm(f => ({ ...f, [field]: e.target.value }));
   }
@@ -86,110 +75,138 @@ export default function IndexPage() {
   function openModal() {
     setModalOpen(true);
     setStep(1);
-    setForm({ firstname: '', lastname: '', email: '', address: '', npa: '', city: '', phone: '', password: '', passwordConfirm: '' });
-    setOtp(['', '', '', '', '', '']);
+    setRegisterError('');
+    setOtpCode('');
     setOtpError('');
+    setResendCooldown(0);
+    setAddressFromTopo(false);
+    setAddressQuery('');
+    setAddressSuggestions([]);
+    setShowSuggestions(false);
+    setForm({ firstname: '', lastname: '', email: '', address: '', npa: '', city: '', phone: '', password: '', passwordConfirm: '' });
+  }
+
+  function startResendCooldown() {
+    setResendCooldown(30);
+    clearInterval(resendTimer.current);
+    resendTimer.current = setInterval(() => {
+      setResendCooldown(v => {
+        if (v <= 1) { clearInterval(resendTimer.current); return 0; }
+        return v - 1;
+      });
+    }, 1000);
+  }
+
+  async function sendOtp() {
+    const res = await fetch('/api/auth/verify-phone/send', { method: 'POST' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Erreur envoi SMS');
+    startResendCooldown();
+  }
+
+  async function handleVerifyOtp() {
+    setOtpError('');
+    if (otpCode.length !== 6) { setOtpError('Le code est à 6 chiffres.'); return; }
+    setOtpLoading(true);
+    try {
+      const res = await fetch('/api/auth/verify-phone/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: otpCode }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Code incorrect');
+      setStep(3);
+      setTimeout(() => { setModalOpen(false); router.push('/home'); }, 2500);
+    } catch (err) {
+      setOtpError(err.message);
+    } finally {
+      setOtpLoading(false);
+    }
+  }
+
+  function handleAddressInput(e) {
+    const val = e.target.value;
+    setAddressQuery(val);
+    setAddressFromTopo(false);
+    setForm(f => ({ ...f, address: val }));
+    clearTimeout(addressDebounce.current);
+    if (val.length < 3) { setAddressSuggestions([]); setShowSuggestions(false); return; }
+    addressDebounce.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/address-search?q=${encodeURIComponent(val)}`);
+        const data = await res.json();
+        setAddressSuggestions(data.suggestions ?? []);
+        setShowSuggestions(true);
+      } catch {}
+    }, 300);
+  }
+
+  function selectAddress(s) {
+    setAddressQuery(s.street);
+    setAddressFromTopo(true);
+    setForm(f => ({ ...f, address: s.street, npa: s.postalCode, city: s.city }));
+    setAddressSuggestions([]);
+    setShowSuggestions(false);
   }
 
   async function handleLogin() {
     setLoginError('');
     if (!loginEmail || !loginPassword) { setLoginError('Email et mot de passe requis.'); return; }
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: loginEmail,
-        password: loginPassword,
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
       });
-      if (error) throw error;
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Erreur serveur.');
       clearVisitorMode();
       router.push('/home');
     } catch (err) {
-      setLoginError('Identifiants incorrects.');
+      setLoginError(err.message || 'Identifiants incorrects.');
     }
   }
 
-  async function goToStep2() {
-    if (!form.firstname || !form.lastname) { alert('Prénom et nom obligatoires.'); return; }
-    if (!form.email.includes('@')) { alert('Email invalide.'); return; }
-    if (!form.phone.startsWith('+')) { alert('Format requis : +41 79 123 45 67'); return; }
-    if (form.password.length < 10) { alert('Mot de passe : 10 caractères minimum.'); return; }
-    if (getStrength(form.password) < 2) { alert('Mot de passe trop faible.'); return; }
-    if (form.password !== form.passwordConfirm) { alert('Les mots de passe ne correspondent pas.'); return; }
+  async function handleRegister() {
+    setRegisterError('');
+    if (!form.firstname || !form.lastname) { setRegisterError('Prénom et nom obligatoires.'); return; }
+    if (!form.email.includes('@')) { setRegisterError('Email invalide.'); return; }
+    if (!form.phone.trim()) { setRegisterError('Numéro de téléphone obligatoire pour vérifier votre identité.'); return; }
+    if (form.password.length < 10) { setRegisterError('Mot de passe : 10 caractères minimum.'); return; }
+    if (getStrength(form.password) < 2) { setRegisterError('Mot de passe trop faible.'); return; }
+    if (form.password !== form.passwordConfirm) { setRegisterError('Les mots de passe ne correspondent pas.'); return; }
 
     try {
-      const { error } = await supabase.auth.signInWithOtp({ phone: form.phone });
-      if (error) throw error;
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `${form.firstname} ${form.lastname}`.trim(),
+          email: form.email,
+          phone: form.phone,
+          password: form.password,
+          address: form.address || null,
+          postal_code: form.npa || null,
+          city: form.city || null,
+          country: 'CH',
+          address_from_topo: addressFromTopo,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Erreur serveur. Vérifiez la console.');
+
+      // Envoyer le SMS OTP
+      await sendOtp();
       setStep(2);
-      setTimeout(() => otpRefs.current[0]?.focus(), 100);
     } catch (err) {
-      alert('Erreur envoi SMS : ' + err.message);
+      setRegisterError(err.message || "Erreur lors de l'inscription.");
     }
-  }
-
-  async function verifyOtpAndRegister() {
-    const token = otp.join('');
-    if (token.length !== 6) { setOtpError('Entrez les 6 chiffres du code.'); return; }
-    setOtpError('');
-
-    try {
-      const { error: otpError } = await supabase.auth.verifyOtp({
-        phone: form.phone,
-        token,
-        type: 'sms',
-      });
-      if (otpError) throw otpError;
-
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: form.email,
-        password: form.password,
-      });
-      if (signUpError) throw signUpError;
-
-      await createUserProfile({
-        id: data.user.id,
-        name: `${form.firstname} ${form.lastname}`.trim(),
-        email: form.email,
-        phone: form.phone,
-        address: form.address,
-        city: form.city,
-        postal_code: form.npa,
-        country: 'CH',
-        address_verified: false,
-        phone_verified: true,
-      });
-
-      setStep(3);
-      setTimeout(() => { setModalOpen(false); router.push('/home'); }, 2500);
-    } catch (err) {
-      setOtpError(err?.message || 'Code incorrect ou expiré.');
-    }
-  }
-
-  function handleOtpChange(index, value) {
-    const cleaned = value.replace(/\D/g, '').slice(0, 1);
-    const newOtp = [...otp];
-    newOtp[index] = cleaned;
-    setOtp(newOtp);
-    if (cleaned && index < 5) otpRefs.current[index + 1]?.focus();
-  }
-
-  function handleOtpKeyDown(index, e) {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      otpRefs.current[index - 1]?.focus();
-    }
-  }
-
-  function handleOtpPaste(e) {
-    e.preventDefault();
-    const text = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-    const newOtp = [...otp];
-    text.split('').forEach((c, i) => { if (i < 6) newOtp[i] = c; });
-    setOtp(newOtp);
-    otpRefs.current[Math.min(text.length, 5)]?.focus();
   }
 
   const stepDotClass = (n) => n <= step
-    ? 'size-8 rounded-full bg-green-600 flex items-center justify-center text-white text-xs font-black transition-all'
-    : 'size-8 rounded-full bg-gray-200 dark:bg-white/10 flex items-center justify-center text-gray-400 text-xs font-black transition-all';
+    ? 'size-7 rounded-full bg-green-600 flex items-center justify-center text-white text-xs font-black transition-all'
+    : 'size-7 rounded-full bg-gray-200 dark:bg-white/10 flex items-center justify-center text-gray-400 text-xs font-black transition-all';
 
   const stepBarClass = (n) => n < step
     ? 'flex-1 h-1 rounded-full bg-green-600 transition-all'
@@ -235,7 +252,7 @@ export default function IndexPage() {
               <p className="text-sm text-gray-500">Connectez-vous pour accéder au magasin</p>
             </div>
             <div className="space-y-4" data-lpignore="true">
-              <input 
+              <input
                 type="email" autoComplete="username"
                 placeholder="Adresse email"
                 value={loginEmail}
@@ -283,19 +300,15 @@ export default function IndexPage() {
             <div className="px-8 pt-8 pb-4">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold dark:text-white">
-                  {step === 1 ? 'Créer un compte' : step === 2 ? 'Vérification SMS' : 'Compte activé'}
+                  {step === 1 ? 'Créer un compte' : step === 2 ? 'Vérification' : 'Compte activé'}
                 </h2>
                 <button onClick={() => setModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
               </div>
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 flex-1">
-                  <div className={stepDotClass(1)}>{step > 1 ? <Check size={14} /> : '1'}</div>
-                  <div className={stepBarClass(1)} />
-                </div>
-                <div className="flex items-center gap-2 flex-1">
-                  <div className={stepDotClass(2)}>{step > 2 ? <Check size={14} /> : '2'}</div>
-                  <div className={stepBarClass(2)} />
-                </div>
+                <div className={stepDotClass(1)}>{step > 1 ? <Check size={12} /> : '1'}</div>
+                <div className={stepBarClass(1)} />
+                <div className={stepDotClass(2)}>{step > 2 ? <Check size={12} /> : '2'}</div>
+                <div className={stepBarClass(2)} />
                 <div className={stepDotClass(3)}>3</div>
               </div>
             </div>
@@ -313,8 +326,35 @@ export default function IndexPage() {
 
                   <div className="space-y-2">
                     <p className="text-[10px] font-black text-green-600 uppercase ml-2 tracking-widest">Adresse suisse</p>
-                    <input type="text" placeholder="Adresse complète" value={form.address} onChange={setField('address')}
-                      className="w-full px-4 py-4 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm outline-none focus:border-green-500" />
+                    <div className="relative">
+                      <div className="relative">
+                        <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                        <input
+                          type="text"
+                          placeholder="Rechercher une adresse suisse..."
+                          value={addressQuery}
+                          onChange={handleAddressInput}
+                          onFocus={() => addressSuggestions.length > 0 && setShowSuggestions(true)}
+                          onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                          autoComplete="off"
+                          className="w-full pl-10 pr-4 py-4 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm outline-none focus:border-green-500"
+                        />
+                      </div>
+                      {showSuggestions && addressSuggestions.length > 0 && (
+                        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-white/10 shadow-xl overflow-hidden">
+                          {addressSuggestions.map((s, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onMouseDown={() => selectAddress(s)}
+                              className="w-full px-4 py-3 text-left text-sm text-gray-800 dark:text-gray-200 hover:bg-green-50 dark:hover:bg-white/5 border-b last:border-0 border-gray-100 dark:border-white/5 transition-colors"
+                            >
+                              {s.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <div className="grid grid-cols-3 gap-3">
                       <input type="text" placeholder="NPA" value={form.npa} onChange={setField('npa')}
                         className="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm outline-none" />
@@ -343,74 +383,98 @@ export default function IndexPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Vérification SMS <span className="text-red-400">· obligatoire</span></p>
+                    <p className="text-[10px] font-black text-green-600 uppercase ml-2 tracking-widest">Téléphone · vérification par SMS</p>
                     <input type="tel" placeholder="+41 79 123 45 67" value={form.phone} onChange={setField('phone')}
                       className="w-full px-4 py-4 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm outline-none focus:border-green-500" />
-                    <p className="text-[10px] text-gray-400 px-2">Format international requis : +41 pour la Suisse</p>
                   </div>
 
-                  <button onClick={goToStep2} className="w-full bg-green-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:brightness-105 active:scale-95 transition-all">
-                    Continuer →
+                  {registerError && <p className="text-sm text-red-500 text-center">{registerError}</p>}
+
+                  <button onClick={handleRegister} className="w-full bg-green-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:brightness-105 active:scale-95 transition-all">
+                    Créer mon compte →
                   </button>
                 </div>
               )}
 
               {step === 2 && (
-                <div className="space-y-6">
-                  <div className="text-center">
-                    <div className="size-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"><MessageCircle size={28} className="text-green-600" /></div>
-                    <h3 className="font-bold text-green-900 dark:text-white text-lg">Code envoyé !</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <div className="space-y-6 py-2">
+                  <div className="text-center space-y-1">
+                    <p className="text-sm font-bold text-gray-800 dark:text-white">Vérifiez votre téléphone</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       Un code à 6 chiffres a été envoyé au<br />
-                      <span className="font-bold text-green-900 dark:text-white">
-                        {form.phone.slice(0, -4).replace(/\d/g, '•') + form.phone.slice(-4)}
-                      </span>
+                      <span className="font-bold text-green-600">{form.phone}</span>
                     </p>
                   </div>
 
-                  <div className="flex justify-center gap-3">
-                    {otp.map((digit, i) => (
+                  <div className="flex justify-center gap-2">
+                    {[0,1,2,3,4,5].map(i => (
                       <input
                         key={i}
-                        ref={el => otpRefs.current[i] = el}
+                        ref={el => { otpInputRefs.current[i] = el; }}
                         type="text"
                         inputMode="numeric"
                         maxLength={1}
-                        value={digit}
-                        onChange={e => handleOtpChange(i, e.target.value)}
-                        onKeyDown={e => handleOtpKeyDown(i, e)}
-                        onPaste={i === 0 ? handleOtpPaste : undefined}
-                        className="size-12 rounded-2xl border-2 border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-center text-xl font-black focus:border-green-500 outline-none transition"
+                        value={otpCode[i] || ''}
+                        onChange={e => {
+                          const digit = e.target.value.replace(/\D/g, '').slice(-1);
+                          const arr = otpCode.padEnd(6, ' ').split('');
+                          arr[i] = digit;
+                          setOtpCode(arr.join('').trimEnd());
+                          if (digit && i < 5) otpInputRefs.current[i + 1]?.focus();
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === 'Backspace' && !otpCode[i] && i > 0) {
+                            const arr = otpCode.padEnd(6, ' ').split('');
+                            arr[i - 1] = '';
+                            setOtpCode(arr.join('').trimEnd());
+                            otpInputRefs.current[i - 1]?.focus();
+                          }
+                          if (e.key === 'Enter') handleVerifyOtp();
+                        }}
+                        onPaste={e => {
+                          e.preventDefault();
+                          const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+                          setOtpCode(pasted);
+                          otpInputRefs.current[Math.min(pasted.length, 5)]?.focus();
+                        }}
+                        className={`size-12 rounded-2xl border-2 text-center text-xl font-black outline-none transition-all dark:bg-white/5 dark:text-white ${
+                          otpCode[i]
+                            ? 'border-green-500 bg-green-50 dark:bg-green-950/30 text-green-700'
+                            : 'border-gray-200 dark:border-white/10 focus:border-green-400'
+                        }`}
                       />
                     ))}
                   </div>
 
-                  {otpError && <p className="text-center text-sm text-red-500 font-medium">{otpError}</p>}
+                  {otpError && <p className="text-sm text-red-500 text-center">{otpError}</p>}
 
-                  <button onClick={verifyOtpAndRegister} className="w-full bg-green-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:brightness-105 active:scale-95 transition-all">
-                    Vérifier le code
+                  <button
+                    onClick={handleVerifyOtp}
+                    disabled={otpLoading || otpCode.length !== 6}
+                    className="w-full bg-green-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:brightness-105 active:scale-95 transition-all disabled:opacity-60"
+                  >
+                    {otpLoading ? 'Vérification…' : 'Confirmer le code →'}
                   </button>
 
-                  <div className="text-center">
-                    <button disabled={!resendReady} onClick={goToStep2}
-                      className={`text-sm font-bold transition-colors ${resendReady ? 'text-green-600' : 'text-gray-300 dark:text-gray-600'}`}>
-                      {resendReady ? 'Renvoyer le code' : `Renvoyer le code (${resendCountdown}s)`}
-                    </button>
-                  </div>
-
-                  <button onClick={() => setStep(1)} className="w-full text-sm text-gray-400 font-medium flex items-center justify-center gap-1 hover:text-gray-600 transition-colors">
-                    ← Modifier mon numéro
+                  <button
+                    onClick={async () => { setOtpError(''); try { await sendOtp(); } catch (e) { setOtpError(e.message); } }}
+                    disabled={resendCooldown > 0}
+                    className="w-full text-sm text-gray-500 dark:text-gray-400 py-2 disabled:opacity-50 transition-opacity"
+                  >
+                    {resendCooldown > 0 ? `Renvoyer dans ${resendCooldown}s` : 'Renvoyer le code'}
                   </button>
                 </div>
               )}
 
               {step === 3 && (
                 <div className="text-center space-y-6 py-4">
-                  <div className="size-20 bg-green-100 rounded-full flex items-center justify-center mx-auto"><CheckCircle size={36} className="text-green-600" /></div>
+                  <div className="size-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                    <CheckCircle size={36} className="text-green-600" />
+                  </div>
                   <div>
-                    <h3 className="text-xl font-black text-green-900 dark:text-white">Compte créé !</h3>
+                    <h3 className="text-xl font-black text-green-900 dark:text-white">Compte activé !</h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                      Bienvenue dans l'épicerie autonome.<br />Vous allez être redirigé…
+                      Téléphone vérifié.<br />Bienvenue dans l'épicerie autonome.
                     </p>
                   </div>
                   <div className="w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto" />

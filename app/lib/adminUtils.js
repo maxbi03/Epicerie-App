@@ -1,4 +1,4 @@
-import { getSupabaseAdmin } from './supabaseServer';
+import { getSession } from './auth';
 
 export function isAdmin(email) {
   if (!email) return false;
@@ -7,22 +7,9 @@ export function isAdmin(email) {
   return email.toLowerCase() === adminEmail.toLowerCase();
 }
 
-export async function requireAdmin(request) {
-  const auth = request.headers.get('authorization');
-  if (!auth?.startsWith('Bearer ')) {
-    return { authorized: false };
-  }
-
-  const token = auth.slice(7);
-  const { data, error } = await getSupabaseAdmin().auth.getUser(token);
-
-  if (error || !data?.user) {
-    return { authorized: false };
-  }
-
-  if (!isAdmin(data.user.email)) {
-    return { authorized: false };
-  }
-
-  return { authorized: true, user: data.user };
+export async function requireAdmin() {
+  const session = await getSession();
+  if (!session?.email) return { authorized: false };
+  if (!isAdmin(session.email)) return { authorized: false };
+  return { authorized: true, user: session };
 }

@@ -1,17 +1,7 @@
-import { supabase } from './supabaseClient';
-
-async function getAdminHeaders() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error('Non authentifié');
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${session.access_token}`,
-  };
-}
+const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
 export async function fetchAdminProducts() {
-  const headers = await getAdminHeaders();
-  const res = await fetch('/api/admin/products', { headers });
+  const res = await fetch('/api/admin/products', { headers: JSON_HEADERS });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error || 'Erreur serveur (admin products)');
@@ -20,8 +10,7 @@ export async function fetchAdminProducts() {
 }
 
 export async function fetchAdminStats() {
-  const headers = await getAdminHeaders();
-  const res = await fetch('/api/admin/stats', { headers });
+  const res = await fetch('/api/admin/stats', { headers: JSON_HEADERS });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error || 'Erreur serveur (stats)');
@@ -30,10 +19,9 @@ export async function fetchAdminStats() {
 }
 
 export async function createProduct(data) {
-  const headers = await getAdminHeaders();
   const res = await fetch('/api/admin/products', {
     method: 'POST',
-    headers,
+    headers: JSON_HEADERS,
     body: JSON.stringify(data),
   });
   if (!res.ok) {
@@ -44,10 +32,9 @@ export async function createProduct(data) {
 }
 
 export async function updateProduct(id, data) {
-  const headers = await getAdminHeaders();
   const res = await fetch('/api/admin/products', {
     method: 'PATCH',
-    headers,
+    headers: JSON_HEADERS,
     body: JSON.stringify({ id, ...data }),
   });
   if (!res.ok) {
@@ -58,10 +45,9 @@ export async function updateProduct(id, data) {
 }
 
 export async function deleteProduct(id) {
-  const headers = await getAdminHeaders();
   const res = await fetch('/api/admin/products', {
     method: 'DELETE',
-    headers,
+    headers: JSON_HEADERS,
     body: JSON.stringify({ id }),
   });
   if (!res.ok) {
@@ -72,8 +58,7 @@ export async function deleteProduct(id) {
 }
 
 export async function fetchAdminNews() {
-  const headers = await getAdminHeaders();
-  const res = await fetch('/api/admin/news', { headers });
+  const res = await fetch('/api/admin/news', { headers: JSON_HEADERS });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error || 'Erreur serveur (admin news)');
@@ -82,10 +67,9 @@ export async function fetchAdminNews() {
 }
 
 export async function createNews(data) {
-  const headers = await getAdminHeaders();
   const res = await fetch('/api/admin/news', {
     method: 'POST',
-    headers,
+    headers: JSON_HEADERS,
     body: JSON.stringify(data),
   });
   if (!res.ok) {
@@ -96,10 +80,9 @@ export async function createNews(data) {
 }
 
 export async function updateNews(id, data) {
-  const headers = await getAdminHeaders();
   const res = await fetch('/api/admin/news', {
     method: 'PATCH',
-    headers,
+    headers: JSON_HEADERS,
     body: JSON.stringify({ id, ...data }),
   });
   if (!res.ok) {
@@ -110,10 +93,9 @@ export async function updateNews(id, data) {
 }
 
 export async function deleteNews(id) {
-  const headers = await getAdminHeaders();
   const res = await fetch('/api/admin/news', {
     method: 'DELETE',
-    headers,
+    headers: JSON_HEADERS,
     body: JSON.stringify({ id }),
   });
   if (!res.ok) {
@@ -124,10 +106,9 @@ export async function deleteNews(id) {
 }
 
 export async function updateStocks(updates) {
-  const headers = await getAdminHeaders();
   const res = await fetch('/api/admin/stocks', {
     method: 'PATCH',
-    headers,
+    headers: JSON_HEADERS,
     body: JSON.stringify({ updates }),
   });
   if (!res.ok) {

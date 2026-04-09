@@ -3,9 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { supabase } from '../lib/supabaseClient';
-import { fetchUserProfile, updateUserProfile } from '../lib/userService';
-import { User, Lock } from 'lucide-react';
+import { updateUserProfile } from '../lib/userService';
+import { User } from 'lucide-react';
 
 export default function ProfilPage() {
   const router = useRouter();
@@ -13,6 +12,7 @@ export default function ProfilPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
+  const [userId, setUserId] = useState(null);
   const [editForm, setEditForm] = useState({ firstName: '', lastName: '', phone: '' });
 
   useEffect(() => {
@@ -24,13 +24,12 @@ export default function ProfilPage() {
 
   async function loadProfile() {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { router.push('/'); return; }
-      const data = await fetchUserProfile(session.user.id);
-      if (data) {
-        const [firstName, ...rest] = (data.name || '').split(' ');
-        setProfile({ ...data, firstName, lastName: rest.join(' ') });
-      }
+      const res = await fetch('/api/auth/me');
+      if (!res.ok) { router.push('/'); return; }
+      const { user } = await res.json();
+      setUserId(user.id);
+      const [firstName, ...rest] = (user.name || '').split(' ');
+      setProfile({ ...user, firstName, lastName: rest.join(' ') });
     } catch (err) {
       console.error('Erreur profil:', err);
     } finally {
@@ -53,8 +52,7 @@ export default function ProfilPage() {
       return;
     }
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const updated = await updateUserProfile(session.user.id, {
+      const updated = await updateUserProfile(userId, {
         name: `${editForm.firstName} ${editForm.lastName}`.trim(),
         phone: editForm.phone,
       });
@@ -68,22 +66,9 @@ export default function ProfilPage() {
   }
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    await fetch('/api/auth/logout', { method: 'POST' });
     sessionStorage.removeItem('app_mode');
     router.push('/');
-  }
-
-  async function handleResetPassword() {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.email) throw new Error('Email introuvable.');
-      await supabase.auth.resetPasswordForEmail(session.user.email, {
-        redirectTo: window.location.origin + '/reset',
-      });
-      alert('Email de réinitialisation envoyé !');
-    } catch (err) {
-      alert('Erreur : ' + err.message);
-    }
   }
 
   if (loading) return (
@@ -191,10 +176,6 @@ export default function ProfilPage() {
             )}
           </div>
         </div>
-
-        <button onClick={handleResetPassword} className="w-full py-4 rounded-3xl bg-card-bg text-text-secondary font-black text-xs uppercase tracking-widest active:scale-[0.98] transition-all flex items-center justify-center gap-2 border border-border-light">
-          <Lock size={16} /> Réinitialiser mon mot de passe
-        </button>
 
         <button onClick={handleLogout} className="w-full py-4 rounded-3xl bg-red-50 text-red-600 font-black text-xs uppercase tracking-widest active:scale-[0.98] transition-all">
           Se déconnecter

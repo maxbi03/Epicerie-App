@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { supabase } from '../lib/supabaseClient';
-import { fetchUserProfile } from '../lib/userService';
 import { ShoppingCart, Minus, Plus } from 'lucide-react';
+import { getBasket, saveBasket } from '../lib/basket';
 
 export default function PanierPage() {
   const [basket, setBasket] = useState([]);
@@ -12,19 +11,17 @@ export default function PanierPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem('user_basket') || '[]');
-    setBasket(stored);
+    setBasket(getBasket());
   }, []);
 
-  function saveBasket(newBasket) {
-    localStorage.setItem('user_basket', JSON.stringify(newBasket));
+  function updateBasket(newBasket) {
+    saveBasket(newBasket);
     setBasket(newBasket);
-    window.dispatchEvent(new Event('cart-updated'));
   }
 
   function increaseQuantity(productId) {
     const product = basket.find(p => p.id === productId);
-    if (product) saveBasket([...basket, product]);
+    if (product) updateBasket([...basket, product]);
   }
 
   function decreaseQuantity(productId) {
@@ -32,12 +29,12 @@ export default function PanierPage() {
     if (index !== -1) {
       const newBasket = [...basket];
       newBasket.splice(index, 1);
-      saveBasket(newBasket);
+      updateBasket(newBasket);
     }
   }
 
   function removeProduct(productId) {
-    saveBasket(basket.filter(p => p.id !== productId));
+    updateBasket(basket.filter(p => p.id !== productId));
   }
 
   const grouped = basket.reduce((acc, product) => {
@@ -50,18 +47,20 @@ export default function PanierPage() {
   const total = groupedList.reduce((sum, p) => sum + p.price * p.quantity, 0);
 
   async function handleCheckout() {
-    console.log('handleCheckout called', { groupedList, total });
     setIsLoading(true);
     setError(null);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
       let clientName = null;
-      if (session?.user?.id) {
-        try {
-          const profile = await fetchUserProfile(session.user.id);
-          clientName = profile?.name || null;
-        } catch {}
-      }
+      let clientEmail = null;
+      try {
+        const me = await fetch('/api/auth/me');
+        if (me.ok) {
+          const { user } = await me.json();
+          clientName = user?.name || null;
+          clientEmail = user?.email || null;
+        }
+      } catch {}
+
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -69,7 +68,7 @@ export default function PanierPage() {
           items: groupedList,
           total,
           client_name: clientName,
-          client_email: session?.user?.email || null,
+          client_email: clientEmail,
         }),
       });
       const data = await res.json();

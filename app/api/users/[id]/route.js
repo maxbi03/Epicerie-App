@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from '../../../lib/supabaseServer';
+import { getSession } from '../../../lib/auth';
 import { NextResponse } from 'next/server';
 
 export async function GET(request, { params }) {
@@ -23,15 +24,32 @@ export async function GET(request, { params }) {
 
 export async function PATCH(request, { params }) {
   const { id } = await params;
-  const patch = await request.json();
 
   if (!id) {
     return NextResponse.json({ error: 'id is required' }, { status: 400 });
   }
 
+  // Vérifier que l'utilisateur connecté modifie uniquement son propre profil
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+  }
+  if (session.userId !== id) {
+    return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+  }
+
+  const patch = await request.json();
+
+  // Champs autorisés à modifier (pas password_hash, pas phone_verified, pas id)
+  const ALLOWED = ['name', 'phone', 'address', 'postal_code', 'city', 'country'];
+  const safePatch = {};
+  for (const key of ALLOWED) {
+    if (patch[key] !== undefined) safePatch[key] = patch[key];
+  }
+
   const { data, error } = await getSupabaseAdmin()
     .from('users')
-    .update(patch)
+    .update(safePatch)
     .eq('id', id)
     .select()
     .single();

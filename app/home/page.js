@@ -1,7 +1,5 @@
 'use client';
 
-import { supabase } from '../lib/supabaseClient';
-import { fetchUserProfile } from '../lib/userService';
 import { STORE_LAT, STORE_LNG, DOOR_UNLOCK_RADIUS_M } from '../lib/config';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
@@ -33,13 +31,13 @@ export default function HomePage() {
     setIsVisitor(visitor);
     if (visitor) { setGreeting('Visiteur'); return; }
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) { setGreeting('Visiteur'); return; }
-      fetchUserProfile(session.user.id).then(profile => {
-        if (profile?.name) setGreeting(profile.name.split(' ')[0]);
-        setPhoneVerified(!!profile?.phone_verified);
+    fetch('/api/auth/me')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data?.user) { setGreeting('Visiteur'); return; }
+        if (data.user.name) setGreeting(data.user.name.split(' ')[0]);
+        setPhoneVerified(!!data.user.phone_verified);
       });
-    });
 
     fetch('/api/news')
       .then(r => r.json())
@@ -103,19 +101,10 @@ export default function HomePage() {
       }
 
       setDoorStatus('unlocking');
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setDoorStatus('error');
-        setDoorError('Session expirée');
-        return;
-      }
 
       const res = await fetch('/api/door/unlock', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(pos),
       });
 

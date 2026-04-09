@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, Minus, Plus, Store, Weight, FileText, Info, ShoppingCart } from 'lucide-react';
+import { getBasket, saveBasket } from '../lib/basket';
 import { BoxIcon } from 'lucide-react';
 import { Box } from 'lucide-react';
 
@@ -18,10 +19,9 @@ export default function ProductModal({ product, onClose, onAdd }) {
     if (onAdd) {
       onAdd(product, quantity);
     } else {
-      const basket = JSON.parse(localStorage.getItem('user_basket') || '[]');
+      const basket = getBasket();
       for (let i = 0; i < quantity; i++) basket.push(product);
-      localStorage.setItem('user_basket', JSON.stringify(basket));
-      window.dispatchEvent(new Event('cart-updated'));
+      saveBasket(basket);
     }
     onClose();
   }
