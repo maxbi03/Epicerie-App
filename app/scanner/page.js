@@ -49,15 +49,39 @@ export default function ScannerPage() {
       .then(products => localStorage.setItem('products_cache', JSON.stringify(products)))
       .catch(err => console.error('Failed to load products:', err));
 
-    // NE PAS démarrer automatiquement — on attend le tap utilisateur
-    // (requis par iOS Safari et certains Android pour getUserMedia)
-    if (window.Html5Qrcode) setScriptReady(true);
+    if (window.Html5Qrcode) {
+      setScriptReady(true);
+      tryAutoStart();   // script déjà chargé (retour sur la page)
+    }
 
     return () => { stopScanner(); };
   }, []);
 
   function onScriptLoad() {
     setScriptReady(true);
+    tryAutoStart();     // script vient de se charger pour la première fois
+  }
+
+  // ── Auto-start si permission déjà accordée ───────────────────────────────────
+
+  async function tryAutoStart() {
+    if (!navigator.permissions) {
+      // Pas d'API Permissions → rester en IDLE, l'utilisateur tape le bouton
+      return;
+    }
+    try {
+      const result = await navigator.permissions.query({ name: 'camera' });
+      if (result.state === 'granted') {
+        // Permission déjà accordée → pas besoin de geste utilisateur, démarrer directement
+        activateCamera();
+      } else if (result.state === 'denied') {
+        setCamStatus(CAM.DENIED);
+      }
+      // 'prompt' → rester en IDLE, afficher le bouton
+    } catch {
+      // Le navigateur ne supporte pas la query 'camera' (iOS < 16, etc.)
+      // → rester en IDLE pour garantir un geste utilisateur propre
+    }
   }
 
   // ── Nettoyage complet du div#reader ─────────────────────────────────────────
@@ -296,7 +320,7 @@ export default function ScannerPage() {
           {showOverlay && (
             <div className="absolute inset-0 flex flex-col items-center justify-center px-8 z-10 bg-gray-950">
 
-              {/* IDLE — premier chargement ou après un retry */}
+              {/* IDLE — permission inconnue (prompt) ou après un retry */}
               {camStatus === CAM.IDLE && (
                 <div className="flex flex-col items-center gap-6 text-center">
                   <div className="size-24 rounded-[2rem] bg-white/10 flex items-center justify-center">
@@ -305,7 +329,8 @@ export default function ScannerPage() {
                   <div>
                     <h2 className="text-white font-black text-xl mb-2">Scanner un produit</h2>
                     <p className="text-white/50 text-sm leading-relaxed">
-                      Appuyez sur le bouton ci-dessous pour activer la caméra et scanner un code-barres.
+                      Appuyez pour activer la caméra.<br />
+                      <span className="text-white/30 text-xs">Votre navigateur vous demandera l'autorisation.</span>
                     </p>
                   </div>
                   <button
