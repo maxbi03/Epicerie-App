@@ -8,8 +8,8 @@ function clearVisitorMode() {
   try { sessionStorage.removeItem('app_mode'); } catch {}
 }
 
-const OTP_PENDING_KEY = 'pending_otp_registration';
-const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes = durée du cookie JWT OTP
+const OTP_PENDING_KEY  = 'pending_otp_registration';
+const PENDING_REG_TTL_MS = 30 * 60 * 1000; // 30 min = durée du cookie pending_registration
 
 function getStrength(pwd) {
   let s = 0;
@@ -79,7 +79,7 @@ export default function IndexPage() {
       if (!raw) return;
       const { phone, sentAt } = JSON.parse(raw);
       // Ignorer si le code OTP a expiré (> 10 min)
-      if (Date.now() - sentAt > OTP_TTL_MS) {
+      if (Date.now() - sentAt > PENDING_REG_TTL_MS) {
         localStorage.removeItem(OTP_PENDING_KEY);
         return;
       }

@@ -29,7 +29,7 @@ export async function signPendingRegToken(payload) {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('10m')
+    .setExpirationTime('30m') // 30 min : largement le temps de lire son SMS et revenir
     .sign(JWT_SECRET);
 }
 
