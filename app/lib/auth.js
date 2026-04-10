@@ -5,8 +5,9 @@ const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET ?? 'change-this-secret-in-production-min-32-chars!!'
 );
 
-export const AUTH_COOKIE = 'auth_token';
-export const OTP_COOKIE  = 'phone_otp';
+export const AUTH_COOKIE        = 'auth_token';
+export const OTP_COOKIE         = 'phone_otp';
+export const PENDING_REG_COOKIE = 'pending_registration';
 
 export async function signToken(payload) {
   return new SignJWT(payload)
@@ -17,6 +18,14 @@ export async function signToken(payload) {
 }
 
 export async function signOtpToken(payload) {
+  return new SignJWT(payload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('10m')
+    .sign(JWT_SECRET);
+}
+
+export async function signPendingRegToken(payload) {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()

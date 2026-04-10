@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
 import { getSupabaseAdmin } from '../../../lib/supabaseServer';
-import { signToken, AUTH_COOKIE } from '../../../lib/auth';
+import { signPendingRegToken, PENDING_REG_COOKIE } from '../../../lib/auth';
 
 export async function POST(request) {
   try {
@@ -10,6 +10,10 @@ export async function POST(request) {
 
     if (!email || !password || !name) {
       return NextResponse.json({ error: 'Champs requis manquants.' }, { status: 400 });
+    }
+
+    if (!phone) {
+      return NextResponse.json({ error: 'Numéro de téléphone requis pour la vérification.' }, { status: 400 });
     }
 
     // Import dynamique pour éviter les problèmes de bundling webpack
@@ -29,36 +33,27 @@ export async function POST(request) {
     // Hasher le mot de passe avec Argon2
     const password_hash = await argon2.hash(password);
 
-    const { data, error } = await getSupabaseAdmin()
-      .from('users')
-      .insert({
-        id: randomUUID(),
-        name,
-        email: email.toLowerCase(),
-        phone: phone ?? null,
-        address: address ?? null,
-        postal_code: postal_code ?? null,
-        city: city ?? null,
-        country: country ?? 'CH',
-        password_hash,
-        address_verified: address_from_topo ? 1 : 0,
-        phone_verified: false,
-      })
-      .select()
-      .single();
+    // Stocker toutes les données dans un cookie JWT signé (valide 10 min)
+    // Le compte ne sera créé en DB qu'après vérification du SMS
+    const pendingToken = await signPendingRegToken({
+      id: randomUUID(),
+      name,
+      email: email.toLowerCase(),
+      phone: phone.trim(),
+      address: address ?? null,
+      postal_code: postal_code ?? null,
+      city: city ?? null,
+      country: country ?? 'CH',
+      password_hash,
+      address_verified: address_from_topo ? 1 : 0,
+    });
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    const token = await signToken({ userId: data.id, email: data.email });
-
-    const response = NextResponse.json({ user: { id: data.id, name: data.name, email: data.email } });
-    response.cookies.set(AUTH_COOKIE, token, {
+    const response = NextResponse.json({ ok: true });
+    response.cookies.set(PENDING_REG_COOKIE, pendingToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: 60 * 10, // 10 minutes
       path: '/',
     });
 
