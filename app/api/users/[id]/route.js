@@ -6,9 +6,14 @@ export async function GET(request, { params }) {
   const { id } = await params;
   if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
 
+  // Authentification requise : un utilisateur ne peut lire que son propre profil
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+  if (session.userId !== id) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+
   const { data, error } = await getSupabaseAdmin()
     .from('users')
-    .select('*')
+    .select('id, name, email, phone, phone_verified, email_verified, address, postal_code, city, country, address_verified, avatar_url, total_spent')
     .eq('id', id)
     .maybeSingle();
 

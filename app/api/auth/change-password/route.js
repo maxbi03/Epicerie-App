@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSession } from '../../../lib/auth';
 import { getSupabaseAdmin } from '../../../lib/supabaseServer';
+import { validatePassword } from '../../../lib/password';
 
 export async function POST(request) {
   try {
@@ -14,8 +15,9 @@ export async function POST(request) {
     if (!currentPassword || !newPassword) {
       return NextResponse.json({ error: 'Champs requis manquants' }, { status: 400 });
     }
-    if (newPassword.length < 10) {
-      return NextResponse.json({ error: 'Nouveau mot de passe : 10 caractères minimum' }, { status: 400 });
+    const passwordError = validatePassword(newPassword);
+    if (passwordError) {
+      return NextResponse.json({ error: passwordError }, { status: 400 });
     }
 
     const argon2 = (await import('argon2')).default ?? (await import('argon2'));

@@ -59,7 +59,7 @@ export default function PanierPage() {
           clientName = user?.name || null;
           clientEmail = user?.email || null;
         }
-      } catch {}
+      } catch (e) { console.warn('[checkout] fetch user info:', e); }
 
       const res = await fetch('/api/checkout', {
         method: 'POST',

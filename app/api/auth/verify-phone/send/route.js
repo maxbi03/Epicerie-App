@@ -1,14 +1,30 @@
 import { NextResponse } from 'next/server';
 import { getSession, signOtpToken, verifyToken, OTP_COOKIE, PENDING_REG_COOKIE } from '../../../../lib/auth';
 import { getSupabaseAdmin } from '../../../../lib/supabaseServer';
+import { normalizePhone, validatePhone } from '../../../../lib/phone';
 import { cookies } from 'next/headers';
 
-// Normalise le numéro suisse en format E.164 (+41XXXXXXXXX)
-function normalizePhone(phone) {
-  let p = phone.replace(/[\s\-\.\(\)]/g, '');
-  if (p.startsWith('00')) p = '+' + p.slice(2);
-  else if (p.startsWith('0') && !p.startsWith('0+')) p = '+41' + p.slice(1);
-  return p;
+/** Génère un code OTP à 6 chiffres cryptographiquement sûr */
+function generateOtp() {
+  const array = new Uint32Array(1);
+  crypto.getRandomValues(array);
+  return String(100000 + (array[0] % 900000));
+}
+
+/** Vérifie si un renvoi est autorisé (cooldown 60s côté serveur) */
+async function checkResendCooldown(cookieStore) {
+  const existing = cookieStore.get(OTP_COOKIE)?.value;
+  if (!existing) return null; // Pas de cooldown si pas de cookie
+
+  const payload = await verifyToken(existing);
+  if (!payload || !payload.iat) return null;
+
+  const elapsed = Math.floor(Date.now() / 1000) - payload.iat;
+  const COOLDOWN = 60; // secondes
+  if (elapsed < COOLDOWN) {
+    return `Veuillez attendre ${COOLDOWN - elapsed} seconde(s) avant de renvoyer un code.`;
+  }
+  return null;
 }
 
 async function sendSms(phone, code) {
@@ -20,7 +36,7 @@ async function sendSms(phone, code) {
     MessageData: `Votre code L'Epicerie : ${code}`,
     Originator:  process.env.ASPSMS_ORIGINATOR || 'Epicerie',
   });
-  const res = await fetch(`https://webapi.aspsms.com/SendSimpleSMS?${params.toString()}`);
+  const res  = await fetch(`https://webapi.aspsms.com/SendSimpleSMS?${params.toString()}`);
   const data = await res.json().catch(() => ({}));
   if (data.ErrorCode !== 1) {
     throw new Error(`Envoi SMS échoué (${data.ErrorDescription ?? 'erreur inconnue'})`);
@@ -46,12 +62,22 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Aucun numéro dans la session.' }, { status: 400 });
       }
 
-      const phone = normalizePhone(pending.phone);
-      const code  = String(Math.floor(100000 + Math.random() * 900000));
+      // Rate limiting : cooldown 60s entre deux envois
+      const cooldownError = await checkResendCooldown(cookieStore);
+      if (cooldownError) {
+        return NextResponse.json({ error: cooldownError }, { status: 429 });
+      }
 
+      const phone = normalizePhone(pending.phone);
+      const phoneError = validatePhone(phone);
+      if (phoneError) {
+        return NextResponse.json({ error: phoneError }, { status: 400 });
+      }
+
+      const code = generateOtp();
       await sendSms(phone, code);
 
-      const otpToken = await signOtpToken({ pendingId: pending.id, phone, code });
+      const otpToken = await signOtpToken({ pendingId: pending.id, phone, code, attempts: 0 });
       const response = NextResponse.json({ ok: true });
       response.cookies.set(OTP_COOKIE, otpToken, {
         httpOnly: true,
@@ -72,8 +98,18 @@ export async function POST(request) {
     // Sous-cas 2a : changement de numéro (newPhone fourni dans le body)
     if (body.newPhone) {
       const phone = normalizePhone(body.newPhone);
+      const phoneError = validatePhone(phone);
+      if (phoneError) {
+        return NextResponse.json({ error: phoneError }, { status: 400 });
+      }
 
-      // Vérifier si ce numéro est déjà utilisé (par ce compte ou un autre)
+      // Rate limiting
+      const cooldownError = await checkResendCooldown(cookieStore);
+      if (cooldownError) {
+        return NextResponse.json({ error: cooldownError }, { status: 429 });
+      }
+
+      // Vérifier si ce numéro est déjà utilisé
       const { data: existing } = await getSupabaseAdmin()
         .from('users')
         .select('id')
@@ -93,11 +129,10 @@ export async function POST(request) {
         );
       }
 
-      const code = String(Math.floor(100000 + Math.random() * 900000));
+      const code = generateOtp();
       await sendSms(phone, code);
 
-      // On stocke newPhone dans le payload OTP pour l'appliquer lors de la confirmation
-      const otpToken = await signOtpToken({ userId: session.userId, phone, newPhone: phone, code });
+      const otpToken = await signOtpToken({ userId: session.userId, phone, newPhone: phone, code, attempts: 0 });
       const response = NextResponse.json({ ok: true });
       response.cookies.set(OTP_COOKIE, otpToken, {
         httpOnly: true,
@@ -109,7 +144,12 @@ export async function POST(request) {
       return response;
     }
 
-    // Sous-cas 2b : vérification du numéro existant (depuis le profil)
+    // Sous-cas 2b : vérification du numéro existant
+    const cooldownError = await checkResendCooldown(cookieStore);
+    if (cooldownError) {
+      return NextResponse.json({ error: cooldownError }, { status: 429 });
+    }
+
     const { data: user, error } = await getSupabaseAdmin()
       .from('users')
       .select('phone, phone_verified')
@@ -127,11 +167,15 @@ export async function POST(request) {
     }
 
     const phone = normalizePhone(user.phone);
-    const code  = String(Math.floor(100000 + Math.random() * 900000));
+    const phoneError = validatePhone(phone);
+    if (phoneError) {
+      return NextResponse.json({ error: phoneError }, { status: 400 });
+    }
 
+    const code = generateOtp();
     await sendSms(phone, code);
 
-    const otpToken = await signOtpToken({ userId: session.userId, phone, code });
+    const otpToken = await signOtpToken({ userId: session.userId, phone, code, attempts: 0 });
     const response = NextResponse.json({ ok: true });
     response.cookies.set(OTP_COOKIE, otpToken, {
       httpOnly: true,

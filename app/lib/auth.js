@@ -1,9 +1,10 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET ?? 'change-this-secret-in-production-min-32-chars!!'
-);
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET manquant dans les variables d\'environnement.');
+}
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
 export const AUTH_COOKIE        = 'auth_token';
 export const OTP_COOKIE         = 'phone_otp';

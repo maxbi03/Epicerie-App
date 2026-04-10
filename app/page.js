@@ -3,25 +3,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, Check, CheckCircle, MapPin } from 'lucide-react';
+import { getStrength, STRENGTH_COLORS, STRENGTH_LABELS } from './lib/password';
 
 function clearVisitorMode() {
-  try { sessionStorage.removeItem('app_mode'); } catch {}
+  try { sessionStorage.removeItem('app_mode'); } catch (e) { console.warn('clearVisitorMode:', e); }
 }
 
-const OTP_PENDING_KEY  = 'pending_otp_registration';
+const OTP_PENDING_KEY    = 'pending_otp_registration';
 const PENDING_REG_TTL_MS = 30 * 60 * 1000; // 30 min = durée du cookie pending_registration
-
-function getStrength(pwd) {
-  let s = 0;
-  if (pwd.length >= 10) s++;
-  if (/[A-Z]/.test(pwd)) s++;
-  if (/[0-9]/.test(pwd)) s++;
-  if (/[^A-Za-z0-9]/.test(pwd)) s++;
-  return s;
-}
-
-const STRENGTH_COLORS = ['', 'bg-red-400', 'bg-orange-400', 'bg-yellow-400', 'bg-green-500'];
-const STRENGTH_LABELS = ['', 'Trop faible', 'Faible', 'Moyen', 'Fort'];
 
 export default function IndexPage() {
   const router = useRouter();
@@ -99,7 +88,7 @@ export default function IndexPage() {
           });
         }, 1000);
       }
-    } catch {}
+    } catch (e) { console.warn('[splash] restore OTP state:', e); }
   }, [splashDone]);
 
   function setField(field) {
@@ -107,7 +96,7 @@ export default function IndexPage() {
   }
 
   function openModal() {
-    try { localStorage.removeItem(OTP_PENDING_KEY); } catch {}
+    try { localStorage.removeItem(OTP_PENDING_KEY); } catch (e) { console.warn(e); }
     setModalOpen(true);
     setStep(1);
     setRegisterError('');
@@ -122,7 +111,7 @@ export default function IndexPage() {
   }
 
   function closeModal() {
-    try { localStorage.removeItem(OTP_PENDING_KEY); } catch {}
+    try { localStorage.removeItem(OTP_PENDING_KEY); } catch (e) { console.warn(e); }
     setModalOpen(false);
   }
 
@@ -156,7 +145,7 @@ export default function IndexPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Code incorrect');
-      try { localStorage.removeItem(OTP_PENDING_KEY); } catch {}
+      try { localStorage.removeItem(OTP_PENDING_KEY); } catch (e) { console.warn(e); }
       setStep(3);
       setTimeout(() => { setModalOpen(false); router.push('/home'); }, 2500);
     } catch (err) {
@@ -179,7 +168,7 @@ export default function IndexPage() {
         const data = await res.json();
         setAddressSuggestions(data.suggestions ?? []);
         setShowSuggestions(true);
-      } catch {}
+      } catch (e) { console.warn('[address suggestions]', e); }
     }, 300);
   }
 
@@ -242,7 +231,7 @@ export default function IndexPage() {
       // Persister l'état pour survivre à un redémarrage du navigateur/de l'app
       try {
         localStorage.setItem(OTP_PENDING_KEY, JSON.stringify({ phone: form.phone, sentAt: Date.now() }));
-      } catch {}
+      } catch (e) { console.warn('[localStorage OTP save]', e); }
       setStep(2);
     } catch (err) {
       setRegisterError(err.message || "Erreur lors de l'inscription.");

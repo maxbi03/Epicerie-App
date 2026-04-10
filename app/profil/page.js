@@ -8,6 +8,7 @@ import {
   MapPin, Phone, Mail, Lock, AlertTriangle, Moon, Sun,
   ShieldCheck, ShieldAlert, Eye, EyeOff, LogOut,
 } from 'lucide-react';
+import { getStrength, STRENGTH_COLORS, STRENGTH_LABELS } from '../lib/password';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -21,17 +22,6 @@ function avatarBg(name = '') {
   for (const c of name) hash = (hash * 31 + c.charCodeAt(0)) & 0xffff;
   return colors[hash % colors.length];
 }
-
-function getStrength(pwd) {
-  let s = 0;
-  if (pwd.length >= 10) s++;
-  if (/[A-Z]/.test(pwd)) s++;
-  if (/[0-9]/.test(pwd)) s++;
-  if (/[^A-Za-z0-9]/.test(pwd)) s++;
-  return s;
-}
-const STRENGTH_COLORS = ['', 'bg-red-400', 'bg-orange-400', 'bg-yellow-400', 'bg-green-500'];
-const STRENGTH_LABELS = ['', 'Trop faible', 'Faible', 'Moyen', 'Fort'];
 
 // ─── Sous-composants ─────────────────────────────────────────────────────────
 
@@ -293,7 +283,7 @@ export default function ProfilPage() {
         const d = await res.json();
         setAddrSugg(d.suggestions ?? []);
         setShowAddrSugg(true);
-      } catch {}
+      } catch (e) { console.warn('[address suggestions]', e); }
     }, 300);
   }
 
