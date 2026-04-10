@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
+    "dev": "next dev --experimental-https --webpack",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint"
@@ -12,6 +12,8 @@
     "@ducanh2912/next-pwa": "^10.2.9",
     "@mollie/api-client": "^4.4.0",
     "@supabase/supabase-js": "^2.99.2",
+    "argon2": "^0.44.0",
+    "jose": "^6.2.2",
     "lucide-react": "^0.577.0",
     "mqtt": "^5.15.1",
     "next": "16.1.7",

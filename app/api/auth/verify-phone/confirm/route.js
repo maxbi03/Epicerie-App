@@ -117,9 +117,14 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Code invalide' }, { status: 400 });
     }
 
+    // Si newPhone est dans le payload → changement de numéro ; sinon simple vérification
+    const updatePayload = otpPayload.newPhone
+      ? { phone: otpPayload.newPhone, phone_verified: true }
+      : { phone_verified: true };
+
     const { error } = await getSupabaseAdmin()
       .from('users')
-      .update({ phone_verified: true })
+      .update(updatePayload)
       .eq('id', session.userId);
 
     if (error) {

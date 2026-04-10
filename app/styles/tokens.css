@@ -20,3 +20,26 @@
   --shadow-sm:      0 1px 3px rgba(0,0,0,0.06);
   --shadow-md:      0 4px 12px rgba(0,0,0,0.08);
 }
+
+.dark {
+  --app-bg:         #111114;
+  --card-bg:        #1c1c1e;
+  --header-bg:      #161618;
+  --menu-bg:        #1c1c1e;
+  --input-bg:       #2c2c2e;
+
+  --text-primary:   #ececf0;
+  --text-secondary: #98989e;
+  --text-muted:     #636366;
+
+  --primary:        #34c759;
+  --primary-light:  #0d2518;
+  --forest-green:   #86efac;
+  --leaf-green:     #4ade80;
+
+  --border:         #38383a;
+  --border-light:   #2c2c2e;
+
+  --shadow-sm:      0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md:      0 4px 12px rgba(0,0,0,0.4);
+}

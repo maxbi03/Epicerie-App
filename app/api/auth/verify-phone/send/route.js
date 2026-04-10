@@ -11,50 +11,47 @@ function normalizePhone(phone) {
   return p;
 }
 
-export async function POST() {
+async function sendSms(phone, code) {
+  const params = new URLSearchParams({
+    Userkey:     process.env.ASPSMS_USERKEY,
+    Password:    process.env.ASPSMS_PASSWORD,
+    MSISDN:      phone,
+    Operation:   'SendTextSMS',
+    MessageData: `Votre code L'Epicerie : ${code}`,
+    Originator:  process.env.ASPSMS_ORIGINATOR || 'Epicerie',
+  });
+  const res = await fetch(`https://webapi.aspsms.com/SendSimpleSMS?${params.toString()}`);
+  const data = await res.json().catch(() => ({}));
+  if (data.ErrorCode !== 1) {
+    throw new Error(`Envoi SMS échoué (${data.ErrorDescription ?? 'erreur inconnue'})`);
+  }
+}
+
+export async function POST(request) {
   try {
     const cookieStore = await cookies();
+    const body = await request.json().catch(() => ({}));
 
-    // CAS 1 : nouvelle inscription (cookie pending_registration présent)
+    // ── CAS 1 : nouvelle inscription (cookie pending_registration) ─────────
     const pendingToken = cookieStore.get(PENDING_REG_COOKIE)?.value;
     if (pendingToken) {
       const pending = await verifyToken(pendingToken);
       if (!pending) {
         return NextResponse.json(
-          { error: 'Session d\'inscription expirée. Veuillez recommencer.' },
+          { error: "Session d'inscription expirée. Recommencez l'inscription." },
           { status: 400 }
         );
       }
       if (!pending.phone) {
-        return NextResponse.json({ error: 'Aucun numéro de téléphone dans la session.' }, { status: 400 });
+        return NextResponse.json({ error: 'Aucun numéro dans la session.' }, { status: 400 });
       }
 
       const phone = normalizePhone(pending.phone);
-      const code = String(Math.floor(100000 + Math.random() * 900000));
+      const code  = String(Math.floor(100000 + Math.random() * 900000));
 
-      const params = new URLSearchParams({
-        Userkey:     process.env.ASPSMS_USERKEY,
-        Password:    process.env.ASPSMS_PASSWORD,
-        MSISDN:      phone,
-        Operation:   'SendTextSMS',
-        MessageData: `Votre code L'Epicerie : ${code}`,
-        Originator:  process.env.ASPSMS_ORIGINATOR || 'Epicerie',
-      });
+      await sendSms(phone, code);
 
-      const smsRes = await fetch(`https://webapi.aspsms.com/SendSimpleSMS?${params.toString()}`);
-      const smsData = await smsRes.json().catch(() => ({}));
-
-      if (smsData.ErrorCode !== 1) {
-        console.error('[verify-phone/send] ASPSMS error:', smsData);
-        return NextResponse.json(
-          { error: `Envoi SMS échoué (${smsData.ErrorDescription ?? 'erreur inconnue'})` },
-          { status: 502 }
-        );
-      }
-
-      // Stocker le code dans un JWT — userId fictif basé sur l'id pending
       const otpToken = await signOtpToken({ pendingId: pending.id, phone, code });
-
       const response = NextResponse.json({ ok: true });
       response.cookies.set(OTP_COOKIE, otpToken, {
         httpOnly: true,
@@ -66,12 +63,53 @@ export async function POST() {
       return response;
     }
 
-    // CAS 2 : utilisateur existant qui vérifie son téléphone (session auth active)
+    // ── CAS 2 : utilisateur connecté ──────────────────────────────────────
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
     }
 
+    // Sous-cas 2a : changement de numéro (newPhone fourni dans le body)
+    if (body.newPhone) {
+      const phone = normalizePhone(body.newPhone);
+
+      // Vérifier si ce numéro est déjà utilisé (par ce compte ou un autre)
+      const { data: existing } = await getSupabaseAdmin()
+        .from('users')
+        .select('id')
+        .eq('phone', phone)
+        .maybeSingle();
+
+      if (existing && existing.id === session.userId) {
+        return NextResponse.json(
+          { error: 'Ce numéro est déjà votre numéro actuel.' },
+          { status: 409 }
+        );
+      }
+      if (existing) {
+        return NextResponse.json(
+          { error: 'Ce numéro est déjà utilisé par un autre compte.' },
+          { status: 409 }
+        );
+      }
+
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      await sendSms(phone, code);
+
+      // On stocke newPhone dans le payload OTP pour l'appliquer lors de la confirmation
+      const otpToken = await signOtpToken({ userId: session.userId, phone, newPhone: phone, code });
+      const response = NextResponse.json({ ok: true });
+      response.cookies.set(OTP_COOKIE, otpToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 10,
+        path: '/',
+      });
+      return response;
+    }
+
+    // Sous-cas 2b : vérification du numéro existant (depuis le profil)
     const { data: user, error } = await getSupabaseAdmin()
       .from('users')
       .select('phone, phone_verified')
@@ -89,30 +127,11 @@ export async function POST() {
     }
 
     const phone = normalizePhone(user.phone);
-    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const code  = String(Math.floor(100000 + Math.random() * 900000));
 
-    const params = new URLSearchParams({
-      Userkey:     process.env.ASPSMS_USERKEY,
-      Password:    process.env.ASPSMS_PASSWORD,
-      MSISDN:      phone,
-      Operation:   'SendTextSMS',
-      MessageData: `Votre code L'Epicerie : ${code}`,
-      Originator:  process.env.ASPSMS_ORIGINATOR || 'Epicerie',
-    });
-
-    const smsRes = await fetch(`https://webapi.aspsms.com/SendSimpleSMS?${params.toString()}`);
-    const smsData = await smsRes.json().catch(() => ({}));
-
-    if (smsData.ErrorCode !== 1) {
-      console.error('[verify-phone/send] ASPSMS error:', smsData);
-      return NextResponse.json(
-        { error: `Envoi SMS échoué (${smsData.ErrorDescription ?? 'erreur inconnue'})` },
-        { status: 502 }
-      );
-    }
+    await sendSms(phone, code);
 
     const otpToken = await signOtpToken({ userId: session.userId, phone, code });
-
     const response = NextResponse.json({ ok: true });
     response.cookies.set(OTP_COOKIE, otpToken, {
       httpOnly: true,
@@ -121,8 +140,8 @@ export async function POST() {
       maxAge: 60 * 10,
       path: '/',
     });
-
     return response;
+
   } catch (err) {
     console.error('[verify-phone/send]', err);
     return NextResponse.json({ error: err.message ?? 'Erreur serveur' }, { status: 500 });

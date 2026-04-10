@@ -5,64 +5,201 @@ import { getBasket, saveBasket } from '../lib/basket';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Script from 'next/script';
-import { Lock, Keyboard, Delete, ShoppingCart, X } from 'lucide-react';
+import { Lock, Keyboard, Delete, ShoppingCart, X, Camera, RefreshCw, AlertTriangle } from 'lucide-react';
 import ProductModal from '../components/ProductModal';
 
 function validateEAN13(barcode) {
   return /^\d{13}$/.test(barcode);
 }
 
+// États de la caméra
+// 'idle'       — en attente d'un tap utilisateur (page vient de s'ouvrir)
+// 'requesting' — getUserMedia() en cours (dialog natif visible)
+// 'active'     — caméra active, scan en cours
+// 'denied'     — permission refusée
+// 'error'      — autre erreur (pas de caméra, HTTP, etc.)
+const CAM = { IDLE: 'idle', REQUESTING: 'requesting', ACTIVE: 'active', DENIED: 'denied', ERROR: 'error' };
+
 export default function ScannerPage() {
-  const [isVisitor, setIsVisitor] = useState(false);
-  const [manualOpen, setManualOpen] = useState(false);
+  const [isVisitor, setIsVisitor]       = useState(false);
+  const [camStatus, setCamStatus]       = useState(CAM.IDLE);
+  const [camError, setCamError]         = useState('');
+  const [scriptReady, setScriptReady]   = useState(false);
+  const [manualOpen, setManualOpen]     = useState(false);
   const [barcodeInput, setBarcodeInput] = useState('');
-  const [cartCount, setCartCount] = useState(0);
-  const [cartTotal, setCartTotal] = useState(0);
-  const [feedback, setFeedback] = useState(null);
+  const [cartCount, setCartCount]       = useState(0);
+  const [cartTotal, setCartTotal]       = useState(0);
+  const [feedback, setFeedback]         = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [quantity, setQuantity] = useState(1);
-  const [unknownBarcode, setUnknownBarcode] = useState(null);
+  const [quantity, setQuantity]         = useState(1);
+  const [unknownBarcode, setUnknownBarcode]   = useState(null);
 
   const scannerRef = useRef(null);
   const isScanning = useRef(false);
 
+  // ── Init ────────────────────────────────────────────────────────────────────
+
   useEffect(() => {
     const visitor = sessionStorage.getItem('app_mode') === 'visitor';
     setIsVisitor(visitor);
+    if (visitor) return;
+
     updateCartSummary();
+    fetchProducts()
+      .then(products => localStorage.setItem('products_cache', JSON.stringify(products)))
+      .catch(err => console.error('Failed to load products:', err));
 
-    fetchProducts().then(products => {
-      localStorage.setItem('products_cache', JSON.stringify(products));
-    }).catch(err => console.error('Failed to load products:', err));
+    // NE PAS démarrer automatiquement — on attend le tap utilisateur
+    // (requis par iOS Safari et certains Android pour getUserMedia)
+    if (window.Html5Qrcode) setScriptReady(true);
 
-    // Si le script Html5Qrcode est déjà chargé (retour sur la page),
-    // on relance le scanner directement sans attendre onLoad
-    if (window.Html5Qrcode) {
-      initScanner();
+    return () => { stopScanner(); };
+  }, []);
+
+  function onScriptLoad() {
+    setScriptReady(true);
+  }
+
+  // ── Nettoyage complet du div#reader ─────────────────────────────────────────
+
+  function clearReaderElement() {
+    try {
+      const el = document.getElementById('reader');
+      if (el) el.innerHTML = '';
+    } catch { /* ignore */ }
+  }
+
+  // ── Déclenchement caméra (DOIT être appelé dans un onClick direct) ───────────
+
+  function activateCamera() {
+    // Vérifier HTTPS (obligatoire sur mobile hors localhost)
+    if (
+      typeof window !== 'undefined' &&
+      location.protocol !== 'https:' &&
+      location.hostname !== 'localhost' &&
+      location.hostname !== '127.0.0.1'
+    ) {
+      setCamStatus(CAM.ERROR);
+      setCamError('La caméra nécessite une connexion sécurisée (HTTPS). Accédez à l\'app via HTTPS.');
+      return;
     }
 
-    return () => {
-      stopScanner();
-    };
-  }, []);
+    if (!window.Html5Qrcode) {
+      setCamStatus(CAM.ERROR);
+      setCamError('Le scanner n\'est pas encore chargé. Patientez quelques secondes et réessayez.');
+      return;
+    }
+
+    if (scannerRef.current) return;
+
+    // Nettoyer le div#reader des résidus d'une instance précédente
+    clearReaderElement();
+
+    setCamStatus(CAM.REQUESTING);
+    setCamError('');
+
+    // ─── Instanciation dans le fil synchrone du geste utilisateur ───
+    let html5QrCode;
+    try {
+      const formats = window.Html5QrcodeSupportedFormats;
+      const formatsToSupport = formats ? [
+        formats.EAN_13, formats.EAN_8,
+        formats.UPC_A,  formats.UPC_E,
+        formats.CODE_128,
+      ] : undefined;
+      html5QrCode = new window.Html5Qrcode(
+        'reader',
+        formatsToSupport ? { formatsToSupport } : undefined
+      );
+    } catch (e) {
+      setCamStatus(CAM.ERROR);
+      setCamError('Erreur d\'initialisation du scanner. Rechargez la page.');
+      return;
+    }
+
+    scannerRef.current = html5QrCode;
+
+    html5QrCode.start(
+      { facingMode: 'environment' },
+      {
+        fps: 30,
+        qrbox: (w, h) => ({
+          width:  Math.min(w * 0.9, 500),
+          height: Math.min(h * 0.45, 250),
+        }),
+        aspectRatio: 1.7777,
+        disableFlip: false,
+        experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+      },
+      (decodedText) => {
+        if (!/^\d{8,13}$/.test(decodedText)) return;
+        if (isScanning.current) return;
+        isScanning.current = true;
+        try { handleScanSuccess(decodedText); } catch (e) { console.error(e); }
+        setTimeout(() => { isScanning.current = false; }, 1500);
+      },
+      () => {}
+    )
+    .then(() => {
+      setCamStatus(CAM.ACTIVE);
+    })
+    .catch((err) => {
+      // Nettoyer proprement l'instance avant de la jeter
+      try { html5QrCode.clear(); } catch { /* ignore */ }
+      scannerRef.current = null;
+
+      const msg = String(err ?? '').toLowerCase();
+      console.error('[Scanner] start() error:', err);
+
+      if (msg.includes('permission') || msg.includes('denied') || msg.includes('notallowed')) {
+        setCamStatus(CAM.DENIED);
+      } else if (msg.includes('notfound') || msg.includes('devicenotfound') || msg.includes('no camera')) {
+        setCamStatus(CAM.ERROR);
+        setCamError('Aucune caméra détectée sur cet appareil.');
+      } else if (msg.includes('inuse') || msg.includes('in use') || msg.includes('notreadable')) {
+        setCamStatus(CAM.ERROR);
+        setCamError('La caméra est utilisée par une autre application. Fermez-la et réessayez.');
+      } else {
+        setCamStatus(CAM.ERROR);
+        setCamError(`Erreur : ${String(err).slice(0, 120)}`);
+      }
+    });
+  }
+
+  // ── Retry — remet en IDLE pour que l'utilisateur retape (geste propre) ───────
+
+  function handleRetry() {
+    // Nettoyer l'instance existante si présente
+    const inst = scannerRef.current;
+    scannerRef.current = null;
+    if (inst) {
+      inst.stop().catch(() => {}).finally(() => {
+        try { inst.clear(); } catch { /* ignore */ }
+        clearReaderElement();
+      });
+    } else {
+      clearReaderElement();
+    }
+    setCamStatus(CAM.IDLE);
+    setCamError('');
+  }
 
   async function stopScanner() {
     if (scannerRef.current) {
       try {
         await scannerRef.current.stop();
         scannerRef.current.clear();
-      } catch (e) {
-        // Ignore les erreurs si déjà stoppé
-      }
+      } catch { /* déjà stoppé */ }
       scannerRef.current = null;
     }
   }
 
+  // ── Logique produits ─────────────────────────────────────────────────────────
+
   function updateCartSummary() {
     const basket = getBasket();
     setCartCount(basket.length);
-    const total = basket.reduce((sum, p) => sum + (p.price || 0), 0);
-    setCartTotal(total.toFixed(2));
+    setCartTotal(basket.reduce((sum, p) => sum + (p.price || 0), 0).toFixed(2));
   }
 
   function showFeedback(type, message) {
@@ -70,59 +207,13 @@ export default function ScannerPage() {
     setTimeout(() => setFeedback(null), 2500);
   }
 
-  function initScanner() {
-    if (!window.Html5Qrcode || scannerRef.current) return;
-
-    const formats = window.Html5QrcodeSupportedFormats;
-    const formatsToSupport = formats ? [
-      formats.EAN_13,
-      formats.EAN_8,
-      formats.UPC_A,
-      formats.UPC_E,
-      formats.CODE_128,
-    ] : undefined;
-
-    const html5QrCode = new window.Html5Qrcode('reader', formatsToSupport ? { formatsToSupport } : undefined);
-    scannerRef.current = html5QrCode;
-
-    html5QrCode.start(
-      { facingMode: 'environment' },
-      {
-        fps: 30,
-        qrbox: (viewfinderWidth, viewfinderHeight) => ({
-          width: Math.min(viewfinderWidth * 0.9, 500),
-          height: Math.min(viewfinderHeight * 0.45, 250),
-        }),
-        aspectRatio: 1.7777,
-        disableFlip: false,
-        experimentalFeatures: {
-          useBarCodeDetectorIfSupported: true,
-        },
-      },
-      (decodedText) => {
-        if (!/^\d{8,13}$/.test(decodedText)) return;
-        if (isScanning.current) return;
-        isScanning.current = true;
-        try {
-          handleScanSuccess(decodedText);
-        } catch (e) {
-          console.error('Scan error:', e);
-        }
-        setTimeout(() => { isScanning.current = false; }, 1500);
-      },
-      () => {}
-    ).catch(() => showFeedback('error', "Impossible d'accéder à la caméra."));
-  }
-
   function handleScanSuccess(barcode) {
     if (!validateEAN13(barcode)) {
       showFeedback('error', `Code-barres invalide: ${barcode}`);
       return;
     }
-
     const products = JSON.parse(localStorage.getItem('products_cache') || '[]');
-    const product = products.find(p => String(p.barcode) === String(barcode));
-
+    const product  = products.find(p => String(p.barcode) === String(barcode));
     if (product) {
       if (navigator.vibrate) navigator.vibrate(100);
       setQuantity(1);
@@ -157,10 +248,14 @@ export default function ScannerPage() {
     }
   }
 
+  // ── Rendu mode visiteur ──────────────────────────────────────────────────────
+
   if (isVisitor) return (
     <div className="h-full max-w-md mx-auto bg-black flex items-center justify-center px-6">
       <div className="w-full bg-card-bg rounded-[2rem] p-6 text-center">
-        <div className="mx-auto size-14 rounded-2xl bg-primary-light flex items-center justify-center mb-4"><Lock size={28} className="text-primary" /></div>
+        <div className="mx-auto size-14 rounded-2xl bg-primary-light flex items-center justify-center mb-4">
+          <Lock size={28} className="text-primary" />
+        </div>
         <h2 className="text-lg font-black text-text-primary mb-2">Scanner désactivé</h2>
         <p className="text-sm text-text-secondary leading-relaxed mb-6">Créez un compte pour utiliser cette fonctionnalité.</p>
         <div className="grid grid-cols-2 gap-3">
@@ -172,9 +267,16 @@ export default function ScannerPage() {
     </div>
   );
 
+  // ── Rendu principal ──────────────────────────────────────────────────────────
+
+  const showOverlay = camStatus !== CAM.ACTIVE;
+
   return (
     <>
-      <Script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" onLoad={initScanner} />
+      <Script
+        src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"
+        onLoad={onScriptLoad}
+      />
 
       <style>{`
         #reader { border: none !important; width: 100% !important; height: 100% !important; }
@@ -187,22 +289,120 @@ export default function ScannerPage() {
 
       <div className="h-full max-w-md mx-auto bg-gray-950 flex flex-col overflow-hidden">
 
-        {/* Zone caméra */}
-        <div className="relative flex-[6] overflow-hidden pt-30">
-          <div id="reader" className="w-full h-full" />
+        {/* ── Zone caméra ── */}
+        <div className="relative flex-[6] overflow-hidden">
 
-          {feedback && (
+          {/* Overlay selon l'état */}
+          {showOverlay && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center px-8 z-10 bg-gray-950">
+
+              {/* IDLE — premier chargement ou après un retry */}
+              {camStatus === CAM.IDLE && (
+                <div className="flex flex-col items-center gap-6 text-center">
+                  <div className="size-24 rounded-[2rem] bg-white/10 flex items-center justify-center">
+                    <Camera size={44} className="text-white/80" />
+                  </div>
+                  <div>
+                    <h2 className="text-white font-black text-xl mb-2">Scanner un produit</h2>
+                    <p className="text-white/50 text-sm leading-relaxed">
+                      Appuyez sur le bouton ci-dessous pour activer la caméra et scanner un code-barres.
+                    </p>
+                  </div>
+                  <button
+                    onClick={activateCamera}
+                    className="flex items-center gap-3 px-8 py-4 bg-primary text-white rounded-2xl font-black text-sm uppercase tracking-widest active:scale-95 transition-transform shadow-lg shadow-primary/30"
+                  >
+                    <Camera size={18} /> Activer la caméra
+                  </button>
+                  {camError && (
+                    <p className="text-amber-400 text-xs text-center px-4 mt-1">{camError}</p>
+                  )}
+                </div>
+              )}
+
+              {/* REQUESTING — dialog natif en cours */}
+              {camStatus === CAM.REQUESTING && (
+                <div className="flex flex-col items-center gap-5 text-center">
+                  <div className="w-10 h-10 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div>
+                    <h2 className="text-white font-black text-lg mb-2">Autorisation en cours…</h2>
+                    <p className="text-white/50 text-sm leading-relaxed">
+                      Acceptez la demande d'accès à la caméra dans la fenêtre qui s'affiche.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* DENIED — permission refusée */}
+              {camStatus === CAM.DENIED && (
+                <div className="flex flex-col items-center gap-5 text-center">
+                  <div className="size-20 rounded-[2rem] bg-red-500/20 flex items-center justify-center">
+                    <AlertTriangle size={36} className="text-red-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-white font-black text-lg mb-2">Caméra bloquée</h2>
+                    <p className="text-white/50 text-sm mb-4 leading-relaxed">
+                      La permission a été refusée. Pour la réactiver :
+                    </p>
+                    <ol className="text-left text-white/40 text-xs space-y-2">
+                      <li>① Appuyez sur l'icône 🔒 dans la barre d'adresse</li>
+                      <li>② Trouvez <strong className="text-white/70">Caméra</strong> dans les permissions</li>
+                      <li>③ Choisissez <strong className="text-white/70">Autoriser</strong></li>
+                      <li>④ Rechargez la page, puis réessayez</li>
+                    </ol>
+                  </div>
+                  <button
+                    onClick={handleRetry}
+                    className="flex items-center gap-2 px-6 py-3 bg-white/15 border border-white/20 text-white rounded-2xl font-bold text-sm active:scale-95 transition-all"
+                  >
+                    <RefreshCw size={16} /> J'ai autorisé — réessayer
+                  </button>
+                </div>
+              )}
+
+              {/* ERROR — autre erreur */}
+              {camStatus === CAM.ERROR && (
+                <div className="flex flex-col items-center gap-5 text-center">
+                  <div className="size-20 rounded-[2rem] bg-orange-500/20 flex items-center justify-center">
+                    <AlertTriangle size={36} className="text-orange-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-white font-black text-lg mb-2">Erreur caméra</h2>
+                    <p className="text-white/50 text-sm leading-relaxed">
+                      {camError || "Impossible d'accéder à la caméra."}
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleRetry}
+                    className="flex items-center gap-2 px-6 py-3 bg-white/15 border border-white/20 text-white rounded-2xl font-bold text-sm active:scale-95 transition-all"
+                  >
+                    <RefreshCw size={16} /> Réessayer
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Lecteur QR — toujours dans le DOM, caché jusqu'à l'activation */}
+          <div
+            id="reader"
+            className="w-full h-full"
+            style={{ visibility: camStatus === CAM.ACTIVE ? 'visible' : 'hidden' }}
+          />
+
+          {/* Feedback scan (succès / erreur) */}
+          {feedback && camStatus === CAM.ACTIVE && (
             <div className={`absolute bottom-3 left-4 right-4 px-4 py-3 rounded-2xl text-sm font-bold text-center z-20 ${
               feedback.type === 'success' ? 'bg-primary text-white' :
-              feedback.type === 'warn' ? 'bg-amber-400 text-amber-900' :
-              'bg-red-500 text-white'
+              feedback.type === 'warn'    ? 'bg-amber-400 text-amber-900' :
+                                           'bg-red-500 text-white'
             }`}>
               {feedback.message}
             </div>
           )}
         </div>
 
-        {/* Zone contrôles */}
+        {/* ── Zone contrôles ── */}
         <div className="flex-[4.5] flex flex-col justify-between px-5 py-4 bg-gray-950">
           {unknownBarcode ? (
             <div className="bg-red-500/20 border border-red-500/40 rounded-2xl p-4 flex items-start gap-3">
@@ -220,7 +420,7 @@ export default function ScannerPage() {
             </div>
           ) : (
             <p className="text-white/50 text-xs text-center">
-              Alignez le code-barres dans le cadre
+              {camStatus === CAM.ACTIVE ? 'Alignez le code-barres dans le cadre' : '\u00A0'}
             </p>
           )}
 
@@ -235,42 +435,32 @@ export default function ScannerPage() {
             {manualOpen && (
               <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 space-y-3">
                 <div className="w-full p-3 rounded-xl text-center text-lg font-bold bg-white/20 border border-white/30 text-white min-h-[50px] flex items-center justify-center select-none">
-                  {barcodeInput ? (
-                    <span className="tracking-[0.15em]">{barcodeInput}<span className="animate-pulse">|</span></span>
-                  ) : (
-                    <span className="text-white/40">2000000000xxx</span>
-                  )}
+                  {barcodeInput
+                    ? <span className="tracking-[0.15em]">{barcodeInput}<span className="animate-pulse">|</span></span>
+                    : <span className="text-white/40">2000000000xxx</span>
+                  }
                 </div>
                 <p className="text-center text-[10px] text-white/40 font-bold">{barcodeInput.length}/13 chiffres</p>
                 <div className="grid grid-cols-3 gap-2">
                   {['1','2','3','4','5','6','7','8','9'].map(n => (
-                    <button
-                      key={n}
+                    <button key={n}
                       onClick={() => setBarcodeInput(v => v.length < 13 ? v + n : v)}
                       className="py-3.5 text-lg font-bold rounded-xl bg-white/20 text-white active:bg-primary transition-colors"
-                    >
-                      {n}
-                    </button>
+                    >{n}</button>
                   ))}
                   <button
                     onClick={() => setBarcodeInput(v => v.slice(0, -1))}
-                    className="py-3.5 rounded-xl bg-red-500/30 text-red-300 active:bg-red-500/50 flex items-center justify-center font-bold text-sm gap-1.5"
-                  >
-                    <Delete size={18} />
-                  </button>
+                    className="py-3.5 rounded-xl bg-red-500/30 text-red-300 active:bg-red-500/50 flex items-center justify-center"
+                  ><Delete size={18} /></button>
                   <button
                     onClick={() => setBarcodeInput(v => v.length < 13 ? v + '0' : v)}
                     className="py-3.5 text-lg font-bold rounded-xl bg-white/20 text-white active:bg-primary transition-colors"
-                  >
-                    0
-                  </button>
+                  >0</button>
                   <button
                     onClick={submitManualBarcode}
                     disabled={barcodeInput.length !== 13}
                     className="py-3.5 text-sm font-black rounded-xl bg-primary text-white uppercase tracking-widest active:scale-95 transition-all disabled:opacity-30 disabled:active:scale-100"
-                  >
-                    OK
-                  </button>
+                  >OK</button>
                 </div>
               </div>
             )}
@@ -291,7 +481,7 @@ export default function ScannerPage() {
                 <span className="font-bold text-sm">Voir mon panier</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-black text-white/60 uppercase">Total:</span>
+                <span className="text-xs font-black text-white/60 uppercase">Total :</span>
                 <span className="font-black text-white">{cartTotal} CHF</span>
               </div>
             </Link>

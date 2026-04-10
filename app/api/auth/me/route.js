@@ -10,7 +10,7 @@ export async function GET() {
 
   const { data: user, error } = await getSupabaseAdmin()
     .from('users')
-    .select('id, name, email, phone, phone_verified, address, postal_code, city, country')
+    .select('id, name, email, phone, phone_verified, email_verified, address, postal_code, city, country, address_verified, avatar_url, total_spent')
     .eq('id', session.userId)
     .single();
 
