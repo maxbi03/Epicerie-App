@@ -8,6 +8,9 @@ function clearVisitorMode() {
   try { sessionStorage.removeItem('app_mode'); } catch {}
 }
 
+const OTP_PENDING_KEY = 'pending_otp_registration';
+const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes = durée du cookie JWT OTP
+
 function getStrength(pwd) {
   let s = 0;
   if (pwd.length >= 10) s++;
@@ -68,11 +71,43 @@ export default function IndexPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // Restaure l'étape OTP si l'app a redémarré pendant la vérification SMS
+  useEffect(() => {
+    if (!splashDone) return;
+    try {
+      const raw = localStorage.getItem(OTP_PENDING_KEY);
+      if (!raw) return;
+      const { phone, sentAt } = JSON.parse(raw);
+      // Ignorer si le code OTP a expiré (> 10 min)
+      if (Date.now() - sentAt > OTP_TTL_MS) {
+        localStorage.removeItem(OTP_PENDING_KEY);
+        return;
+      }
+      setForm(f => ({ ...f, phone }));
+      setModalOpen(true);
+      setStep(2);
+      // Recalculer le cooldown restant sur le bouton "Renvoyer"
+      const elapsed = Math.floor((Date.now() - sentAt) / 1000);
+      const remaining = Math.max(0, 30 - elapsed);
+      if (remaining > 0) {
+        setResendCooldown(remaining);
+        clearInterval(resendTimer.current);
+        resendTimer.current = setInterval(() => {
+          setResendCooldown(v => {
+            if (v <= 1) { clearInterval(resendTimer.current); return 0; }
+            return v - 1;
+          });
+        }, 1000);
+      }
+    } catch {}
+  }, [splashDone]);
+
   function setField(field) {
     return e => setForm(f => ({ ...f, [field]: e.target.value }));
   }
 
   function openModal() {
+    try { localStorage.removeItem(OTP_PENDING_KEY); } catch {}
     setModalOpen(true);
     setStep(1);
     setRegisterError('');
@@ -84,6 +119,11 @@ export default function IndexPage() {
     setAddressSuggestions([]);
     setShowSuggestions(false);
     setForm({ firstname: '', lastname: '', email: '', address: '', npa: '', city: '', phone: '', password: '', passwordConfirm: '' });
+  }
+
+  function closeModal() {
+    try { localStorage.removeItem(OTP_PENDING_KEY); } catch {}
+    setModalOpen(false);
   }
 
   function startResendCooldown() {
@@ -116,6 +156,7 @@ export default function IndexPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Code incorrect');
+      try { localStorage.removeItem(OTP_PENDING_KEY); } catch {}
       setStep(3);
       setTimeout(() => { setModalOpen(false); router.push('/home'); }, 2500);
     } catch (err) {
@@ -198,6 +239,10 @@ export default function IndexPage() {
 
       // Envoyer le SMS OTP
       await sendOtp();
+      // Persister l'état pour survivre à un redémarrage du navigateur/de l'app
+      try {
+        localStorage.setItem(OTP_PENDING_KEY, JSON.stringify({ phone: form.phone, sentAt: Date.now() }));
+      } catch {}
       setStep(2);
     } catch (err) {
       setRegisterError(err.message || "Erreur lors de l'inscription.");
@@ -302,7 +347,7 @@ export default function IndexPage() {
                 <h2 className="text-2xl font-bold dark:text-white">
                   {step === 1 ? 'Créer un compte' : step === 2 ? 'Vérification' : 'Compte activé'}
                 </h2>
-                <button onClick={() => setModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+                <button onClick={closeModal} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
               </div>
               <div className="flex items-center gap-2">
                 <div className={stepDotClass(1)}>{step > 1 ? <Check size={12} /> : '1'}</div>
