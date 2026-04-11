@@ -20,7 +20,7 @@ export default function HomePage() {
   const [emailUnverified, setEmailUnverified] = useState(false);
   const [latestNews, setLatestNews] = useState(null);
   const [phoneVerified, setPhoneVerified] = useState(false);
-  const [doorStatus, setDoorStatus] = useState('idle'); // idle, locating, unlocking, success, error, too_far, no_phone
+  const [doorStatus, setDoorStatus] = useState('idle'); // idle, locating, unlocking, waiting, success, error, too_far, no_phone
   const [doorError, setDoorError] = useState('');
   const [distance, setDistance] = useState(null);
   const [isNearby, setIsNearby] = useState(false);
@@ -102,6 +102,7 @@ export default function HomePage() {
 
       setDoorStatus('unlocking');
 
+      // Le fetch attend la confirmation de l'ESP32 (jusqu'à 10s)
       const res = await fetch('/api/door/unlock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -115,7 +116,12 @@ export default function HomePage() {
         return;
       }
 
-      setDoorStatus('success');
+      if (data.confirmed) {
+        setDoorStatus('success');
+      } else {
+        setDoorStatus('error');
+        setDoorError('Commande envoyée mais pas de confirmation');
+      }
       setTimeout(() => setDoorStatus('idle'), 6000);
 
     } catch (err) {
@@ -133,13 +139,14 @@ export default function HomePage() {
 
   const doorTitle = doorStatus === 'success' ? 'Porte déverrouillée'
     : doorStatus === 'locating' ? 'Localisation...'
-    : doorStatus === 'unlocking' ? 'Déverrouillage...'
+    : doorStatus === 'unlocking' ? 'Ouverture en cours...'
     : doorStatus === 'error' || doorStatus === 'too_far' ? 'Accès refusé'
     : doorStatus === 'no_phone' ? 'Téléphone non vérifié'
     : isNearby ? 'Épicerie détectée'
     : 'Aucun magasin à proximité';
 
-  const doorSubtitle = doorStatus === 'success' ? 'La porte est ouverte pendant 5 secondes'
+  const doorSubtitle = doorStatus === 'success' ? 'La porte est ouverte pendant 5s'
+    : doorStatus === 'unlocking' ? 'En attente de confirmation du système...'
     : doorStatus === 'error' || doorStatus === 'too_far' ? doorError
     : doorStatus === 'no_phone' ? 'Vérifiez votre numéro dans votre profil'
     : isNearby && phoneVerified ? `Vous êtes à ${distance ?? '?'}m`
@@ -216,9 +223,9 @@ export default function HomePage() {
                   <span className={`font-bold text-lg uppercase tracking-wider ${
                     doorStatus === 'success' || (canUnlock && doorStatus !== 'locating' && doorStatus !== 'unlocking') ? '' : 'text-text-muted'
                   }`}>
-                    {doorStatus === 'success' ? 'Ouvert' :
+                    {doorStatus === 'success' ? 'Confirmé' :
                      doorStatus === 'locating' ? 'Localisation...' :
-                     doorStatus === 'unlocking' ? 'Ouverture...' :
+                     doorStatus === 'unlocking' ? 'Confirmation...' :
                      !phoneVerified ? 'Tél. non vérifié' :
                      !isNearby ? 'Trop loin' :
                      'Déverrouiller'}
