@@ -10,6 +10,17 @@ const MQTT_STATUS_TOPIC = process.env.MQTT_STATUS_TOPIC || 'epico/door/status';
 const DOOR_SECRET = process.env.DOOR_SECRET || 'secret-de-ouf';
 const DOOR_CONFIRM_TIMEOUT = 10000; // 10s max pour attendre la confirmation ESP32
 
+async function logTraffic(user, name, success) {
+  try {
+    const { error } = await getSupabaseAdmin()
+      .from('traffic')
+      .insert({ user_id: user, user_name: name, success });
+    if (error) console.error('Failed to log traffic:', error);
+  } catch (err) {
+    console.error('Failed to log traffic:', err);
+  }
+}
+
 function haversineDistance(lat1, lng1, lat2, lng2) {
   const R = 6371000;
   const toRad = (deg) => (deg * Math.PI) / 180;
@@ -106,14 +117,17 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
     }
 
-    // 2. Vérifier phone_verified
+    // 2. Vérifier phone_verified et récupérer le nom
     const { data: profile, error: profileError } = await getSupabaseAdmin()
       .from('users')
-      .select('phone_verified')
+      .select('phone_verified, name')
       .eq('id', session.userId)
       .single();
 
+    const userName = profile?.name || session.email;
+
     if (profileError || !profile?.phone_verified) {
+      await logTraffic(session.userId, userName, false);
       return NextResponse.json({ error: 'Numéro de téléphone non vérifié' }, { status: 403 });
     }
 
@@ -125,6 +139,7 @@ export async function POST(request) {
 
     const distance = haversineDistance(lat, lng, STORE_LAT, STORE_LNG);
     if (distance > DOOR_UNLOCK_RADIUS_M) {
+      await logTraffic(session.userId, userName, false);
       return NextResponse.json({
         error: `Vous êtes trop loin (${Math.round(distance)}m). Rapprochez-vous de l'épicerie.`,
         distance: Math.round(distance),
@@ -132,13 +147,23 @@ export async function POST(request) {
     }
 
     // 4. Envoyer la commande MQTT et attendre la confirmation de l'ESP32
-    const result = await unlockDoorWithConfirmation();
+    let success = false;
+    try {
+      const result = await unlockDoorWithConfirmation();
+      success = result.confirmed;
+    } catch (mqttError) {
+      console.error('MQTT error:', mqttError.message);
+      await logTraffic(session.userId, userName, false);
+      return NextResponse.json({ error: mqttError.message || 'Erreur MQTT' }, { status: 500 });
+    }
 
+    // Log en fire-and-forget pour ne pas bloquer la réponse
+    logTraffic(session.userId, userName, success);
     console.log(`Door unlocked (confirmed by ESP32) by ${session.email} (${Math.round(distance)}m)`);
 
-    return NextResponse.json({ status: 'ok', confirmed: result.confirmed, distance: Math.round(distance) });
+    return NextResponse.json({ status: 'ok', confirmed: success, distance: Math.round(distance) });
   } catch (error) {
     console.error('Door unlock error:', error);
-    return NextResponse.json({ error: 'Erreur lors du déverrouillage' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Erreur lors du déverrouillage' }, { status: 500 });
   }
 }
