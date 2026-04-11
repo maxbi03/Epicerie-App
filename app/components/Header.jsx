@@ -17,6 +17,8 @@ const PAGE_TITLES = {
   '/admin': 'Administration',
   '/admin/produits': 'Gestion Produits',
   '/admin/news': 'Gestion News',
+  '/admin/users': 'Utilisateurs',
+  '/admin/ventes': 'Ventes',
 };
 
 const NAV_LINKS = [
