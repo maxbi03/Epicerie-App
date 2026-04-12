@@ -125,13 +125,13 @@ export default function AdminSalesPage() {
             >
               <ShoppingCart size={14} className="text-primary shrink-0" />
               <div className="flex-1 min-w-0">
-                <p
-                  className="font-bold text-sm text-primary truncate underline decoration-primary/30 cursor-pointer"
+                <span
+                  className="inline font-bold text-sm text-primary truncate underline decoration-primary/30 cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     if (sale.user_id) router.push(`/admin/users?highlight=${sale.user_id}`);
                   }}
-                >{sale.client_name || 'Client inconnu'}</p>
+                >{sale.client_name || 'Client inconnu'}</span>
                 <p className="text-[10px] text-text-muted">{formatDate(sale.created_at)}</p>
               </div>
               <div className="text-right shrink-0 flex items-center gap-2">

@@ -19,6 +19,7 @@ const PAGE_TITLES = {
   '/admin/news': 'Gestion News',
   '/admin/users': 'Utilisateurs',
   '/admin/ventes': 'Ventes',
+  '/admin/traffic': 'Traffic',
 };
 
 const NAV_LINKS = [
