@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Receipt, Search, Calendar, TrendingUp, Loader2, ShoppingCart } from 'lucide-react';
+import { Receipt, Search, Loader2, ShoppingCart, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function AdminSalesPage() {
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [period, setPeriod] = useState('all'); // all, today, week, month
+  const [period, setPeriod] = useState('all');
+  const [expanded, setExpanded] = useState(null);
 
   useEffect(() => {
     fetch('/api/admin/sales')
@@ -115,20 +116,35 @@ export default function AdminSalesPage() {
       {/* Liste */}
       <div className="space-y-2">
         {filtered.map((sale, i) => (
-          <div key={i} className="bg-card-bg rounded-2xl border border-border-light p-4">
-            <div className="flex items-start justify-between gap-3">
+          <div key={i} className="bg-card-bg rounded-2xl border border-border-light overflow-hidden">
+            <button
+              onClick={() => setExpanded(expanded === i ? null : i)}
+              className="w-full flex items-center gap-3 p-4 text-left"
+            >
+              <ShoppingCart size={14} className="text-primary shrink-0" />
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <ShoppingCart size={14} className="text-primary shrink-0" />
-                  <p className="font-bold text-sm text-text-primary truncate">{sale.client_name || 'Client inconnu'}</p>
-                </div>
-                <p className="text-xs text-text-secondary leading-relaxed">{sale.receipt || '—'}</p>
+                <p className="font-bold text-sm text-text-primary truncate">{sale.client_name || 'Client inconnu'}</p>
+                <p className="text-[10px] text-text-muted">{formatDate(sale.created_at)}</p>
               </div>
-              <div className="text-right shrink-0">
+              <div className="text-right shrink-0 flex items-center gap-2">
                 <p className="font-bold text-sm text-green-600">{formatMoney(sale.price)}</p>
-                <p className="text-[10px] text-text-muted mt-0.5">{formatDate(sale.created_at)}</p>
+                {expanded === i ? <ChevronUp size={14} className="text-text-muted" /> : <ChevronDown size={14} className="text-text-muted" />}
               </div>
-            </div>
+            </button>
+
+            {expanded === i && sale.receipt && (
+              <div className="px-4 pb-4 pt-0 border-t border-border-light">
+                <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider pt-3 mb-2">Articles</p>
+                <ul className="space-y-1">
+                  {sale.receipt.split(', ').map((item, j) => (
+                    <li key={j} className="text-xs text-text-primary flex items-center gap-2">
+                      <span className="size-1.5 rounded-full bg-primary shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         ))}
 

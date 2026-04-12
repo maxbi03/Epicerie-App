@@ -38,9 +38,9 @@ export async function POST(request) {
           .insert({
             created_at: new Date().toISOString(),
             client_name: metadata.client_name || null,
-            client_email: metadata.client_email || null,
+            user_id: metadata.user_id || null,
             receipt,
-            price: Math.round(Number(transaction.amount) / 100 * 100), // amount already in cents from Payrexx
+            price: Math.round(Number(transaction.amount) / 100 * 100),
           });
 
         if (saleError) {
@@ -80,7 +80,7 @@ export async function POST(request) {
           .insert({
             created_at: new Date().toISOString(),
             client_name: payment.metadata.client_name || null,
-            client_email: payment.metadata.client_email || null,
+            user_id: payment.metadata.user_id || null,
             receipt,
             price: Math.round(Number(payment.amount.value) * 100),
           });

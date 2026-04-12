@@ -3,7 +3,7 @@ import { PAYMENT_GATEWAY } from '../../lib/config';
 
 export async function POST(request) {
   try {
-    const { items, total, client_name, client_email } = await request.json();
+    const { items, total, client_name, user_id } = await request.json();
 
     if (!items || items.length === 0) {
       return NextResponse.json({ error: 'Panier vide' }, { status: 400 });
@@ -17,7 +17,7 @@ export async function POST(request) {
     const metadata = {
       items: JSON.stringify(items.map(i => ({ id: i.id, name: i.name, qty: i.quantity, price: i.price }))),
       client_name: client_name || null,
-      client_email: client_email || null,
+      user_id: user_id || null,
     };
 
     if (PAYMENT_GATEWAY === 'payrexx') {

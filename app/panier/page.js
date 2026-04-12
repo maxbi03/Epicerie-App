@@ -51,13 +51,13 @@ export default function PanierPage() {
     setError(null);
     try {
       let clientName = null;
-      let clientEmail = null;
+      let clientUserId = null;
       try {
         const me = await fetch('/api/auth/me');
         if (me.ok) {
           const { user } = await me.json();
           clientName = user?.name || null;
-          clientEmail = user?.email || null;
+          clientUserId = user?.id || null;
         }
       } catch (e) { console.warn('[checkout] fetch user info:', e); }
 
@@ -68,7 +68,7 @@ export default function PanierPage() {
           items: groupedList,
           total,
           client_name: clientName,
-          client_email: clientEmail,
+          user_id: clientUserId,
         }),
       });
       const data = await res.json();
