@@ -1,15 +1,16 @@
 import { getSession } from './auth';
-
-export function isAdmin(email) {
-  if (!email) return false;
-  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-  if (!adminEmail) return false;
-  return email.toLowerCase() === adminEmail.toLowerCase();
-}
+import { getSupabaseAdmin } from './supabaseServer';
 
 export async function requireAdmin() {
   const session = await getSession();
-  if (!session?.email) return { authorized: false };
-  if (!isAdmin(session.email)) return { authorized: false };
+  if (!session?.userId) return { authorized: false };
+
+  const { data: user } = await getSupabaseAdmin()
+    .from('users')
+    .select('role')
+    .eq('id', session.userId)
+    .single();
+
+  if (!user || user.role !== 'admin') return { authorized: false };
   return { authorized: true, user: session };
 }

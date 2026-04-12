@@ -23,8 +23,7 @@ export default function AdminLayout({ children }) {
     fetch('/api/auth/me')
       .then(r => r.ok ? r.json() : null)
       .then(data => {
-        const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-        if (data?.user?.email && adminEmail && data.user.email.toLowerCase() === adminEmail.toLowerCase()) {
+        if (data?.user?.role === 'admin') {
           setAuthorized(true);
         } else {
           router.push('/home');

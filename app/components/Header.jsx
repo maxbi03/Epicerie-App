@@ -61,9 +61,7 @@ export default function Header() {
     fetch('/api/auth/me')
       .then(r => r.ok ? r.json() : null)
       .then(data => {
-        if (!data?.user?.email) return;
-        const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-        setIsAdminUser(!!(adminEmail && data.user.email.toLowerCase() === adminEmail.toLowerCase()));
+        if (data?.user?.role === 'admin') setIsAdminUser(true);
       });
   }, [pathname]);
 

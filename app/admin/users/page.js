@@ -1,24 +1,33 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Users, Phone, Mail, MapPin, CheckCircle2, XCircle, Search, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [expanded, setExpanded] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
   const [sortBy, setSortBy] = useState('created_at');
+  const searchParams = useSearchParams();
+  const highlightId = searchParams.get('highlight');
 
   useEffect(() => {
     fetch('/api/admin/users')
       .then(r => r.json())
       .then(data => {
-        if (Array.isArray(data)) setUsers(data);
+        if (Array.isArray(data)) {
+          setUsers(data);
+          // Auto-expand l'utilisateur si highlight param
+          if (highlightId) {
+            setExpandedId(highlightId);
+          }
+        }
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, []);
+  }, [highlightId]);
 
   const filtered = users.filter(u => {
     const q = search.toLowerCase();
@@ -99,9 +108,9 @@ export default function AdminUsersPage() {
       {/* Liste */}
       <div className="space-y-2">
         {sorted.map((user, i) => (
-          <div key={i} className="bg-card-bg rounded-2xl border border-border-light overflow-hidden">
+          <div key={i} className={`bg-card-bg rounded-2xl border overflow-hidden ${highlightId && user.id === highlightId ? 'border-primary ring-2 ring-primary/20' : 'border-border-light'}`}>
             <button
-              onClick={() => setExpanded(expanded === i ? null : i)}
+              onClick={() => setExpandedId(expandedId === user.id ? null : user.id)}
               className="w-full flex items-center gap-3 p-4 text-left"
             >
               {/* Avatar */}
@@ -118,6 +127,13 @@ export default function AdminUsersPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="font-bold text-sm text-text-primary truncate">{user.name || 'Sans nom'}</p>
+                  {user.role && (
+                    <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md shrink-0 ${
+                      user.role === 'admin' ? 'bg-purple-100 text-purple-700' :
+                      user.role === 'member' ? 'bg-green-100 text-green-700' :
+                      'bg-gray-100 text-gray-600'
+                    }`}>{user.role}</span>
+                  )}
                   {user.phone_verified ? (
                     <CheckCircle2 size={14} className="text-green-500 shrink-0" />
                   ) : (
@@ -132,10 +148,10 @@ export default function AdminUsersPage() {
                 {user.created_at && <p className="text-[10px] text-text-muted">{formatDate(user.created_at)}</p>}
               </div>
 
-              {expanded === i ? <ChevronUp size={16} className="text-text-muted shrink-0" /> : <ChevronDown size={16} className="text-text-muted shrink-0" />}
+              {expandedId === user.id ? <ChevronUp size={16} className="text-text-muted shrink-0" /> : <ChevronDown size={16} className="text-text-muted shrink-0" />}
             </button>
 
-            {expanded === i && (
+            {expandedId === user.id && (
               <div className="px-4 pb-4 pt-0 space-y-3 border-t border-border-light">
                 <div className="grid grid-cols-2 gap-3 pt-3">
                   <div className="flex items-center gap-2">

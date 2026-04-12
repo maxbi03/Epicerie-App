@@ -41,7 +41,7 @@ function unlockDoorWithConfirmation() {
       if (!settled) {
         settled = true;
         client.end(true);
-        reject(new Error('ESP32 n\'a pas confirmé l\'ouverture (timeout)'));
+        reject(new Error('Erreur lors de la communication avec le système de la porte. Veuillez réessayer.'));
       }
     }, DOOR_CONFIRM_TIMEOUT);
 

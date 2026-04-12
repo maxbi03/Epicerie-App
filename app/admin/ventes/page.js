@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Receipt, Search, Loader2, ShoppingCart, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function AdminSalesPage() {
@@ -9,6 +10,7 @@ export default function AdminSalesPage() {
   const [search, setSearch] = useState('');
   const [period, setPeriod] = useState('all');
   const [expanded, setExpanded] = useState(null);
+  const router = useRouter();
 
   useEffect(() => {
     fetch('/api/admin/sales')
@@ -123,7 +125,13 @@ export default function AdminSalesPage() {
             >
               <ShoppingCart size={14} className="text-primary shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm text-text-primary truncate">{sale.client_name || 'Client inconnu'}</p>
+                <p
+                  className="font-bold text-sm text-primary truncate underline decoration-primary/30 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (sale.user_id) router.push(`/admin/users?highlight=${sale.user_id}`);
+                  }}
+                >{sale.client_name || 'Client inconnu'}</p>
                 <p className="text-[10px] text-text-muted">{formatDate(sale.created_at)}</p>
               </div>
               <div className="text-right shrink-0 flex items-center gap-2">
