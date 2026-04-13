@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { fetchAdminProducts, createProduct, updateProduct, deleteProduct } from '../../lib/adminService';
-import { Pencil, X, AlertTriangle, Eye, EyeOff } from 'lucide-react';
+import { Pencil, X, AlertTriangle, Eye, EyeOff, Package, Plus, Minus, Check } from 'lucide-react';
 
 function getCategories(products) {
   return [...new Set(products.map(p => p.category).filter(Boolean))].sort();
@@ -24,6 +24,10 @@ export default function AdminProduits() {
   const [activeCategory, setActiveCategory] = useState('Tous');
   const [stockFilter, setStockFilter] = useState('all');
   const [error, setError] = useState('');
+  const [showDelivery, setShowDelivery] = useState(false);
+  const [deliveryQtys, setDeliveryQtys] = useState({});
+  const [deliverySaving, setDeliverySaving] = useState(false);
+  const [deliveryDone, setDeliveryDone] = useState(false);
 
   async function loadProducts() {
     try {
@@ -122,6 +126,51 @@ export default function AdminProduits() {
     setForm(prev => ({ ...prev, [field]: value }));
   }
 
+  function openDelivery() {
+    setDeliveryQtys({});
+    setDeliveryDone(false);
+    setShowDelivery(true);
+  }
+
+  function setDeliveryQty(id, value) {
+    const n = Math.max(0, parseInt(value, 10) || 0);
+    setDeliveryQtys(prev => ({ ...prev, [id]: n }));
+  }
+
+  function adjustDeliveryQty(id, delta) {
+    setDeliveryQtys(prev => ({ ...prev, [id]: Math.max(0, (prev[id] ?? 0) + delta) }));
+  }
+
+  async function handleDeliverySubmit() {
+    const items = Object.entries(deliveryQtys)
+      .filter(([, qty]) => qty > 0)
+      .map(([id, qty]) => ({ id, qty }));
+    if (items.length === 0) return;
+    setDeliverySaving(true);
+    try {
+      const res = await fetch('/api/admin/products/stock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'delivery', items }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Erreur');
+      }
+      setDeliveryDone(true);
+      await loadProducts();
+      setTimeout(() => setShowDelivery(false), 1200);
+    } catch (err) {
+      setError(err.message);
+      setShowDelivery(false);
+    } finally {
+      setDeliverySaving(false);
+    }
+  }
+
+  const activeProducts = products.filter(p => p.is_active === true);
+  const deliveryTotal = Object.values(deliveryQtys).reduce((s, q) => s + (q || 0), 0);
+
   const filtered = products.filter(p => {
     const matchCat = activeCategory === 'Tous' || p.category === activeCategory;
     const matchSearch = (p.name || '').toLowerCase().includes(search.toLowerCase());
@@ -165,12 +214,20 @@ export default function AdminProduits() {
             <h2 className="text-xl font-bold text-text-primary">Produits</h2>
             <p className="text-sm text-text-secondary">{products.length} produits</p>
           </div>
-          <button
-            onClick={openCreate}
-            className="px-4 py-2.5 bg-primary text-white text-xs font-bold rounded-xl active:scale-95 transition-all"
-          >
-            + Ajouter
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={openDelivery}
+              className="flex items-center gap-1.5 px-4 py-2.5 bg-amber-500 text-white text-xs font-bold rounded-xl active:scale-95 transition-all"
+            >
+              <Package size={14} /> Livraison
+            </button>
+            <button
+              onClick={openCreate}
+              className="px-4 py-2.5 bg-primary text-white text-xs font-bold rounded-xl active:scale-95 transition-all"
+            >
+              + Ajouter
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -380,6 +437,101 @@ export default function AdminProduits() {
                 {saving ? 'Enregistrement...' : editingId ? 'Modifier' : 'Créer le produit'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modale Livraison ── */}
+      {showDelivery && (
+        <div className="fixed inset-0 backdrop-blur-sm z-50 flex items-end justify-center animate-fade-in" onClick={() => !deliverySaving && setShowDelivery(false)}>
+          <div className="bg-card-bg rounded-t-3xl w-full max-w-md flex flex-col max-h-[90vh] animate-slide-up" onClick={e => e.stopPropagation()}>
+
+            {/* Header */}
+            <div className="shrink-0 px-5 pt-5 pb-4 border-b border-border-light">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <div className="size-9 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                    <Package size={16} className="text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <h2 className="text-lg font-black text-text-primary">Livraison fournisseur</h2>
+                </div>
+                <button onClick={() => setShowDelivery(false)} className="size-9 flex items-center justify-center rounded-full hover:bg-app-bg transition-colors text-text-secondary">
+                  <X size={18} />
+                </button>
+              </div>
+              <p className="text-xs text-text-muted ml-11">Saisir les quantités reçues → ajoutées au stock réserve</p>
+            </div>
+
+            {/* Product list */}
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+              {activeProducts.map(product => {
+                const qty = deliveryQtys[product.id] ?? 0;
+                const hasQty = qty > 0;
+                return (
+                  <div key={product.id} className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 border transition-all ${hasQty ? 'bg-amber-50 dark:bg-amber-900/15 border-amber-200 dark:border-amber-700' : 'bg-app-bg border-border-light'}`}>
+                    {/* Image */}
+                    <div className="size-10 rounded-xl overflow-hidden bg-white border border-gray-200 dark:border-white/10 shrink-0">
+                      {product.image_url && <img src={product.image_url} className="w-full h-full object-contain" alt="" />}
+                    </div>
+
+                    {/* Name + current stock */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-text-primary truncate">{product.name}</p>
+                      <p className="text-[10px] text-text-muted">Réserve actuelle : <span className="font-bold">{product.stock_back ?? 0}</span></p>
+                    </div>
+
+                    {/* Qty stepper */}
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => adjustDeliveryQty(product.id, -1)}
+                        className={`size-8 flex items-center justify-center rounded-lg transition-all active:scale-90 ${hasQty ? 'bg-amber-200 dark:bg-amber-700 text-amber-700 dark:text-amber-200' : 'bg-gray-100 dark:bg-white/10 text-text-muted'}`}
+                      >
+                        <Minus size={12} />
+                      </button>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min="0"
+                        value={qty || ''}
+                        placeholder="0"
+                        onChange={e => setDeliveryQty(product.id, e.target.value)}
+                        className={`w-12 text-center text-sm font-black rounded-lg border py-1.5 transition-all outline-none dark:bg-white/5 dark:text-white ${hasQty ? 'border-amber-300 dark:border-amber-600 bg-white text-amber-700' : 'border-border dark:border-white/10'}`}
+                      />
+                      <button
+                        onClick={() => adjustDeliveryQty(product.id, 1)}
+                        className={`size-8 flex items-center justify-center rounded-lg transition-all active:scale-90 ${hasQty ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-white/10 text-text-muted'}`}
+                      >
+                        <Plus size={12} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Footer */}
+            <div className="shrink-0 px-4 pb-6 pt-3 border-t border-border-light">
+              {deliveryTotal > 0 && (
+                <p className="text-center text-xs text-text-muted mb-3">
+                  <span className="font-black text-amber-600">{deliveryTotal} unité{deliveryTotal > 1 ? 's' : ''}</span> à ajouter en réserve
+              </p>
+              )}
+              <button
+                onClick={handleDeliverySubmit}
+                disabled={deliveryTotal === 0 || deliverySaving || deliveryDone}
+                className={`w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 ${
+                  deliveryDone ? 'bg-green-500 text-white' : 'bg-amber-500 text-white shadow-lg shadow-amber-500/25'
+                }`}
+              >
+                {deliveryDone ? (
+                  <><Check size={16} /> Stock mis à jour !</>
+                ) : deliverySaving ? (
+                  <><div className="size-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Enregistrement...</>
+                ) : (
+                  <><Package size={16} /> Valider la livraison</>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
