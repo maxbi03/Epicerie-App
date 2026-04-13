@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ShoppingCart, Minus, Plus, Lock } from 'lucide-react';
+import { ShoppingCart, Minus, Plus, Lock, Bookmark, Check, X } from 'lucide-react';
 import { getBasket, saveBasket } from '../lib/basket';
 
 export default function PanierPage() {
@@ -10,11 +10,38 @@ export default function PanierPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isVisitor, setIsVisitor] = useState(false);
+  const [showSave, setShowSave] = useState(false);
+  const [saveName, setSaveName] = useState('');
+  const [saveStatus, setSaveStatus] = useState('idle'); // idle | saving | done | error
 
   useEffect(() => {
     setBasket(getBasket());
     setIsVisitor(sessionStorage.getItem('app_mode') === 'visitor');
   }, []);
+
+  async function handleSaveList() {
+    if (!saveName.trim()) return;
+    setSaveStatus('saving');
+    try {
+      const items = Object.values(
+        basket.reduce((acc, p) => {
+          if (!acc[p.id]) acc[p.id] = { id: p.id, name: p.name, price: p.price, image: p.image, origin: p.origin, qty: 0 };
+          acc[p.id].qty += 1;
+          return acc;
+        }, {})
+      );
+      const res = await fetch('/api/saved-lists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: saveName.trim(), items }),
+      });
+      if (!res.ok) throw new Error();
+      setSaveStatus('done');
+      setTimeout(() => { setShowSave(false); setSaveName(''); setSaveStatus('idle'); }, 1500);
+    } catch {
+      setSaveStatus('error');
+    }
+  }
 
   function updateBasket(newBasket) {
     saveBasket(newBasket);
@@ -166,6 +193,46 @@ export default function PanierPage() {
             <p className="text-xs text-red-600 dark:text-red-400 font-medium">{error}</p>
           </div>
         )}
+        {/* Sauvegarder la liste */}
+        {!isVisitor && groupedList.length > 0 && (
+          <div className="mb-3">
+            {!showSave ? (
+              <button
+                onClick={() => { setShowSave(true); setSaveStatus('idle'); }}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl text-xs font-bold text-text-muted border border-dashed border-border-light hover:border-primary hover:text-primary transition-all active:scale-[0.98]"
+              >
+                <Bookmark size={13} /> Sauvegarder cette liste
+              </button>
+            ) : (
+              <div className="bg-card-bg rounded-2xl border border-primary/30 p-3 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-black text-text-primary uppercase tracking-wider">Nommer la liste</p>
+                  <button onClick={() => { setShowSave(false); setSaveName(''); setSaveStatus('idle'); }}>
+                    <X size={14} className="text-text-muted" />
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={saveName}
+                  onChange={e => setSaveName(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleSaveList()}
+                  placeholder="Ex : Courses hebdo, Petit-déjeuner…"
+                  autoFocus
+                  className="w-full px-3 py-2.5 rounded-xl border border-border dark:border-white/10 bg-app-bg dark:bg-white/5 dark:text-white text-sm outline-none focus:border-primary transition-colors"
+                />
+                {saveStatus === 'error' && <p className="text-[10px] text-red-500">Erreur, réessayez.</p>}
+                <button
+                  onClick={handleSaveList}
+                  disabled={!saveName.trim() || saveStatus === 'saving' || saveStatus === 'done'}
+                  className={`w-full py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] disabled:opacity-50 ${saveStatus === 'done' ? 'bg-green-500 text-white' : 'bg-primary text-white'}`}
+                >
+                  {saveStatus === 'done' ? <><Check size={13} /> Liste sauvegardée !</> : saveStatus === 'saving' ? 'Sauvegarde…' : <><Bookmark size={13} /> Sauvegarder</>}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="rounded-3xl p-1 border border-gray-100 dark:border-white/10">
           {isVisitor ? (
             <Link href="/" className="w-full py-4 rounded-2xl font-black text-sm uppercase tracking-[0.1em] bg-primary/10 text-primary flex items-center justify-center gap-2 active:scale-[0.98] transition-all">

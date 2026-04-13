@@ -7,7 +7,9 @@ import {
   User, Camera, Trash2, Check, ChevronRight,
   MapPin, Phone, Mail, Lock, AlertTriangle, Moon, Sun,
   ShieldCheck, ShieldAlert, Eye, EyeOff, LogOut,
+  Bookmark, ShoppingBasket, X, ChevronDown,
 } from 'lucide-react';
+import { saveBasket } from '../lib/basket';
 import { getStrength, STRENGTH_COLORS, STRENGTH_LABELS } from '../lib/password';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -125,12 +127,18 @@ export default function ProfilPage() {
   const [deleteError, setDeleteError]       = useState('');
   const [deleteConfirm, setDeleteConfirm]   = useState(false);
 
+  // ── Listes sauvegardées
+  const [savedLists, setSavedLists]         = useState([]);
+  const [listsLoading, setListsLoading]     = useState(false);
+  const [expandedList, setExpandedList]     = useState(null);
+  const [loadedListId, setLoadedListId]     = useState(null);
+
   // ── Chargement ──────────────────────────────────────────────────────────────
 
   useEffect(() => {
     const visitor = sessionStorage.getItem('app_mode') === 'visitor';
     setIsVisitor(visitor);
-    if (!visitor) loadProfile();
+    if (!visitor) { loadProfile(); loadSavedLists(); }
     else setLoading(false);
 
     const saved = localStorage.getItem('theme');
@@ -138,6 +146,39 @@ export default function ProfilPage() {
     setDarkMode(prefersDark);
     document.documentElement.classList.toggle('dark', prefersDark);
   }, []);
+
+  async function loadSavedLists() {
+    setListsLoading(true);
+    try {
+      const res = await fetch('/api/saved-lists');
+      if (res.ok) setSavedLists(await res.json());
+    } finally {
+      setListsLoading(false);
+    }
+  }
+
+  async function deleteSavedList(id) {
+    if (!confirm('Supprimer cette liste ?')) return;
+    await fetch('/api/saved-lists', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
+    setSavedLists(prev => prev.filter(l => l.id !== id));
+    if (expandedList === id) setExpandedList(null);
+  }
+
+  function loadListIntoBasket(list) {
+    const flat = list.items.flatMap(item =>
+      Array.from({ length: item.qty }, () => ({
+        id: item.id, name: item.name, price: item.price, image: item.image, origin: item.origin,
+      }))
+    );
+    saveBasket(flat);
+    window.dispatchEvent(new Event('cart-updated'));
+    setLoadedListId(list.id);
+    setTimeout(() => setLoadedListId(null), 2000);
+  }
 
   async function loadProfile() {
     try {
@@ -700,6 +741,89 @@ export default function ProfilPage() {
             <div className={`absolute top-1 size-4 rounded-full bg-white shadow transition-transform ${darkMode ? 'translate-x-6' : 'translate-x-1'}`} />
           </div>
         </button>
+      </Section>
+
+      {/* ── Mes listes ───────────────────────────────────────────────────── */}
+      <Section title="Mes listes sauvegardées">
+        {listsLoading ? (
+          <div className="flex justify-center py-5">
+            <div className="size-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : savedLists.length === 0 ? (
+          <div className="px-5 py-5 flex items-center gap-3">
+            <div className="shrink-0 size-8 rounded-xl bg-primary-light flex items-center justify-center">
+              <Bookmark size={15} className="text-primary" />
+            </div>
+            <p className="text-sm text-text-muted">Aucune liste sauvegardée.<br />
+              <span className="text-xs">Ajoutez des produits au panier et tapez "Sauvegarder cette liste".</span>
+            </p>
+          </div>
+        ) : (
+          savedLists.map((list, i) => (
+            <div key={list.id} className={`border-b last:border-0 border-border-light ${i === 0 ? '' : ''}`}>
+              {/* Header de la liste */}
+              <button
+                onClick={() => setExpandedList(expandedList === list.id ? null : list.id)}
+                className="w-full flex items-center gap-3 px-5 py-4 text-left transition-colors active:bg-black/5 dark:active:bg-white/5"
+              >
+                <div className="shrink-0 size-8 rounded-xl bg-primary-light flex items-center justify-center">
+                  <Bookmark size={15} className="text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-text-primary truncate">{list.name}</p>
+                  <p className="text-xs text-text-muted mt-0.5">
+                    {list.items?.length ?? 0} produit{(list.items?.length ?? 0) > 1 ? 's' : ''} · {new Date(list.created_at).toLocaleDateString('fr-CH', { day: 'numeric', month: 'short' })}
+                  </p>
+                </div>
+                <ChevronDown size={14} className={`text-text-muted shrink-0 transition-transform ${expandedList === list.id ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Contenu déplié */}
+              {expandedList === list.id && (
+                <div className="px-5 pb-4 space-y-3">
+                  {/* Aperçu des produits */}
+                  <div className="space-y-1.5">
+                    {list.items?.map((item, j) => (
+                      <div key={j} className="flex items-center gap-2.5 py-1">
+                        {item.image
+                          ? <img src={item.image} className="size-8 rounded-lg object-contain bg-white border border-gray-100 dark:border-white/10 shrink-0" alt="" />
+                          : <div className="size-8 rounded-lg bg-primary-light shrink-0" />
+                        }
+                        <span className="flex-1 text-sm text-text-primary truncate">{item.name}</span>
+                        <span className="text-xs font-bold text-text-muted shrink-0">×{item.qty}</span>
+                        <span className="text-xs text-text-muted shrink-0">{(item.price * item.qty).toFixed(2)} CHF</span>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Total */}
+                  <p className="text-xs font-black text-text-primary text-right border-t border-border-light pt-2">
+                    Total : {list.items?.reduce((s, i) => s + i.price * i.qty, 0).toFixed(2)} CHF
+                  </p>
+                  {/* Actions */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => loadListIntoBasket(list)}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-2xl font-black text-xs transition-all active:scale-[0.97] ${
+                        loadedListId === list.id ? 'bg-green-500 text-white' : 'bg-primary text-white'
+                      }`}
+                    >
+                      {loadedListId === list.id
+                        ? <><Check size={13} /> Ajouté au panier !</>
+                        : <><ShoppingBasket size={13} /> Charger dans le panier</>
+                      }
+                    </button>
+                    <button
+                      onClick={() => deleteSavedList(list.id)}
+                      className="size-10 flex items-center justify-center rounded-2xl bg-red-50 dark:bg-red-900/20 text-red-500 active:scale-90 transition-all"
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))
+        )}
       </Section>
 
       {/* ── Compte ────────────────────────────────────────────────────────── */}
