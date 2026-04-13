@@ -3,7 +3,7 @@
 import { STORE_LAT, STORE_LNG, DOOR_UNLOCK_RADIUS_M } from '../lib/config';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { MapPin, Lock, DoorOpen, Camera, Package, ArrowRight, Loader2, CheckCircle2, Phone } from 'lucide-react';
+import { MapPin, Lock, DoorOpen, Camera, Package, ChevronRight, Loader2, CheckCircle2, Phone, Newspaper } from 'lucide-react';
 
 function haversine(lat1, lng1, lat2, lng2) {
   const R = 6371000;
@@ -108,12 +108,12 @@ export default function HomePage() {
   const canUnlock = !isVisitor && phoneVerified && isNearby;
 
   const doorIcon = doorStatus === 'success'
-    ? <CheckCircle2 size={28} className="text-green-500" />
+    ? <CheckCircle2 size={32} className="text-green-500" />
     : doorStatus === 'locating' || doorStatus === 'unlocking'
-    ? <Loader2 size={28} className="text-amber-500 animate-spin" />
+    ? <Loader2 size={32} className="text-amber-500 animate-spin" />
     : isNearby && phoneVerified
-    ? <DoorOpen size={28} className="text-primary" />
-    : <MapPin size={28} className="text-text-muted" />;
+    ? <DoorOpen size={32} className="text-primary" />
+    : <MapPin size={32} className="text-text-muted" />;
 
   const doorTitle = doorStatus === 'success' ? 'Porte déverrouillée'
     : doorStatus === 'locating' ? 'Localisation...'
@@ -131,79 +131,106 @@ export default function HomePage() {
     : distance != null ? `Vous êtes à ${distance}m de l'épicerie`
     : 'Recherche de votre position...';
 
-  return (
-    <main className="h-full max-w-md mx-auto w-full flex flex-col px-4 pt-3 pb-3 overflow-hidden">
+  /* États dérivés pour la couleur de la carte */
+  const doorState = doorStatus === 'success' ? 'success'
+    : doorStatus === 'error' || doorStatus === 'too_far' || doorStatus === 'no_phone' ? 'error'
+    : doorStatus === 'locating' || doorStatus === 'unlocking' ? 'loading'
+    : isNearby && phoneVerified ? 'ready'
+    : 'idle';
 
-      {/* Salutation */}
-      <div className="shrink-0 mb-3">
-        <h1 className="text-xl font-bold text-text-primary leading-tight">
+  const categoryColor = latestNews?.category === 'offres' ? 'bg-emerald-500'
+    : latestNews?.category === 'partenaires' ? 'bg-violet-500'
+    : 'bg-blue-500';
+  const categoryLabel = latestNews?.category === 'offres' ? 'Offre'
+    : latestNews?.category === 'partenaires' ? 'Partenaire' : 'Info';
+
+  return (
+    <main className="h-full max-w-md mx-auto w-full flex flex-col px-4 pt-4 pb-4 overflow-hidden">
+
+      {/* ── Salutation ── */}
+      <div className="shrink-0 mb-4">
+        <h1 className="text-2xl font-black text-text-primary leading-tight tracking-tight">
           Bonjour, {greeting} !
         </h1>
-        <p className="text-xs text-text-muted">Bienvenue dans votre épicerie autonome.</p>
+        <p className="text-xs text-text-muted mt-0.5">Bienvenue dans votre épicerie autonome.</p>
       </div>
 
-      {/* Zone 60 / 20 / 20 — pas de trous */}
+      {/* ── Zone 60 / 20 / 20 ── */}
       <div className="flex-1 min-h-0 flex flex-col gap-3">
 
-        {/* 60% — CARTE PORTE */}
-        <div className={`flex-[3] min-h-0 bg-card-bg rounded-3xl border flex flex-col items-center justify-center text-center px-4 gap-3 transition-all duration-500 ${
-          doorStatus === 'success' ? 'border-green-300 bg-green-50/50' :
-          doorStatus === 'error' || doorStatus === 'too_far' || doorStatus === 'no_phone' ? 'border-red-200 bg-red-50/30' :
-          isNearby && phoneVerified ? 'border-primary/30 bg-primary/5' :
-          'border-border-light'
+        {/* ── 60% — PORTE ── */}
+        <div className={`flex-[3] min-h-0 relative rounded-3xl overflow-hidden flex flex-col items-center justify-center text-center px-6 gap-5 transition-all duration-500 ${
+          doorState === 'success' ? 'bg-emerald-50 border-2 border-emerald-300' :
+          doorState === 'error'   ? 'bg-red-50 border-2 border-red-200' :
+          doorState === 'loading' ? 'bg-amber-50 border-2 border-amber-200' :
+          doorState === 'ready'   ? 'bg-primary/5 border-2 border-primary/40' :
+          'bg-card-bg border border-border-light'
         }`}>
-          <div className={`size-12 rounded-full flex items-center justify-center border transition-all duration-500 ${
-            doorStatus === 'success' ? 'bg-green-100 border-green-300' :
-            doorStatus === 'locating' || doorStatus === 'unlocking' ? 'bg-amber-100 border-amber-300 animate-pulse' :
-            isNearby && phoneVerified ? 'bg-primary/10 border-primary/30' :
-            'bg-app-bg border-border'
-          }`}>
-            {doorIcon}
+
+          {/* Glow décoratif en fond */}
+          <div className={`absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 size-48 rounded-full blur-3xl opacity-20 pointer-events-none transition-colors duration-500 ${
+            doorState === 'success' ? 'bg-emerald-400' :
+            doorState === 'error'   ? 'bg-red-400' :
+            doorState === 'loading' ? 'bg-amber-400' :
+            doorState === 'ready'   ? 'bg-primary' :
+            'bg-transparent'
+          }`} />
+
+          {/* Icône avec halo */}
+          <div className="relative flex items-center justify-center">
+            {doorState === 'ready' && (
+              <div className="absolute size-24 rounded-full bg-primary/10 animate-ping" style={{animationDuration:'2s'}} />
+            )}
+            <div className={`relative size-20 rounded-full flex items-center justify-center border-2 shadow-lg transition-all duration-500 ${
+              doorState === 'success' ? 'bg-white border-emerald-300 shadow-emerald-100' :
+              doorState === 'error'   ? 'bg-white border-red-200 shadow-red-100' :
+              doorState === 'loading' ? 'bg-white border-amber-300 shadow-amber-100' :
+              doorState === 'ready'   ? 'bg-white border-primary/30 shadow-primary/10' :
+              'bg-app-bg border-border-light shadow-none'
+            }`}>
+              {doorIcon}
+            </div>
           </div>
 
-          <div>
-            <h2 className="text-text-primary text-base font-bold mb-0.5">{doorTitle}</h2>
-            <p className="text-text-muted text-sm">{doorSubtitle}</p>
+          {/* Texte */}
+          <div className="space-y-1">
+            <h2 className="text-text-primary text-lg font-black tracking-tight">{doorTitle}</h2>
+            <p className="text-text-muted text-sm leading-snug">{doorSubtitle}</p>
           </div>
 
+          {/* Bouton principal */}
           {!isVisitor ? (
             <button
               onClick={handleUnlock}
               disabled={!canUnlock || doorStatus === 'locating' || doorStatus === 'unlocking' || doorStatus === 'success'}
-              className={`w-full py-3.5 rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-[0.97] ${
-                doorStatus === 'success' ? 'bg-green-500 text-white' :
-                canUnlock && doorStatus !== 'locating' && doorStatus !== 'unlocking'
-                  ? 'bg-primary text-white'
-                  : 'opacity-60 bg-app-bg cursor-not-allowed'
+              className={`w-full py-4 rounded-2xl flex items-center justify-center gap-2.5 font-black text-sm uppercase tracking-widest transition-all active:scale-[0.97] ${
+                doorState === 'success'
+                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200'
+                : doorState === 'ready'
+                  ? 'bg-primary text-white shadow-lg shadow-primary/25'
+                : 'bg-app-bg text-text-muted border border-border-light cursor-not-allowed opacity-70'
               }`}
             >
-              {doorStatus === 'success' ? <CheckCircle2 size={20} /> :
-               doorStatus === 'locating' || doorStatus === 'unlocking' ? <Loader2 size={20} className="animate-spin" /> :
-               canUnlock ? <DoorOpen size={20} /> :
-               !phoneVerified ? <Phone size={20} className="text-text-muted" /> :
-               <Lock size={20} className="text-text-muted" />}
-              <span className={`font-bold text-sm uppercase tracking-wider ${
-                doorStatus === 'success' || (canUnlock && doorStatus !== 'locating' && doorStatus !== 'unlocking') ? '' : 'text-text-muted'
-              }`}>
-                {doorStatus === 'success' ? 'Confirmé' :
-                 doorStatus === 'locating' ? 'Localisation...' :
-                 doorStatus === 'unlocking' ? 'Confirmation...' :
-                 !phoneVerified ? 'Tél. non vérifié' :
-                 !isNearby ? 'Trop loin' :
-                 'Déverrouiller'}
-              </span>
+              {doorStatus === 'success'   ? <CheckCircle2 size={18} /> :
+               doorState === 'loading'    ? <Loader2 size={18} className="animate-spin" /> :
+               doorState === 'ready'      ? <DoorOpen size={18} /> :
+               !phoneVerified             ? <Phone size={18} /> :
+                                            <Lock size={18} />}
+              {doorStatus === 'success'             ? 'Porte ouverte !' :
+               doorStatus === 'locating'            ? 'Localisation…' :
+               doorStatus === 'unlocking'           ? 'Ouverture…' :
+               doorStatus === 'no_phone'            ? 'Tél. non vérifié' :
+               !isNearby                            ? 'Trop loin' :
+                                                      'Déverrouiller'}
             </button>
           ) : (
             <div className="w-full space-y-2">
-              <button disabled className="w-full py-3.5 rounded-2xl flex items-center justify-center gap-3 opacity-50 bg-app-bg cursor-not-allowed">
-                <Lock size={20} className="text-text-muted" />
-                <span className="text-text-muted font-bold text-sm uppercase tracking-wider">Compte requis</span>
-              </button>
+              <p className="text-xs text-text-muted">Créez un compte pour accéder à l&apos;épicerie</p>
               <div className="grid grid-cols-2 gap-2">
                 <Link href="/" className="py-3 rounded-xl bg-primary text-white font-black text-[10px] uppercase tracking-widest text-center active:scale-[0.98] transition-all">
                   Se connecter
                 </Link>
-                <Link href="/" className="py-3 rounded-xl bg-primary-light text-primary font-black text-[10px] uppercase tracking-widest text-center active:scale-[0.98] transition-all">
+                <Link href="/" className="py-3 rounded-xl bg-primary-light text-primary font-black text-[10px] uppercase tracking-widest text-center active:scale-[0.98] transition-all border border-primary/20">
                   Créer un compte
                 </Link>
               </div>
@@ -211,49 +238,45 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* 20% — RACCOURCIS */}
+        {/* ── 20% — RACCOURCIS ── */}
         <div className="flex-[1] min-h-0 grid grid-cols-2 gap-3">
-          <Link href="/scanner" className="h-full flex items-center gap-3 bg-card-bg rounded-2xl px-4 border border-border-light active:scale-[0.98] transition-all">
-            <div className="size-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-              <Camera size={18} className="text-primary" />
+          <Link href="/scanner" className="h-full flex flex-col items-center justify-center gap-1.5 bg-card-bg rounded-2xl border border-border-light active:scale-[0.97] transition-all group">
+            <div className="size-11 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center group-active:scale-95 transition-transform">
+              <Camera size={20} className="text-primary" />
             </div>
-            <span className="font-bold text-sm text-text-primary">Scanner</span>
+            <span className="font-bold text-xs text-text-primary tracking-wide">Scanner</span>
           </Link>
-          <Link href="/stock" className="h-full flex items-center gap-3 bg-card-bg rounded-2xl px-4 border border-border-light active:scale-[0.98] transition-all">
-            <div className="size-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-              <Package size={18} className="text-primary" />
+          <Link href="/stock" className="h-full flex flex-col items-center justify-center gap-1.5 bg-card-bg rounded-2xl border border-border-light active:scale-[0.97] transition-all group">
+            <div className="size-11 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center group-active:scale-95 transition-transform">
+              <Package size={20} className="text-primary" />
             </div>
-            <span className="font-bold text-sm text-text-primary">Produits</span>
+            <span className="font-bold text-xs text-text-primary tracking-wide">Produits</span>
           </Link>
         </div>
 
-        {/* 20% — DERNIÈRE ACTUALITÉ */}
+        {/* ── 20% — ACTUALITÉ ── */}
         {latestNews ? (
           <Link href="/news" className="flex-[1] min-h-0 flex items-center bg-card-bg rounded-2xl border border-border-light overflow-hidden active:scale-[0.98] transition-all">
             {latestNews.image1
-              ? <img src={latestNews.image1} className="h-full w-20 object-cover shrink-0" alt="" />
-              : <div className="h-full w-16 bg-primary/10 flex items-center justify-center shrink-0">
-                  <Package size={20} className="text-primary/40" />
+              ? <img src={latestNews.image1} className="h-full w-24 object-cover shrink-0" alt="" />
+              : <div className="h-full w-20 bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center shrink-0">
+                  <Newspaper size={22} className="text-primary/50" />
                 </div>
             }
-            <div className="flex-1 min-w-0 px-3">
-              <span className={`text-[9px] font-black uppercase tracking-widest ${
-                latestNews.category === 'offres' ? 'text-green-600' :
-                latestNews.category === 'partenaires' ? 'text-green-600' :
-                'text-blue-500'
-              }`}>
-                {latestNews.category === 'offres' ? 'Offre' : latestNews.category === 'partenaires' ? 'Partenaire' : 'Info'}
-              </span>
-              <p className="font-bold text-sm text-text-primary truncate">{latestNews.title}</p>
+            <div className="flex-1 min-w-0 px-3.5">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className={`size-1.5 rounded-full shrink-0 ${categoryColor}`} />
+                <span className="text-[9px] font-black uppercase tracking-widest text-text-muted">{categoryLabel}</span>
+              </div>
+              <p className="font-bold text-sm text-text-primary truncate leading-tight">{latestNews.title}</p>
               {latestNews.subtitle && (
-                <p className="text-xs text-text-muted truncate">{latestNews.subtitle}</p>
+                <p className="text-xs text-text-muted truncate mt-0.5">{latestNews.subtitle}</p>
               )}
             </div>
-            <ArrowRight size={14} className="text-text-muted shrink-0 mr-3" />
+            <ChevronRight size={16} className="text-text-muted shrink-0 mr-3" />
           </Link>
         ) : (
-          /* Placeholder si pas de news — maintient la proportion 20% */
-          <div className="flex-[1] min-h-0 bg-card-bg rounded-2xl border border-border-light" />
+          <div className="flex-[1] min-h-0 rounded-2xl border border-border-light border-dashed bg-card-bg/50" />
         )}
 
       </div>
