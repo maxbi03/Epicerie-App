@@ -46,7 +46,7 @@ export async function POST(request) {
     return NextResponse.json({ error: fetchError.message }, { status: 500 });
   }
 
-  const currentMap = Object.fromEntries((current || []).map(p => [p[PRODUCTS_ID] ?? p.id, p.stock_back ?? 0]));
+  const currentMap = Object.fromEntries((current || []).map(p => [p[PRODUCTS_ID] ?? p.id, Number(p.stock_back ?? 0)]));
 
   // Apply increments
   const updates = validItems.map(({ id, qty }) => ({
