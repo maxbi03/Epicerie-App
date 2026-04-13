@@ -293,16 +293,16 @@ export default function IndexPage() {
                 marginBottom: 20,
               }}
             >
-              <span style={{ color: '#fff', fontSize: 40, fontWeight: 900, textShadow: '0 2px 10px rgba(0,0,0,0.3)', lineHeight: 1 }}>É</span>
+              <img src="/icons/logo.png" className="rounded-2xl" />
             </div>
 
             {/* Texte */}
-            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 9, fontWeight: 900, letterSpacing: '0.34em', textTransform: 'uppercase', marginBottom: 6 }}>
-              Village Connecté
-            </p>
-            <h1 style={{ color: '#fff', fontSize: 28, fontWeight: 900, letterSpacing: '-0.03em', textShadow: '0 2px 16px rgba(0,0,0,0.25)', lineHeight: 1 }}>
-              L&apos;Épicerie
+            <h1 style={{ color: '#fff', fontSize: 28, fontWeight: 900, letterSpacing: '-0.03em', textShadow: '0 2px 16px rgba(0,0,0,0.25)', lineHeight: 1, marginBottom: 4 }}>
+              EPICO
             </h1>
+            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 9, fontWeight: 900, letterSpacing: '0.34em', textTransform: 'uppercase', marginBottom: 6 }}>
+              À n'importer quelle heure
+            </p>
           </div>
 
         </div>

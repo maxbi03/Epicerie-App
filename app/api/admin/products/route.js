@@ -3,7 +3,7 @@ import { requireAdmin } from '../../../lib/adminUtils';
 import { NextResponse } from 'next/server';
 import { PRODUCTS_TABLE, PRODUCTS_ID } from '../../../lib/config';
 
-const REQUIRED_FIELDS = ['name', 'barcode', 'price_chf', 'quantity', 'category', 'image_url', 'producer', 'description'];
+const REQUIRED_FIELDS = ['name', 'barcode', 'price_chf', 'quantity', 'category', 'image_url', 'producer'];
 
 function isComplete(product) {
   return REQUIRED_FIELDS.every(f => {

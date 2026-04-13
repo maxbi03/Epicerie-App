@@ -95,7 +95,7 @@ export default function AdminProduits() {
     }
   }
 
-  const REQUIRED_FIELDS = ['name', 'barcode', 'price_chf', 'quantity', 'category', 'image_url', 'producer', 'description'];
+  const REQUIRED_FIELDS = ['name', 'barcode', 'price_chf', 'quantity', 'category', 'image_url', 'producer'];
 
   function isProductComplete(p) {
     return REQUIRED_FIELDS.every(f => {
@@ -223,7 +223,8 @@ export default function AdminProduits() {
                 ${stockFilter === f.key
                   ? f.key === 'low' ? 'bg-amber-500 text-white'
                   : f.key === 'out' ? 'bg-red-500 text-white'
-                  : f.key === 'incomplete' ? 'bg-red-400 text-white'
+                  : f.key === 'incomplete' ? 'bg-orange-400 text-white'
+                  : f.key === 'inactive' ? 'bg-gray-400 text-white'
                   : 'bg-primary text-white'
                   : 'bg-card-bg text-text-secondary border border-border-light'
                 }`}
@@ -242,17 +243,20 @@ export default function AdminProduits() {
         ) : (
           <div className="space-y-2">
             {filtered.map(product => {
+              const complete = isProductComplete(product);
+              const incomplete = !complete;
+              const manuallyInactive = complete && product.is_active === false;
               const inactive = product.is_active === false;
               const shelfStock = product.stock_shelf ?? 0;
               const backStock = product.stock_back ?? 0;
               const outOfStock = shelfStock === 0 && backStock === 0;
               const lowStock = !outOfStock && (shelfStock <= 5 || backStock <= 5);
-              const stockIssue = outOfStock || lowStock;
               return (
                 <div key={product.id} className={`flex items-center gap-3 rounded-2xl p-3 border shadow-sm ${
-                  inactive ? 'bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800'
-                  : outOfStock ? 'bg-red-50/50 border-red-200 dark:bg-red-950/20 dark:border-red-800/50'
-                  : lowStock ? 'bg-amber-50/50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800/50'
+                  incomplete ? 'bg-orange-50 border-orange-200'
+                  : manuallyInactive ? 'bg-gray-50 border-gray-200'
+                  : outOfStock ? 'bg-red-50/50 border-red-200'
+                  : lowStock ? 'bg-amber-50/50 border-amber-200'
                   : 'bg-card-bg border-border-light'
                 }`}>
                   <div className="size-12 rounded-xl overflow-hidden bg-white border border-gray-200 dark:border-white/10 shrink-0">
@@ -260,8 +264,9 @@ export default function AdminProduits() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className={`font-bold text-sm truncate ${inactive ? 'text-red-400' : 'text-text-primary'}`}>{product.name || 'Sans nom'}</h4>
-                      {inactive && <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-red-100 text-red-500 shrink-0">Incomplet</span>}
+                      <h4 className={`font-bold text-sm truncate ${incomplete ? 'text-orange-500' : manuallyInactive ? 'text-gray-400' : 'text-text-primary'}`}>{product.name || 'Sans nom'}</h4>
+                      {incomplete && <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-orange-100 text-orange-600 shrink-0">Incomplet</span>}
+                      {manuallyInactive && <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 shrink-0">Inactif</span>}
                       {!inactive && outOfStock && <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-red-100 text-red-500 shrink-0">Rupture</span>}
                       {!inactive && lowStock && <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-amber-100 text-amber-600 shrink-0">Stock faible</span>}
                     </div>
@@ -360,12 +365,12 @@ export default function AdminProduits() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">Stock rayon</label>
-                  <input type="number" min="0" placeholder="0" value={form.stock_shelf} onChange={e => updateField('stock_shelf', Math.max(0, e.target.value))}
+                  <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" placeholder="0" value={form.stock_shelf} onChange={e => updateField('stock_shelf', Math.max(0, e.target.value))}
                     className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">Stock réserve</label>
-                  <input type="number" min="0" placeholder="0" value={form.stock_back} onChange={e => updateField('stock_back', Math.max(0, e.target.value))}
+                  <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" placeholder="0" value={form.stock_back} onChange={e => updateField('stock_back', Math.max(0, e.target.value))}
                     className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
                 </div>
               </div>
