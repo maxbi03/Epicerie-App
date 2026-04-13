@@ -252,7 +252,7 @@ export default function IndexPage() {
           <div
             className="absolute left-0 top-0 h-full w-1/2"
             style={{
-              background: 'linear-gradient(to right, #0b2e10 0%, #163f1c 100%)',
+              background: 'linear-gradient(to right, #263d12 0%, #3a5519 100%)',
               transform: doorOpen ? 'translateX(-101%)' : 'translateX(0)',
               transition: 'transform 0.72s cubic-bezier(0.7, 0, 0.3, 1)',
             }}
@@ -262,7 +262,7 @@ export default function IndexPage() {
           <div
             className="absolute right-0 top-0 h-full w-1/2"
             style={{
-              background: 'linear-gradient(to left, #0b2e10 0%, #163f1c 100%)',
+              background: 'linear-gradient(to left, #263d12 0%, #3a5519 100%)',
               transform: doorOpen ? 'translateX(101%)' : 'translateX(0)',
               transition: 'transform 0.72s cubic-bezier(0.7, 0, 0.3, 1)',
             }}

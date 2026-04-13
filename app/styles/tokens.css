@@ -1,18 +1,18 @@
 :root {
-  --app-bg:        #f6f8f6;
+  --app-bg:        #f6f8f3;
   --card-bg:       #ffffff;
   --header-bg:     #ffffff;
   --menu-bg:       #ffffff;
   --input-bg:      #ffffff;
 
-  --text-primary:   #1B4332;
+  --text-primary:   #2e3d1a;
   --text-secondary: #6b7280;
   --text-muted:     #9ca3af;
 
-  --primary:        #00b503;
-  --primary-light:  #e8fce8;
-  --forest-green:   #1B4332;
-  --leaf-green:     #2D6A4F;
+  --primary:        #669933;
+  --primary-light:  #eef4e6;
+  --forest-green:   #2e3d1a;
+  --leaf-green:     #4d7226;
 
   --border:         #e5e7eb;
   --border-light:   #f3f4f6;
@@ -32,10 +32,10 @@
   --text-secondary: #98989e;
   --text-muted:     #636366;
 
-  --primary:        #34c759;
-  --primary-light:  #0d2518;
-  --forest-green:   #86efac;
-  --leaf-green:     #4ade80;
+  --primary:        #88bb44;
+  --primary-light:  #1a2d08;
+  --forest-green:   #aad466;
+  --leaf-green:     #88bb44;
 
   --border:         #38383a;
   --border-light:   #2c2c2e;
