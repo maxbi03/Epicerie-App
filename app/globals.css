@@ -47,21 +47,23 @@
 
 /* ── Impression / PDF (page reçu) ── */
 @media print {
-  /* Cache tout sauf le ticket */
-  body > * { display: none !important; }
-  .receipt-wrapper { display: block !important; }
-
-  body { background: white !important; }
+  /* Cacher tout via visibility (permet de rendre visible un enfant imbriqué) */
+  body * { visibility: hidden; }
 
   .no-print { display: none !important; }
 
+  /* Rendre visible uniquement le ticket et ses enfants */
+  .receipt-wrapper,
+  .receipt-wrapper * { visibility: visible; }
+
   .receipt-wrapper {
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 24px;
     display: flex;
-    align-items: flex-start;
     justify-content: center;
-    padding: 20px;
   }
 
   .receipt-paper {
@@ -70,5 +72,6 @@
     border-radius: 0 !important;
     max-width: 300px !important;
     width: 100%;
+    background: white !important;
   }
 }
