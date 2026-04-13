@@ -3,7 +3,7 @@
 import { STORE_LAT, STORE_LNG, DOOR_UNLOCK_RADIUS_M } from '../lib/config';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { MapPin, Lock, DoorOpen, Camera, Package, ChevronRight, Loader2, CheckCircle2, Phone, Newspaper } from 'lucide-react';
+import { MapPin, Lock, DoorOpen, Camera, Package, ChevronRight, Loader2, CheckCircle2, Phone, Newspaper, Flag, X, Send, ShoppingBasket, Trash2, Wind, HelpCircle } from 'lucide-react';
 
 function haversine(lat1, lng1, lat2, lng2) {
   const R = 6371000;
@@ -24,6 +24,11 @@ export default function HomePage() {
   const [distance, setDistance] = useState(null);
   const [isNearby, setIsNearby] = useState(false);
   const lastCoords = useRef(null);
+  const [showReport, setShowReport] = useState(false);
+  const [reportType, setReportType] = useState(null);
+  const [reportText, setReportText] = useState('');
+  const [reportStatus, setReportStatus] = useState('idle'); // idle | sending | done | error
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
     const visitor = sessionStorage.getItem('app_mode') === 'visitor';
@@ -36,6 +41,7 @@ export default function HomePage() {
         if (!data?.user) { setGreeting('Visiteur'); return; }
         if (data.user.name) setGreeting(data.user.name.split(' ')[0]);
         setPhoneVerified(!!data.user.phone_verified);
+        setUserId(data.user.id);
       });
 
     fetch('/api/news')
@@ -107,6 +113,32 @@ export default function HomePage() {
 
   const canUnlock = !isVisitor && phoneVerified && isNearby;
 
+  const REPORT_TYPES = [
+    { key: 'product_missing', label: 'Produit manquant', Icon: ShoppingBasket, color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-700' },
+    { key: 'product_damaged', label: 'Produit abîmé / échu', Icon: Trash2, color: 'text-red-500', bg: 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-700' },
+    { key: 'store_dirty',     label: 'Magasin sale', Icon: Wind, color: 'text-sky-600', bg: 'bg-sky-50 border-sky-200 dark:bg-sky-900/20 dark:border-sky-700' },
+    { key: 'other',           label: 'Autre problème', Icon: HelpCircle, color: 'text-text-muted', bg: 'bg-card-bg border-border-light' },
+  ];
+
+  function openReport() { setReportType(null); setReportText(''); setReportStatus('idle'); setShowReport(true); }
+
+  async function handleReportSubmit() {
+    if (!reportType) return;
+    setReportStatus('sending');
+    try {
+      const res = await fetch('/api/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: reportType, description: reportText, user_id: userId }),
+      });
+      if (!res.ok) throw new Error();
+      setReportStatus('done');
+      setTimeout(() => setShowReport(false), 1500);
+    } catch {
+      setReportStatus('error');
+    }
+  }
+
   const doorIcon = doorStatus === 'success'
     ? <CheckCircle2 size={32} className="text-green-500" />
     : doorStatus === 'locating' || doorStatus === 'unlocking'
@@ -145,6 +177,7 @@ export default function HomePage() {
     : latestNews?.category === 'partenaires' ? 'Partenaire' : 'Info';
 
   return (
+    <>
     <main className="h-full max-w-md mx-auto w-full flex flex-col px-4 pt-4 pb-4 overflow-hidden">
 
       {/* ── Salutation ── */}
@@ -280,6 +313,98 @@ export default function HomePage() {
         )}
 
       </div>
+
+      {/* ── Bouton flottant Signaler ── */}
+      <button
+        onClick={openReport}
+        className="absolute bottom-5 right-4 size-11 rounded-full bg-card-bg border border-border-light shadow-md flex items-center justify-center text-text-muted active:scale-90 transition-all hover:border-red-200 hover:text-red-400 z-10"
+        aria-label="Signaler un problème"
+      >
+        <Flag size={16} />
+      </button>
     </main>
+
+    {/* ── Bottom sheet signalement ── */}
+    {showReport && (
+      <div className="fixed inset-0 backdrop-blur-sm z-50 flex items-end justify-center" onClick={() => reportStatus !== 'sending' && setShowReport(false)}>
+        <div className="bg-card-bg rounded-t-3xl w-full max-w-md overflow-y-auto max-h-[85vh] animate-slide-up" onClick={e => e.stopPropagation()}>
+
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-border-light">
+            <div className="flex items-center gap-2.5">
+              <div className="size-9 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+                <Flag size={15} className="text-red-500" />
+              </div>
+              <div>
+                <h2 className="text-base font-black text-text-primary">Signaler un problème</h2>
+                <p className="text-[10px] text-text-muted">Votre retour nous aide à améliorer l'épicerie</p>
+              </div>
+            </div>
+            <button onClick={() => setShowReport(false)} className="size-9 flex items-center justify-center rounded-full hover:bg-app-bg text-text-muted transition-colors">
+              <X size={17} />
+            </button>
+          </div>
+
+          <div className="px-5 pt-4 pb-6 space-y-4">
+            {/* Type */}
+            <div className="grid grid-cols-2 gap-2.5">
+              {REPORT_TYPES.map(({ key, label, Icon, color, bg }) => (
+                <button
+                  key={key}
+                  onClick={() => setReportType(key)}
+                  className={`flex flex-col items-center justify-center gap-2 p-3.5 rounded-2xl border-2 transition-all active:scale-[0.97] text-center ${
+                    reportType === key
+                      ? `${bg} ${color} border-current`
+                      : 'bg-app-bg border-border-light text-text-muted hover:border-gray-300'
+                  }`}
+                >
+                  <Icon size={22} className={reportType === key ? color : 'text-text-muted'} />
+                  <span className="text-[11px] font-bold leading-tight">{label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Détail libre */}
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-widest text-text-muted mb-1.5 block">
+                Précision <span className="font-normal normal-case tracking-normal">(optionnel)</span>
+              </label>
+              <textarea
+                value={reportText}
+                onChange={e => setReportText(e.target.value)}
+                placeholder="Ex : le fromage en rayon central est périmé depuis hier…"
+                rows={3}
+                className="w-full px-4 py-3 rounded-2xl border border-border dark:border-white/10 bg-app-bg dark:bg-white/5 dark:text-white text-sm resize-none outline-none focus:border-primary transition-colors"
+              />
+            </div>
+
+            {/* Erreur */}
+            {reportStatus === 'error' && (
+              <p className="text-xs text-red-500 text-center">Une erreur est survenue, réessayez.</p>
+            )}
+
+            {/* CTA */}
+            <button
+              onClick={handleReportSubmit}
+              disabled={!reportType || reportStatus === 'sending' || reportStatus === 'done'}
+              className={`w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 ${
+                reportStatus === 'done'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-red-500 text-white shadow-lg shadow-red-500/20'
+              }`}
+            >
+              {reportStatus === 'done' ? (
+                <><CheckCircle2 size={16} /> Merci, signalement envoyé !</>
+              ) : reportStatus === 'sending' ? (
+                <><div className="size-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Envoi…</>
+              ) : (
+                <><Send size={15} /> Envoyer le signalement</>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
