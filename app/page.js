@@ -15,7 +15,8 @@ const PENDING_REG_TTL_MS = 30 * 60 * 1000; // 30 min = durée du cookie pending_
 export default function IndexPage() {
   const router = useRouter();
   const [splashDone, setSplashDone] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [doorOpen, setDoorOpen] = useState(false);
+  const [logoVisible, setLogoVisible] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [loginEmail, setLoginEmail] = useState('');
@@ -47,17 +48,12 @@ export default function IndexPage() {
       setSplashDone(true);
       return;
     }
-    let p = 0;
-    const interval = setInterval(() => {
-      p = Math.min(p + Math.random() * 18 + 6, 92);
-      setProgress(Math.round(p));
-      if (p >= 92) clearInterval(interval);
-    }, 140);
-    setTimeout(() => {
-      setProgress(100);
-      setTimeout(() => setSplashDone(true), 180);
-    }, 1800);
-    return () => clearInterval(interval);
+    // Logo apparaît avec spring
+    setTimeout(() => setLogoVisible(true), 80);
+    // Portes s'ouvrent
+    setTimeout(() => setDoorOpen(true), 950);
+    // Overlay retiré après que les portes soient hors champ
+    setTimeout(() => setSplashDone(true), 1750);
   }, []);
 
   // Restaure l'étape OTP si l'app a redémarré pendant la vérification SMS
@@ -249,21 +245,78 @@ export default function IndexPage() {
   return (
     <>
       {!splashDone && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-gradient-to-b from-green-50 to-green-100 dark:from-green-950 dark:to-gray-950">
-          <div className="w-full max-w-[22rem] text-center">
-            <div className="size-28 rounded-[2rem] bg-green-800 flex items-center justify-center mx-auto mb-5 shadow-2xl">
-              <span className="text-white text-4xl font-black">É</span>
+        <div className="fixed inset-0 z-[9999] overflow-hidden pointer-events-none">
+
+          {/* ── Panneau gauche ── */}
+          <div
+            className="absolute left-0 top-0 h-full w-1/2"
+            style={{
+              background: 'linear-gradient(160deg, #0b2e10 0%, #174d1f 60%, #1f6128 100%)',
+              transform: doorOpen ? 'translateX(-101%)' : 'translateX(0)',
+              transition: 'transform 0.72s cubic-bezier(0.7, 0, 0.3, 1)',
+              boxShadow: doorOpen ? 'none' : '6px 0 32px rgba(0,0,0,0.45)',
+            }}
+          />
+
+          {/* ── Panneau droit ── */}
+          <div
+            className="absolute right-0 top-0 h-full w-1/2"
+            style={{
+              background: 'linear-gradient(200deg, #1f6128 0%, #174d1f 40%, #0b2e10 100%)',
+              transform: doorOpen ? 'translateX(101%)' : 'translateX(0)',
+              transition: 'transform 0.72s cubic-bezier(0.7, 0, 0.3, 1)',
+              boxShadow: doorOpen ? 'none' : '-6px 0 32px rgba(0,0,0,0.45)',
+            }}
+          />
+
+          {/* ── Joint central des portes ── */}
+          <div
+            className="absolute left-1/2 top-0 h-full -translate-x-1/2"
+            style={{
+              width: '1px',
+              background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.12) 30%, rgba(255,255,255,0.12) 70%, transparent)',
+              opacity: doorOpen ? 0 : 1,
+              transition: 'opacity 0.15s',
+            }}
+          />
+
+          {/* ── Logo centré, s'évapore à l'ouverture ── */}
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center select-none"
+            style={{
+              opacity: logoVisible ? (doorOpen ? 0 : 1) : 0,
+              transform: `scale(${logoVisible ? (doorOpen ? 1.06 : 1) : 0.86})`,
+              transition: logoVisible
+                ? doorOpen
+                  ? 'opacity 0.3s ease-in, transform 0.3s ease-in'
+                  : 'opacity 0.45s ease-out, transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1)'
+                : 'none',
+            }}
+          >
+            {/* Icône */}
+            <div
+              style={{
+                width: 96, height: 96,
+                borderRadius: 28,
+                background: 'rgba(255,255,255,0.10)',
+                border: '1px solid rgba(255,255,255,0.18)',
+                boxShadow: '0 12px 48px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.18)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                marginBottom: 20,
+              }}
+            >
+              <span style={{ color: '#fff', fontSize: 40, fontWeight: 900, textShadow: '0 2px 10px rgba(0,0,0,0.3)', lineHeight: 1 }}>É</span>
             </div>
-            <p className="text-[11px] font-black tracking-[0.22em] uppercase text-green-700 dark:text-green-400 opacity-80">Ouverture</p>
-            <h1 className="mt-2 text-[1.9rem] font-black text-green-900 dark:text-white tracking-tight leading-tight">L'Épicerie</h1>
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Village connecté</p>
-            <div className="mt-8 h-2.5 w-full rounded-full bg-green-200/50 dark:bg-white/10 overflow-hidden border border-green-200/30">
-              <div className="h-full rounded-full bg-green-700 transition-all duration-200" style={{ width: `${progress}%` }} />
-            </div>
-            <p className="mt-3 text-[11px] font-black tracking-[0.16em] uppercase text-gray-400">
-              Chargement... {progress}%
+
+            {/* Texte */}
+            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 9, fontWeight: 900, letterSpacing: '0.34em', textTransform: 'uppercase', marginBottom: 6 }}>
+              Village Connecté
             </p>
+            <h1 style={{ color: '#fff', fontSize: 28, fontWeight: 900, letterSpacing: '-0.03em', textShadow: '0 2px 16px rgba(0,0,0,0.25)', lineHeight: 1 }}>
+              L&apos;Épicerie
+            </h1>
           </div>
+
         </div>
       )}
 
