@@ -35,11 +35,14 @@ export default function PanierPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: saveName.trim(), items }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Erreur');
+      }
       setSaveStatus('done');
       setTimeout(() => { setShowSave(false); setSaveName(''); setSaveStatus('idle'); }, 1500);
-    } catch {
-      setSaveStatus('error');
+    } catch (err) {
+      setSaveStatus(err.message || 'error');
     }
   }
 
@@ -220,7 +223,9 @@ export default function PanierPage() {
                   autoFocus
                   className="w-full px-3 py-2.5 rounded-xl border border-border dark:border-white/10 bg-app-bg dark:bg-white/5 dark:text-white text-sm outline-none focus:border-primary transition-colors"
                 />
-                {saveStatus === 'error' && <p className="text-[10px] text-red-500">Erreur, réessayez.</p>}
+                {saveStatus !== 'idle' && saveStatus !== 'saving' && saveStatus !== 'done' && (
+                  <p className="text-[10px] text-red-500">{saveStatus}</p>
+                )}
                 <button
                   onClick={handleSaveList}
                   disabled={!saveName.trim() || saveStatus === 'saving' || saveStatus === 'done'}

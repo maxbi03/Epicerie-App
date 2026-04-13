@@ -30,6 +30,13 @@ export async function POST(request) {
   if (!name?.trim()) return NextResponse.json({ error: 'Nom requis' }, { status: 400 });
   if (!Array.isArray(items) || items.length === 0) return NextResponse.json({ error: 'Liste vide' }, { status: 400 });
 
+  // Enforce 5-list maximum
+  const { count } = await getSupabaseAdmin()
+    .from('saved_lists')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId);
+  if (count >= 5) return NextResponse.json({ error: 'Maximum 5 listes atteint. Supprimez-en une pour continuer.' }, { status: 409 });
+
   const { data, error: dbError } = await getSupabaseAdmin()
     .from('saved_lists')
     .insert({ user_id: userId, name: name.trim(), items })
