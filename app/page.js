@@ -248,35 +248,23 @@ export default function IndexPage() {
         <div className="fixed inset-0 z-[9999] overflow-hidden pointer-events-none">
 
           {/* ── Panneau gauche ── */}
+          {/* ── Panneau gauche — bord droit = même couleur que bord gauche du droit ── */}
           <div
             className="absolute left-0 top-0 h-full w-1/2"
             style={{
-              background: 'linear-gradient(160deg, #0b2e10 0%, #174d1f 60%, #1f6128 100%)',
+              background: 'linear-gradient(to right, #0b2e10 0%, #163f1c 100%)',
               transform: doorOpen ? 'translateX(-101%)' : 'translateX(0)',
               transition: 'transform 0.72s cubic-bezier(0.7, 0, 0.3, 1)',
-              boxShadow: doorOpen ? 'none' : '6px 0 32px rgba(0,0,0,0.45)',
             }}
           />
 
-          {/* ── Panneau droit ── */}
+          {/* ── Panneau droit — bord gauche = même couleur que bord droit du gauche ── */}
           <div
             className="absolute right-0 top-0 h-full w-1/2"
             style={{
-              background: 'linear-gradient(200deg, #1f6128 0%, #174d1f 40%, #0b2e10 100%)',
+              background: 'linear-gradient(to left, #0b2e10 0%, #163f1c 100%)',
               transform: doorOpen ? 'translateX(101%)' : 'translateX(0)',
               transition: 'transform 0.72s cubic-bezier(0.7, 0, 0.3, 1)',
-              boxShadow: doorOpen ? 'none' : '-6px 0 32px rgba(0,0,0,0.45)',
-            }}
-          />
-
-          {/* ── Joint central des portes ── */}
-          <div
-            className="absolute left-1/2 top-0 h-full -translate-x-1/2"
-            style={{
-              width: '1px',
-              background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.12) 30%, rgba(255,255,255,0.12) 70%, transparent)',
-              opacity: doorOpen ? 0 : 1,
-              transition: 'opacity 0.15s',
             }}
           />
 
