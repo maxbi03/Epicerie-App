@@ -3,7 +3,7 @@
 import { STORE_LAT, STORE_LNG, DOOR_UNLOCK_RADIUS_M } from '../lib/config';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, MapPin, Lock, DoorOpen, Camera, Package, ArrowRight, Loader2, CheckCircle2, Phone } from 'lucide-react';
+import { MapPin, Lock, DoorOpen, Camera, Package, ArrowRight, Loader2, CheckCircle2, Phone } from 'lucide-react';
 
 function haversine(lat1, lng1, lat2, lng2) {
   const R = 6371000;
@@ -17,7 +17,6 @@ function haversine(lat1, lng1, lat2, lng2) {
 export default function HomePage() {
   const [isVisitor, setIsVisitor] = useState(false);
   const [greeting, setGreeting] = useState('…');
-  const [emailUnverified, setEmailUnverified] = useState(false);
   const [latestNews, setLatestNews] = useState(null);
   const [phoneVerified, setPhoneVerified] = useState(false);
   const [doorStatus, setDoorStatus] = useState('idle'); // idle, locating, unlocking, waiting, success, error, too_far, no_phone
@@ -44,7 +43,6 @@ export default function HomePage() {
       .then(data => { if (Array.isArray(data) && data.length > 0) setLatestNews(data[0]); })
       .catch(() => {});
 
-    // Vérifier la proximité en continu
     if (navigator.geolocation) {
       const watchId = navigator.geolocation.watchPosition(
         (pos) => {
@@ -54,8 +52,6 @@ export default function HomePage() {
           setIsNearby(dist <= DOOR_UNLOCK_RADIUS_M);
         },
         (err) => {
-          console.log('Geolocation error:', err.code, err.message);
-          // code 1 = PERMISSION_DENIED, essayer sans haute précision
           if (err.code !== 1) {
             navigator.geolocation.getCurrentPosition(
               (pos) => {
@@ -75,14 +71,9 @@ export default function HomePage() {
   }, []);
 
   async function handleUnlock() {
-    if (!phoneVerified) {
-      setDoorStatus('no_phone');
-      return;
-    }
-
+    if (!phoneVerified) { setDoorStatus('no_phone'); return; }
     setDoorStatus('locating');
     setDoorError('');
-
     try {
       const pos = lastCoords.current;
       if (!pos) {
@@ -90,52 +81,39 @@ export default function HomePage() {
         setDoorError('Position GPS non disponible. Autorisez la localisation et réessayez.');
         return;
       }
-
       const dist = haversine(pos.lat, pos.lng, STORE_LAT, STORE_LNG);
       setDistance(Math.round(dist));
-
       if (dist > DOOR_UNLOCK_RADIUS_M) {
         setDoorStatus('too_far');
         setDoorError(`${Math.round(dist)}m — rapprochez-vous (max ${DOOR_UNLOCK_RADIUS_M}m)`);
         return;
       }
-
       setDoorStatus('unlocking');
-
-      // Le fetch attend la confirmation de l'ESP32 (jusqu'à 10s)
       const res = await fetch('/api/door/unlock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(pos),
       });
-
       const data = await res.json();
-      if (!res.ok) {
-        setDoorStatus('error');
-        setDoorError(data.error);
-        return;
-      }
-
-      if (data.confirmed) {
-        setDoorStatus('success');
-      } else {
-        setDoorStatus('error');
-        setDoorError('Commande envoyée mais pas de confirmation');
-      }
+      if (!res.ok) { setDoorStatus('error'); setDoorError(data.error); return; }
+      setDoorStatus(data.confirmed ? 'success' : 'error');
+      if (!data.confirmed) setDoorError('Commande envoyée mais pas de confirmation');
       setTimeout(() => setDoorStatus('idle'), 6000);
-
     } catch (err) {
       setDoorStatus('error');
       setDoorError(err.message);
     }
   }
 
-  // Déterminer l'état visuel de la carte porte
   const canUnlock = !isVisitor && phoneVerified && isNearby;
-  const doorIcon = doorStatus === 'success' ? <CheckCircle2 size={32} className="text-green-500" />
-    : doorStatus === 'locating' || doorStatus === 'unlocking' ? <Loader2 size={32} className="text-amber-500 animate-spin" />
-    : isNearby && phoneVerified ? <DoorOpen size={32} className="text-primary" />
-    : <MapPin size={32} className="text-text-muted" />;
+
+  const doorIcon = doorStatus === 'success'
+    ? <CheckCircle2 size={28} className="text-green-500" />
+    : doorStatus === 'locating' || doorStatus === 'unlocking'
+    ? <Loader2 size={28} className="text-amber-500 animate-spin" />
+    : isNearby && phoneVerified
+    ? <DoorOpen size={28} className="text-primary" />
+    : <MapPin size={28} className="text-text-muted" />;
 
   const doorTitle = doorStatus === 'success' ? 'Porte déverrouillée'
     : doorStatus === 'locating' ? 'Localisation...'
@@ -146,7 +124,7 @@ export default function HomePage() {
     : 'Aucun magasin à proximité';
 
   const doorSubtitle = doorStatus === 'success' ? 'La porte est ouverte pendant 5s'
-    : doorStatus === 'unlocking' ? 'En attente de confirmation du système...'
+    : doorStatus === 'unlocking' ? 'En attente de confirmation...'
     : doorStatus === 'error' || doorStatus === 'too_far' ? doorError
     : doorStatus === 'no_phone' ? 'Vérifiez votre numéro dans votre profil'
     : isNearby && phoneVerified ? `Vous êtes à ${distance ?? '?'}m`
@@ -154,162 +132,124 @@ export default function HomePage() {
     : 'Recherche de votre position...';
 
   return (
-    <>
-      {emailUnverified && (
-        <div className="max-w-md mx-auto w-full">
-          <div className="mx-4 mt-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 flex items-start gap-3">
-            <AlertTriangle size={20} className="text-amber-500 mt-0.5 shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-amber-800">Email non confirmé</p>
-              <p className="text-xs text-amber-600 mt-0.5">Vérifiez votre boîte mail et cliquez sur le lien de confirmation.</p>
-            </div>
-            <button className="text-xs font-black text-amber-600 whitespace-nowrap hover:text-amber-800 transition-colors shrink-0">
-              Renvoyer
-            </button>
-          </div>
+    <main className="h-full max-w-md mx-auto w-full flex flex-col gap-3 px-4 py-3 overflow-hidden">
+
+      {/* Salutation */}
+      <div className="shrink-0">
+        <h1 className="text-xl font-bold text-text-primary leading-tight">
+          Bonjour, <span className="text-primary">{greeting}</span> !
+        </h1>
+        <p className="text-xs text-text-muted">Bienvenue dans votre épicerie autonome.</p>
+      </div>
+
+      {/* CARTE PORTE — prend tout l'espace disponible */}
+      <div className={`flex-1 min-h-0 bg-card-bg rounded-3xl border flex flex-col items-center justify-center text-center p-5 gap-4 transition-all duration-500 ${
+        doorStatus === 'success' ? 'border-green-300 bg-green-50/50' :
+        doorStatus === 'error' || doorStatus === 'too_far' || doorStatus === 'no_phone' ? 'border-red-200 bg-red-50/30' :
+        isNearby && phoneVerified ? 'border-primary/30 bg-primary/5' :
+        'border-border-light'
+      }`}>
+        {/* Icône */}
+        <div className={`size-14 rounded-full flex items-center justify-center border transition-all duration-500 ${
+          doorStatus === 'success' ? 'bg-green-100 border-green-300' :
+          doorStatus === 'locating' || doorStatus === 'unlocking' ? 'bg-amber-100 border-amber-300 animate-pulse' :
+          isNearby && phoneVerified ? 'bg-primary/10 border-primary/30' :
+          'bg-app-bg border-border'
+        }`}>
+          {doorIcon}
         </div>
+
+        {/* Texte */}
+        <div>
+          <h2 className="text-text-primary text-lg font-bold mb-0.5">{doorTitle}</h2>
+          <p className="text-text-muted text-sm">{doorSubtitle}</p>
+        </div>
+
+        {/* Bouton */}
+        {!isVisitor ? (
+          <button
+            onClick={handleUnlock}
+            disabled={!canUnlock || doorStatus === 'locating' || doorStatus === 'unlocking' || doorStatus === 'success'}
+            className={`w-full py-4 rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-[0.97] ${
+              doorStatus === 'success' ? 'bg-green-500 text-white' :
+              canUnlock && doorStatus !== 'locating' && doorStatus !== 'unlocking'
+                ? 'bg-primary text-white'
+                : 'opacity-60 bg-app-bg cursor-not-allowed'
+            }`}
+          >
+            {doorStatus === 'success' ? <CheckCircle2 size={22} /> :
+             doorStatus === 'locating' || doorStatus === 'unlocking' ? <Loader2 size={22} className="animate-spin" /> :
+             canUnlock ? <DoorOpen size={22} /> :
+             !phoneVerified ? <Phone size={22} className="text-text-muted" /> :
+             <Lock size={22} className="text-text-muted" />}
+            <span className={`font-bold text-base uppercase tracking-wider ${
+              doorStatus === 'success' || (canUnlock && doorStatus !== 'locating' && doorStatus !== 'unlocking') ? '' : 'text-text-muted'
+            }`}>
+              {doorStatus === 'success' ? 'Confirmé' :
+               doorStatus === 'locating' ? 'Localisation...' :
+               doorStatus === 'unlocking' ? 'Confirmation...' :
+               !phoneVerified ? 'Tél. non vérifié' :
+               !isNearby ? 'Trop loin' :
+               'Déverrouiller'}
+            </span>
+          </button>
+        ) : (
+          <div className="w-full space-y-3">
+            <button disabled className="w-full py-4 rounded-2xl flex items-center justify-center gap-3 opacity-50 bg-app-bg cursor-not-allowed">
+              <Lock size={22} className="text-text-muted" />
+              <span className="text-text-muted font-bold text-base uppercase tracking-wider">Compte requis</span>
+            </button>
+            <div className="grid grid-cols-2 gap-2">
+              <Link href="/" className="py-3 rounded-xl bg-primary text-white font-black text-[10px] uppercase tracking-widest text-center active:scale-[0.98] transition-all">
+                Se connecter
+              </Link>
+              <Link href="/" className="py-3 rounded-xl bg-primary-light text-primary font-black text-[10px] uppercase tracking-widest text-center active:scale-[0.98] transition-all">
+                Créer un compte
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* RACCOURCIS */}
+      <div className="shrink-0 grid grid-cols-2 gap-3">
+        <Link href="/scanner" className="flex items-center gap-3 bg-card-bg rounded-2xl p-3.5 border border-border-light active:scale-[0.98] transition-all">
+          <div className="size-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <Camera size={18} className="text-primary" />
+          </div>
+          <span className="font-bold text-sm text-text-primary">Scanner</span>
+        </Link>
+        <Link href="/stock" className="flex items-center gap-3 bg-card-bg rounded-2xl p-3.5 border border-border-light active:scale-[0.98] transition-all">
+          <div className="size-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <Package size={18} className="text-primary" />
+          </div>
+          <span className="font-bold text-sm text-text-primary">Produits</span>
+        </Link>
+      </div>
+
+      {/* DERNIÈRE ACTUALITÉ — compact horizontal */}
+      {latestNews && (
+        <Link href="/news" className="shrink-0 flex items-center gap-3 bg-card-bg rounded-2xl border border-border-light overflow-hidden active:scale-[0.98] transition-all">
+          {latestNews.image1 && (
+            <img src={latestNews.image1} className="size-16 object-cover shrink-0" alt="" />
+          )}
+          <div className="flex-1 min-w-0 py-3 pr-3">
+            <span className={`text-[9px] font-black uppercase tracking-widest ${
+              latestNews.category === 'offres' ? 'text-green-600' :
+              latestNews.category === 'partenaires' ? 'text-green-600' :
+              'text-blue-500'
+            }`}>
+              {latestNews.category === 'offres' ? 'Offre' : latestNews.category === 'partenaires' ? 'Partenaire' : 'Info'}
+            </span>
+            <p className="font-bold text-sm text-text-primary truncate">{latestNews.title}</p>
+            {latestNews.subtitle && (
+              <p className="text-xs text-text-muted truncate">{latestNews.subtitle}</p>
+            )}
+          </div>
+          <ArrowRight size={14} className="text-text-muted shrink-0 mr-3" />
+        </Link>
       )}
 
-      <main className="relative flex h-full max-w-md mx-auto flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto pb-10">
-
-          <div className="px-5 pt-6 pb-2">
-            <h1 className="text-2xl font-bold text-text-primary">
-              Bonjour, <span>{greeting}</span> !
-            </h1>
-            <p className="text-sm text-text-secondary">Bienvenue dans votre épicerie autonome.</p>
-          </div>
-
-          {/* CARD PORTE */}
-          <div className="p-5">
-            <div className={`bg-card-bg rounded-3xl p-6 flex flex-col items-center text-center relative border shadow-sm transition-all duration-500 ${
-              doorStatus === 'success' ? 'border-green-300 bg-green-50/50' :
-              doorStatus === 'error' || doorStatus === 'too_far' || doorStatus === 'no_phone' ? 'border-red-200 bg-red-50/30' :
-              isNearby && phoneVerified ? 'border-primary/30 bg-primary/5' :
-              'border-border-light'
-            }`}>
-              <div className="mb-6">
-                <div className={`size-16 rounded-full flex items-center justify-center border transition-all duration-500 ${
-                  doorStatus === 'success' ? 'bg-green-100 border-green-300' :
-                  doorStatus === 'locating' || doorStatus === 'unlocking' ? 'bg-amber-100 border-amber-300 animate-pulse' :
-                  isNearby && phoneVerified ? 'bg-primary/10 border-primary/30' :
-                  'bg-app-bg border-border'
-                }`}>
-                  {doorIcon}
-                </div>
-              </div>
-
-              <div className="mb-6">
-                <h2 className="text-text-primary text-xl font-bold mb-1">{doorTitle}</h2>
-                <p className="text-text-muted text-sm font-medium">{doorSubtitle}</p>
-              </div>
-
-              {!isVisitor ? (
-                <button
-                  onClick={handleUnlock}
-                  disabled={!canUnlock || doorStatus === 'locating' || doorStatus === 'unlocking' || doorStatus === 'success'}
-                  className={`w-full py-5 rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-[0.97] ${
-                    doorStatus === 'success' ? 'bg-green-500 text-white' :
-                    canUnlock && doorStatus !== 'locating' && doorStatus !== 'unlocking'
-                      ? 'bg-primary text-white active:scale-[0.97]'
-                      : 'opacity-60 bg-app-bg cursor-not-allowed'
-                  }`}
-                >
-                  {doorStatus === 'success' ? <CheckCircle2 size={24} /> :
-                   doorStatus === 'locating' || doorStatus === 'unlocking' ? <Loader2 size={24} className="animate-spin" /> :
-                   canUnlock ? <DoorOpen size={24} /> :
-                   !phoneVerified ? <Phone size={24} className="text-text-muted" /> :
-                   <Lock size={24} className="text-text-muted" />}
-                  <span className={`font-bold text-lg uppercase tracking-wider ${
-                    doorStatus === 'success' || (canUnlock && doorStatus !== 'locating' && doorStatus !== 'unlocking') ? '' : 'text-text-muted'
-                  }`}>
-                    {doorStatus === 'success' ? 'Confirmé' :
-                     doorStatus === 'locating' ? 'Localisation...' :
-                     doorStatus === 'unlocking' ? 'Confirmation...' :
-                     !phoneVerified ? 'Tél. non vérifié' :
-                     !isNearby ? 'Trop loin' :
-                     'Déverrouiller'}
-                  </span>
-                </button>
-              ) : (
-                <>
-                  <button disabled className="w-full py-5 rounded-2xl flex items-center justify-center gap-3 opacity-60 bg-app-bg cursor-not-allowed">
-                    <Lock size={24} className="text-text-muted" />
-                    <span className="text-text-muted font-bold text-lg uppercase tracking-wider">Compte requis</span>
-                  </button>
-                  <div className="w-full mt-4 bg-primary-light border border-border-light rounded-2xl p-4 text-left">
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 size-10 rounded-xl bg-primary-light flex items-center justify-center">
-                        <Lock size={20} className="text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-bold text-text-primary">Déverrouillage désactivé</p>
-                        <p className="text-xs text-text-secondary leading-relaxed mt-1">
-                          Créez un compte et vérifiez-le pour utiliser cette fonctionnalité.
-                        </p>
-                        <div className="grid grid-cols-2 gap-3 mt-4">
-                          <Link href="/" className="w-full py-3 rounded-xl bg-primary text-white font-black text-[10px] uppercase tracking-widest text-center active:scale-[0.98] transition-all">
-                            Se connecter
-                          </Link>
-                          <Link href="/" className="w-full py-3 rounded-xl bg-primary-light text-forest-green font-black text-[10px] uppercase tracking-widest text-center active:scale-[0.98] transition-all">
-                            Créer un compte
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* RACCOURCIS */}
-          <div className="px-5 mb-6">
-            <h3 className="text-xs font-black text-text-muted uppercase tracking-widest mb-3">Raccourcis</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <Link href="/scanner" className="flex items-center gap-3 bg-card-bg rounded-2xl p-4 border border-border-light shadow-sm active:scale-[0.98] transition-all">
-                <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <Camera size={20} className="text-primary" />
-                </div>
-                <span className="font-bold text-sm text-text-primary">Scanner</span>
-              </Link>
-              <Link href="/stock" className="flex items-center gap-3 bg-card-bg rounded-2xl p-4 border border-border-light shadow-sm active:scale-[0.98] transition-all">
-                <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <Package size={20} className="text-primary" />
-                </div>
-                <span className="font-bold text-sm text-text-primary">Produits</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* DERNIÈRE NEWS */}
-          {latestNews && (
-            <div className="px-5 mb-6">
-              <h3 className="text-xs font-black text-text-muted uppercase tracking-widest mb-3">Actualité</h3>
-              <Link href="/news" className="block bg-card-bg rounded-2xl overflow-hidden shadow-sm border border-border-light active:scale-[0.98] transition-all">
-                {latestNews.image1 && (
-                  <img src={latestNews.image1} className="w-full h-36 object-cover" alt="" />
-                )}
-                <div className="p-4">
-                  <span className={`text-[10px] font-black uppercase tracking-widest ${
-                    latestNews.category === 'offres' ? 'text-green-600' :
-                    latestNews.category === 'partenaires' ? 'text-green-600' :
-                    'text-blue-500'
-                  }`}>{latestNews.category === 'offres' ? 'Offre' : latestNews.category === 'partenaires' ? 'Partenaire' : 'Info'}</span>
-                  <h3 className="font-bold text-text-primary text-base mt-1">{latestNews.title}</h3>
-                  {latestNews.subtitle && (
-                    <p className="text-xs text-text-secondary mt-0.5">{latestNews.subtitle}</p>
-                  )}
-                  <span className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-primary">
-                    Lire la suite <ArrowRight size={12} />
-                  </span>
-                </div>
-              </Link>
-            </div>
-          )}
-
-        </div>
-      </main>
-    </>
+    </main>
   );
 }
