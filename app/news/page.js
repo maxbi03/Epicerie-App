@@ -63,7 +63,7 @@ export default function NewsPage() {
               <button key={f.key} onClick={() => setActive(f.key)}
                 className={`shrink-0 flex h-9 items-center justify-center rounded-xl px-5 border text-sm font-medium transition-all
                   ${active === f.key
-                    ? 'bg-green-500 text-white border-green-500 font-bold'
+                    ? 'bg-primary text-white border-primary font-bold'
                     : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300'
                   }`}>
                 {f.label}
@@ -75,7 +75,7 @@ export default function NewsPage() {
           <div className="flex flex-col gap-6 px-4 pb-10 mt-2">
             {loading && (
               <div className="flex justify-center py-12">
-                <div className="w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
               </div>
             )}
 
@@ -108,8 +108,8 @@ export default function NewsPage() {
                   )}
                   <div className="p-4">
                     <span className={`text-[10px] font-black uppercase tracking-widest ${
-                      item.category === 'offres' ? 'text-green-600' :
-                      item.category === 'partenaires' ? 'text-green-600' :
+                      item.category === 'offres' ? 'text-primary' :
+                      item.category === 'partenaires' ? 'text-primary' :
                       'text-blue-500'
                     }`}>{badge}{item.type ? ` · ${item.type}` : ''}</span>
                     <h3 className="font-bold text-lg mt-1 dark:text-white">{item.title}</h3>
@@ -126,12 +126,12 @@ export default function NewsPage() {
                       isProductLink ? (
                         <button
                           onClick={(e) => handleLink(e, item.link)}
-                          className="inline-flex items-center gap-1.5 mt-3 text-sm font-bold text-green-600 hover:text-green-700"
+                          className="inline-flex items-center gap-1.5 mt-3 text-sm font-bold text-primary hover:brightness-75"
                         >
                           {item.link_name || 'Voir le produit'} <ArrowRight size={14} />
                         </button>
                       ) : (
-                        <Link href={item.link} onClick={e => e.stopPropagation()} className="inline-flex items-center gap-1.5 mt-3 text-sm font-bold text-green-600 hover:text-green-700">
+                        <Link href={item.link} onClick={e => e.stopPropagation()} className="inline-flex items-center gap-1.5 mt-3 text-sm font-bold text-primary hover:brightness-75">
                           {item.link_name || 'Voir plus'} <ArrowRight size={14} />
                         </Link>
                       )
@@ -172,8 +172,8 @@ export default function NewsPage() {
 
               <div>
                 <span className={`text-[10px] font-black uppercase tracking-widest ${
-                  selectedNews.category === 'offres' ? 'text-green-600' :
-                  selectedNews.category === 'partenaires' ? 'text-green-600' :
+                  selectedNews.category === 'offres' ? 'text-primary' :
+                  selectedNews.category === 'partenaires' ? 'text-primary' :
                   'text-blue-500'
                 }`}>{(categoryConfig[selectedNews.category] || categoryConfig.com).badge}{selectedNews.type ? ` · ${selectedNews.type}` : ''}</span>
                 <h3 className="text-xl font-bold mt-1 dark:text-white">{selectedNews.title}</h3>
@@ -190,13 +190,13 @@ export default function NewsPage() {
                 selectedNews.link.startsWith('product:') ? (
                   <button
                     onClick={(e) => { handleLink(e, selectedNews.link); setSelectedNews(null); }}
-                    className="inline-flex items-center gap-1.5 text-sm font-bold text-green-600 hover:text-green-700"
+                    className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:brightness-75"
                   >
                     {selectedNews.link_name || 'Voir le produit'} <ArrowRight size={14} />
                   </button>
                 ) : (
                   <Link href={selectedNews.link} onClick={() => setSelectedNews(null)}
-                    className="inline-flex items-center gap-1.5 text-sm font-bold text-green-600 hover:text-green-700">
+                    className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:brightness-75">
                     {selectedNews.link_name || 'Voir plus'} <ArrowRight size={14} />
                   </Link>
                 )

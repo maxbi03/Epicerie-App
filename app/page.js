@@ -344,7 +344,7 @@ export default function IndexPage() {
                 className="w-full px-4 py-4 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm outline-none focus:border-green-500 transition"
               />
               {loginError && <p className="text-sm text-red-500 text-center">{loginError}</p>}
-              <button onClick={handleLogin} className="w-full bg-green-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:brightness-105 active:scale-95 transition-all">
+              <button onClick={handleLogin} className="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg hover:brightness-105 active:scale-95 transition-all">
                 Se connecter
               </button>
             </div>
@@ -357,7 +357,7 @@ export default function IndexPage() {
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">Nouveau ici ?</h2>
               <p className="text-sm text-gray-500 px-4">Créez votre compte pour accéder à l'épicerie autonome.</p>
             </div>
-            <button onClick={openModal} className="w-full bg-green-100 text-green-700 font-bold py-4 rounded-2xl hover:brightness-95 active:scale-95 transition-all">
+            <button onClick={openModal} className="w-full bg-primary-light text-primary font-bold py-4 rounded-2xl hover:brightness-95 active:scale-95 transition-all">
               S'inscrire
             </button>
           </div>
@@ -465,7 +465,7 @@ export default function IndexPage() {
 
                   {registerError && <p className="text-sm text-red-500 text-center">{registerError}</p>}
 
-                  <button onClick={handleRegister} className="w-full bg-green-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:brightness-105 active:scale-95 transition-all">
+                  <button onClick={handleRegister} className="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg hover:brightness-105 active:scale-95 transition-all">
                     Créer mon compte →
                   </button>
                 </div>
@@ -526,7 +526,7 @@ export default function IndexPage() {
                   <button
                     onClick={handleVerifyOtp}
                     disabled={otpLoading || otpCode.length !== 6}
-                    className="w-full bg-green-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:brightness-105 active:scale-95 transition-all disabled:opacity-60"
+                    className="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg hover:brightness-105 active:scale-95 transition-all disabled:opacity-60"
                   >
                     {otpLoading ? 'Vérification…' : 'Confirmer le code →'}
                   </button>

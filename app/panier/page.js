@@ -101,14 +101,14 @@ export default function PanierPage() {
 
         {groupedList.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-10 text-center py-20">
-            <div className="size-20 bg-green-50 rounded-full flex items-center justify-center mb-4">
-              <ShoppingCart size={36} className="text-green-600" />
+            <div className="size-20 bg-primary-light rounded-full flex items-center justify-center mb-4">
+              <ShoppingCart size={36} className="text-primary" />
             </div>
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Votre panier est vide</h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed max-w-[200px] mx-auto">
               Scannez vos produits en magasin pour les ajouter ici !
             </p>
-            <Link href="/scanner" className="mt-6 flex items-center gap-2 text-green-600 font-bold text-xs uppercase tracking-widest border-b border-green-600 pb-1 active:scale-95 transition-transform">
+            <Link href="/scanner" className="mt-6 flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest border-b border-primary pb-1 active:scale-95 transition-transform">
               Ouvrir le scanner
             </Link>
           </div>
@@ -171,7 +171,7 @@ export default function PanierPage() {
             className={`w-full py-4 rounded-2xl font-black text-sm uppercase tracking-[0.1em] transition-all
               ${groupedList.length === 0 || isLoading
                 ? 'bg-gray-200 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
-                : 'bg-green-600 text-white hover:brightness-105 active:scale-[0.98]'
+                : 'bg-primary text-white hover:brightness-105 active:scale-[0.98]'
               }`}
           >
             {isLoading ? 'Redirection...' : groupedList.length === 0 ? 'Panier vide' : `Payer ${total.toFixed(2)} CHF`}
