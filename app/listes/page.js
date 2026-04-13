@@ -46,7 +46,7 @@ export default function ListesPage() {
     if (products.length === 0) {
       setProdLoading(true);
       const data = await fetchProducts().catch(() => []);
-      setProducts(data.filter(p => p.is_active));
+      setProducts(data); // already filtered to is_active=true by the API
       setProdLoading(false);
     }
   }
@@ -67,7 +67,7 @@ export default function ListesPage() {
     setSaveError('');
     const items = products
       .filter(p => (qtys[p.id] ?? 0) > 0)
-      .map(p => ({ id: p.id, name: p.name, price: p.price_chf, image: p.image_url, origin: p.producer, qty: qtys[p.id] }));
+      .map(p => ({ id: p.id, name: p.name, price: p.price, image: p.image, origin: p.origin, qty: qtys[p.id] }));
     try {
       const res = await fetch('/api/saved-lists', {
         method: 'POST',
@@ -233,11 +233,11 @@ export default function ListesPage() {
               return (
                 <div key={product.id} className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 border transition-all ${active ? 'bg-primary/5 border-primary/25 dark:border-primary/30' : 'bg-app-bg border-border-light'}`}>
                   <div className="size-10 rounded-xl overflow-hidden bg-white border border-gray-100 dark:border-white/10 shrink-0">
-                    {product.image_url && <img src={product.image_url} className="w-full h-full object-contain" alt="" />}
+                    {product.image && <img src={product.image} className="w-full h-full object-contain" alt="" />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-text-primary truncate">{product.name}</p>
-                    <p className="text-[10px] text-text-muted">{Number(product.price_chf).toFixed(2)} CHF</p>
+                    <p className="text-[10px] text-text-muted">{Number(product.price).toFixed(2)} CHF</p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <button onClick={() => adjust(product.id, -1)}
@@ -273,7 +273,7 @@ export default function ListesPage() {
                 <span className="font-black text-primary">{selectedTotal} article{selectedTotal > 1 ? 's' : ''}</span> sélectionné{selectedTotal > 1 ? 's' : ''}
                 {' · '}
                 <span className="font-black text-text-primary">
-                  {products.filter(p => (qtys[p.id] ?? 0) > 0).reduce((s, p) => s + p.price_chf * qtys[p.id], 0).toFixed(2)} CHF
+                  {products.filter(p => (qtys[p.id] ?? 0) > 0).reduce((s, p) => s + p.price * qtys[p.id], 0).toFixed(2)} CHF
                 </span>
               </p>
             )}
