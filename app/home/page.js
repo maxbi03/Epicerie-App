@@ -132,25 +132,25 @@ export default function HomePage() {
     : 'Recherche de votre position...';
 
   return (
-    <main className="h-full max-w-md mx-auto w-full flex flex-col gap-3 px-4 py-3 overflow-hidden">
+    <main className="h-full max-w-md mx-auto w-full flex flex-col px-4 pt-3 pb-2 overflow-hidden">
 
       {/* Salutation */}
-      <div className="shrink-0">
+      <div className="shrink-0 mb-3">
         <h1 className="text-xl font-bold text-text-primary leading-tight">
           Bonjour, <span className="text-primary">{greeting}</span> !
         </h1>
         <p className="text-xs text-text-muted">Bienvenue dans votre épicerie autonome.</p>
       </div>
 
-      {/* CARTE PORTE — prend tout l'espace disponible */}
-      <div className={`flex-1 min-h-0 bg-card-bg rounded-3xl border flex flex-col items-center justify-center text-center p-5 gap-4 transition-all duration-500 ${
+      {/* CARTE PORTE — taille plafonnée, centrée verticalement */}
+      <div className={`shrink-0 bg-card-bg rounded-3xl border flex flex-col items-center justify-center text-center p-4 gap-3 mb-3 transition-all duration-500 ${
         doorStatus === 'success' ? 'border-green-300 bg-green-50/50' :
         doorStatus === 'error' || doorStatus === 'too_far' || doorStatus === 'no_phone' ? 'border-red-200 bg-red-50/30' :
         isNearby && phoneVerified ? 'border-primary/30 bg-primary/5' :
         'border-border-light'
       }`}>
         {/* Icône */}
-        <div className={`size-14 rounded-full flex items-center justify-center border transition-all duration-500 ${
+        <div className={`size-12 rounded-full flex items-center justify-center border transition-all duration-500 ${
           doorStatus === 'success' ? 'bg-green-100 border-green-300' :
           doorStatus === 'locating' || doorStatus === 'unlocking' ? 'bg-amber-100 border-amber-300 animate-pulse' :
           isNearby && phoneVerified ? 'bg-primary/10 border-primary/30' :
@@ -161,7 +161,7 @@ export default function HomePage() {
 
         {/* Texte */}
         <div>
-          <h2 className="text-text-primary text-lg font-bold mb-0.5">{doorTitle}</h2>
+          <h2 className="text-text-primary text-base font-bold mb-0.5">{doorTitle}</h2>
           <p className="text-text-muted text-sm">{doorSubtitle}</p>
         </div>
 
@@ -170,19 +170,19 @@ export default function HomePage() {
           <button
             onClick={handleUnlock}
             disabled={!canUnlock || doorStatus === 'locating' || doorStatus === 'unlocking' || doorStatus === 'success'}
-            className={`w-full py-4 rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-[0.97] ${
+            className={`w-full py-3.5 rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-[0.97] ${
               doorStatus === 'success' ? 'bg-green-500 text-white' :
               canUnlock && doorStatus !== 'locating' && doorStatus !== 'unlocking'
                 ? 'bg-primary text-white'
                 : 'opacity-60 bg-app-bg cursor-not-allowed'
             }`}
           >
-            {doorStatus === 'success' ? <CheckCircle2 size={22} /> :
-             doorStatus === 'locating' || doorStatus === 'unlocking' ? <Loader2 size={22} className="animate-spin" /> :
-             canUnlock ? <DoorOpen size={22} /> :
-             !phoneVerified ? <Phone size={22} className="text-text-muted" /> :
-             <Lock size={22} className="text-text-muted" />}
-            <span className={`font-bold text-base uppercase tracking-wider ${
+            {doorStatus === 'success' ? <CheckCircle2 size={20} /> :
+             doorStatus === 'locating' || doorStatus === 'unlocking' ? <Loader2 size={20} className="animate-spin" /> :
+             canUnlock ? <DoorOpen size={20} /> :
+             !phoneVerified ? <Phone size={20} className="text-text-muted" /> :
+             <Lock size={20} className="text-text-muted" />}
+            <span className={`font-bold text-sm uppercase tracking-wider ${
               doorStatus === 'success' || (canUnlock && doorStatus !== 'locating' && doorStatus !== 'unlocking') ? '' : 'text-text-muted'
             }`}>
               {doorStatus === 'success' ? 'Confirmé' :
@@ -194,10 +194,10 @@ export default function HomePage() {
             </span>
           </button>
         ) : (
-          <div className="w-full space-y-3">
-            <button disabled className="w-full py-4 rounded-2xl flex items-center justify-center gap-3 opacity-50 bg-app-bg cursor-not-allowed">
-              <Lock size={22} className="text-text-muted" />
-              <span className="text-text-muted font-bold text-base uppercase tracking-wider">Compte requis</span>
+          <div className="w-full space-y-2">
+            <button disabled className="w-full py-3.5 rounded-2xl flex items-center justify-center gap-3 opacity-50 bg-app-bg cursor-not-allowed">
+              <Lock size={20} className="text-text-muted" />
+              <span className="text-text-muted font-bold text-sm uppercase tracking-wider">Compte requis</span>
             </button>
             <div className="grid grid-cols-2 gap-2">
               <Link href="/" className="py-3 rounded-xl bg-primary text-white font-black text-[10px] uppercase tracking-widest text-center active:scale-[0.98] transition-all">
@@ -211,8 +211,11 @@ export default function HomePage() {
         )}
       </div>
 
+      {/* Espace flexible entre porte et raccourcis */}
+      <div className="flex-1 min-h-0" />
+
       {/* RACCOURCIS */}
-      <div className="shrink-0 grid grid-cols-2 gap-3">
+      <div className="shrink-0 grid grid-cols-2 gap-3 mb-3">
         <Link href="/scanner" className="flex items-center gap-3 bg-card-bg rounded-2xl p-3.5 border border-border-light active:scale-[0.98] transition-all">
           <div className="size-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
             <Camera size={18} className="text-primary" />
@@ -229,11 +232,14 @@ export default function HomePage() {
 
       {/* DERNIÈRE ACTUALITÉ — compact horizontal */}
       {latestNews && (
-        <Link href="/news" className="shrink-0 flex items-center gap-3 bg-card-bg rounded-2xl border border-border-light overflow-hidden active:scale-[0.98] transition-all">
-          {latestNews.image1 && (
-            <img src={latestNews.image1} className="size-16 object-cover shrink-0" alt="" />
-          )}
-          <div className="flex-1 min-w-0 py-3 pr-3">
+        <Link href="/news" className="shrink-0 flex items-center bg-card-bg rounded-2xl border border-border-light overflow-hidden active:scale-[0.98] transition-all">
+          {latestNews.image1
+            ? <img src={latestNews.image1} className="size-16 object-cover shrink-0" alt="" />
+            : <div className="size-16 bg-primary/10 flex items-center justify-center shrink-0">
+                <Package size={20} className="text-primary/40" />
+              </div>
+          }
+          <div className="flex-1 min-w-0 px-3 py-2.5">
             <span className={`text-[9px] font-black uppercase tracking-widest ${
               latestNews.category === 'offres' ? 'text-green-600' :
               latestNews.category === 'partenaires' ? 'text-green-600' :
