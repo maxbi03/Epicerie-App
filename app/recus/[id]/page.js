@@ -13,7 +13,7 @@ function formatDateTime(iso) {
 }
 
 function receiptId(id) {
-  return id ? id.slice(0, 8).toUpperCase() : '--------';
+  return id ? String(id).slice(0, 8).toUpperCase() : '--------';
 }
 
 export default function ReceiptPage() {
