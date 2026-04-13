@@ -1,6 +1,6 @@
 # L'Épicerie du Village — Application
 
-Application de gestion pour une épicerie autonome (sans personnel) située à Semsales, Suisse. Permet aux clients de s'inscrire, scanner des produits, remplir un panier et payer via leur téléphone.
+Application de gestion pour une épicerie autonome (sans personnel) située à Jongny, Suisse. Permet aux clients de s'inscrire, scanner des produits, remplir un panier et payer via leur téléphone.
 
 **Stack :** Next.js 16 · React 19 · Supabase · Mollie · Tailwind CSS 4 · PWA
 
@@ -11,32 +11,40 @@ Application de gestion pour une épicerie autonome (sans personnel) située à S
 ```
 app/
 ├── api/                    # Routes API (backend)
+│   ├── auth/
+│   │   └── me/             # GET — profil de l'utilisateur connecté
 │   ├── products/           # GET — récupère tous les produits
 │   ├── users/              # POST — crée un profil utilisateur
-│   ├── users/[id]/         # GET/PATCH — lecture/mise à jour d'un profil
+│   │   └── [id]/           # GET/PATCH — lecture/mise à jour d'un profil
+│   ├── news/               # GET — liste des actualités
+│   ├── door/
+│   │   └── unlock/         # POST — déverrouillage de la porte (GPS + téléphone vérifié)
 │   └── checkout/           # POST — crée un paiement Mollie
 │       └── webhook/        # POST — reçoit la confirmation de paiement
 ├── components/
 │   └── Header.jsx          # Navigation principale, menu, compteur panier
 ├── lib/                    # Utilitaires et services
+│   ├── config.js           # Constantes globales (coords magasin, rayon GPS)
+│   ├── basket.js           # Lecture/écriture du panier (localStorage)
 │   ├── supabaseClient.js   # Instance Supabase côté client
 │   ├── supabaseServer.js   # Instance Supabase côté serveur (admin)
 │   ├── userService.js      # Fonctions API profil utilisateur
 │   ├── productsService.js  # Fonctions de récupération des produits
 │   └── updateStock.js      # Décrémente le stock après paiement
 ├── styles/
-│   └── globals.css         # Styles globaux (Tailwind + custom)
+│   ├── tokens.css          # Variables CSS (palette #669933, dark mode)
+│   └── globals.css         # Styles globaux (Tailwind + tokens + animations)
 │
 │   # — Pages —
-├── page.js                 # Connexion / inscription
-├── home/                   # Tableau de bord après connexion
+├── page.js                 # Connexion / inscription (splash Split Door)
+├── home/                   # Accueil après connexion (layout 60/20/20)
 ├── scanner/                # Scanner de codes-barres (EAN-13)
 ├── panier/                 # Panier d'achat
 │   └── confirmation/       # Page de confirmation de commande
 ├── stock/                  # Catalogue produits avec stock en temps réel
 ├── profil/                 # Profil utilisateur et paramètres
-├── news/                   # Actualités, offres, événements
-├── map/                    # Localisation du magasin (OpenStreetMap)
+├── news/                   # Le Fil Rouge — actualités style média éditorial
+├── map/                    # Localisation du magasin (Google Maps)
 ├── inscription/            # Inscription avec vérification téléphone
 └── layout.js               # Layout racine (Header + providers)
 
@@ -73,8 +81,25 @@ Utilisateur
                             → session JWT → redirect /home
 ```
 
-- **Mode visiteur** disponible (accès limité, pas de paiement)
+- **Mode visiteur** disponible (vitrine — panier visible, paiement et déverrouillage bloqués)
 - Mot de passe : minimum 10 caractères, majuscule, chiffre, symbole
+
+### Déverrouillage de la porte
+
+```
+Page d'accueil (/home)
+  │
+  ├─ GPS watchPosition() → distance calculée (haversine) vs coordonnées Jongny
+  │     │
+  │     └─ isNearby = dist ≤ DOOR_UNLOCK_RADIUS_M
+  │
+  └─ Bouton "Déverrouiller" (actif si : connecté + téléphone vérifié + isNearby)
+       │
+       └─ POST /api/door/unlock { lat, lng }
+            │
+            ├─ Vérification serveur : session + phone_verified + distance
+            └─ Commande envoyée au contrôleur de la porte
+```
 
 ### Produits & Scanner
 
@@ -103,7 +128,7 @@ Scan produit → addToBasket() → localStorage ('user_basket')
 
 Validation panier
   │
-  └─ POST /api/checkout { items, total }
+  └─ POST /api/checkout { items, total, client_name, user_id }
        │
        └─ Mollie API → crée un paiement en CHF
             │
@@ -114,8 +139,9 @@ Validation panier
                       └─ Webhook Mollie → POST /api/checkout/webhook
                            │
                            ├─ Vérifie statut = 'paid'
-                           └─ updateStockAfterPayment()
-                                → décrémente stock_shelf pour chaque article
+                           ├─ updateStockAfterPayment()
+                           │    → décrémente stock_shelf pour chaque article
+                           └─ Incrémente total_spent dans table 'users'
 ```
 
 ### Profil utilisateur
@@ -137,6 +163,7 @@ PATCH /api/users/[id] → mise à jour (nom, téléphone, etc.)
 | name, email, phone | Infos de base |
 | street, house_number, postal_code, city, country | Adresse |
 | address_verified, phone_verified | Statuts de vérification |
+| total_spent | Cumul des achats (mis à jour par le webhook Mollie) |
 
 ### Table `products`
 
@@ -149,6 +176,18 @@ PATCH /api/users/[id] → mise à jour (nom, téléphone, etc.)
 | stock_shelf, stock_total | Stock en rayon / total |
 | image_url | Image du produit |
 
+### Table `news`
+
+| Colonne | Description |
+|---------|-------------|
+| id | Identifiant de l'article |
+| title, subtitle, content | Contenu éditorial |
+| category | `offres` · `partenaires` · `com` |
+| type | Sous-type libre (ex. "Dégustation") |
+| image1, image2 | URLs des images |
+| link, link_name | Lien CTA (URL ou `product:<nom>`) |
+| created_at | Date de publication |
+
 ---
 
 ## Intégrations externes
@@ -158,7 +197,17 @@ PATCH /api/users/[id] → mise à jour (nom, téléphone, etc.)
 | **Supabase** | Auth, base de données, edge functions |
 | **Mollie** | Paiement en ligne (CHF) |
 | **api3.geo.admin.ch** | Autocomplétion d'adresses suisses |
-| **OpenStreetMap** | Carte de localisation du magasin |
+| **Google Maps** | Itinéraire vers le magasin (coordonnées Jongny) |
+
+---
+
+## Design & UI
+
+- **Palette principale** : `#669933` (vert épicerie), définie via variables CSS dans `tokens.css`
+- **Dark mode** : palette adaptée (`--primary: #88bb44`), tokens propagés via `@theme inline`
+- **Splash screen** : animation Split Door — deux panneaux qui s'ouvrent sur le logo, transition `cubic-bezier` avec effet spring
+- **Page d'accueil** : layout proportionnel `flex-[3]/flex-[1]/flex-[1]` (60 % porte · 20 % raccourcis · 20 % actualité), sans scroll
+- **Le Fil Rouge** : fil éditorial style média premium — hero pleine largeur avec overlay, articles vignette + texte, séparateurs fins, modal article avec lecture plein écran
 
 ---
 
@@ -171,7 +220,7 @@ PATCH /api/users/[id] → mise à jour (nom, téléphone, etc.)
 | **next** (16.1.7) | Framework principal. Gère le routing, le rendu côté serveur (SSR), les API routes, l'optimisation d'images et le bundling |
 | **react** (19.2.3) | Librairie UI. Construction de l'interface avec des composants, gestion du state (`useState`, `useEffect`, etc.) |
 | **react-dom** (19.2.3) | Lien entre React et le navigateur. Transforme les composants React en éléments HTML dans le DOM |
-| **@supabase/supabase-js** | Client Supabase. Authentification (OTP SMS, login), requêtes base de données (produits, users), appels aux edge functions |
+| **@supabase/supabase-js** | Client Supabase. Authentification (OTP SMS, login), requêtes base de données (produits, users, news), appels aux edge functions |
 | **@mollie/api-client** | Client API Mollie. Création des paiements en CHF côté serveur (`/api/checkout`) et vérification du statut via webhook |
 | **@ducanh2912/next-pwa** | Plugin PWA pour Next.js. Génère le service worker, gère le cache offline, permet l'installation sur l'écran d'accueil |
 | **next-pwa** | Ancienne version du plugin PWA (résidu, remplacé par `@ducanh2912/next-pwa`) |
@@ -181,7 +230,7 @@ PATCH /api/users/[id] → mise à jour (nom, téléphone, etc.)
 
 | Package | Rôle |
 |---------|------|
-| **tailwindcss** (v4) | Framework CSS utilitaire. Toutes les classes comme `bg-green-600`, `rounded-xl`, `dark:bg-gray-900` |
+| **tailwindcss** (v4) | Framework CSS utilitaire. Classes utilitaires mappées sur les tokens CSS (`bg-primary`, `text-primary`, etc.) |
 | **@tailwindcss/postcss** | Plugin PostCSS pour Tailwind v4. Transforme les classes Tailwind en CSS final au build |
 | **eslint** | Linter JavaScript. Détecte les erreurs de code, variables inutilisées, imports manquants |
 | **eslint-config-next** | Configuration ESLint spécifique à Next.js. Règles pour les bonnes pratiques Next (Image, Link, etc.) |
