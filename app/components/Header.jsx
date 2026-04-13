@@ -31,7 +31,7 @@ const NAV_LINKS = [
 ];
 
 const LOCATION_LINKS = [
-  { href: '/map', label: 'Où nous trouver', Icon: Map },
+  { href: '/map', label: "L'Épicerie", Icon: Map },
 ];
 
 const ACCOUNT_LINKS = [

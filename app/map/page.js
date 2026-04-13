@@ -1,11 +1,14 @@
-import { MapPin } from 'lucide-react';
+import { MapPin, Navigation } from 'lucide-react';
+
+const LAT = 46.4792;
+const LON = 6.8417;
 
 export default function MapPage() {
   return (
     <main className="relative max-w-md mx-auto w-full bg-app-bg shadow-2xl border-x border-border-light overflow-hidden h-full">
       <iframe
         className="w-full h-full border-none"
-        src="https://www.openstreetmap.org/export/embed.html?bbox=6.841,46.470,6.861,46.484&layer=mapnik&marker=46.477,6.851"
+        src={`https://www.openstreetmap.org/export/embed.html?bbox=6.832,46.472,6.852,46.486&layer=mapnik&marker=${LAT},${LON}`}
       />
       <div className="absolute bottom-10 left-4 right-4 bg-card-bg p-5 rounded-3xl shadow-2xl border border-border-light z-20">
         <div className="flex items-start gap-4">
@@ -21,13 +24,26 @@ export default function MapPage() {
             </div>
           </div>
         </div>
+
+        {/* Navigation — HERE WeGo (souverain européen) en priorité */}
         <a
-          href="https://www.google.com/maps/dir/?api=1&destination=Route+de+Ch%C3%A2tel-St-Denis+38+1805+Jongny"
+          href={`https://wego.here.com/directions/drive/mylocation/${LAT},${LON}`}
           target="_blank"
           rel="noreferrer"
-          className="w-full mt-4 bg-border-light text-text-primary py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-primary hover:text-white transition-all active:scale-95"
+          className="w-full mt-4 bg-primary text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:brightness-110 transition-all active:scale-95"
         >
-          Y aller avec Google Maps
+          <Navigation size={16} />
+          Y aller avec HERE WeGo
+        </a>
+
+        {/* Fallback Google Maps */}
+        <a
+          href={`https://www.google.com/maps/dir/?api=1&destination=${LAT},${LON}`}
+          target="_blank"
+          rel="noreferrer"
+          className="w-full mt-2 bg-border-light text-text-muted py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-primary hover:text-white transition-all active:scale-95"
+        >
+          Ou via Google Maps
         </a>
       </div>
     </main>
