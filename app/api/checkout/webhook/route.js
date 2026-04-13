@@ -34,6 +34,7 @@ export async function POST(request) {
 
         const receipt = items.map(i => `${i.name} x${i.qty}`).join(', ');
         const salePrice = Math.round(Number(transaction.amount) / 100 * 100);
+        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
         const { error: saleError } = await getSupabaseAdmin()
           .from(SALES_TABLE)
           .insert({
@@ -42,6 +43,8 @@ export async function POST(request) {
             user_id: metadata.user_id || null,
             receipt,
             price: salePrice,
+            items_json: items,
+            expires_at: expiresAt,
           });
 
         if (saleError) {
@@ -87,6 +90,7 @@ export async function POST(request) {
 
         const receipt = items.map(i => `${i.name} x${i.qty}`).join(', ');
         const salePrice = Math.round(Number(payment.amount.value) * 100);
+        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
         const { error: saleError } = await getSupabaseAdmin()
           .from(SALES_TABLE)
           .insert({
@@ -95,6 +99,8 @@ export async function POST(request) {
             user_id: payment.metadata.user_id || null,
             receipt,
             price: salePrice,
+            items_json: items,
+            expires_at: expiresAt,
           });
 
         if (saleError) {

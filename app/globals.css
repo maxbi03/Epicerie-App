@@ -44,3 +44,31 @@
 .animate-fade-in {
   animation: fadeIn 0.2s ease-out;
 }
+
+/* ── Impression / PDF (page reçu) ── */
+@media print {
+  /* Cache tout sauf le ticket */
+  body > * { display: none !important; }
+  .receipt-wrapper { display: block !important; }
+
+  body { background: white !important; }
+
+  .no-print { display: none !important; }
+
+  .receipt-wrapper {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .receipt-paper {
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    max-width: 300px !important;
+    width: 100%;
+  }
+}

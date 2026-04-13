@@ -7,7 +7,7 @@ import {
   User, Camera, Trash2, Check, ChevronRight,
   MapPin, Phone, Mail, Lock, AlertTriangle, Moon, Sun,
   ShieldCheck, ShieldAlert, Eye, EyeOff, LogOut,
-  Bookmark,
+  Bookmark, Receipt,
 } from 'lucide-react';
 import { getStrength, STRENGTH_COLORS, STRENGTH_LABELS } from '../lib/password';
 
@@ -709,13 +709,19 @@ export default function ProfilPage() {
         </button>
       </Section>
 
-      {/* ── Mes listes ───────────────────────────────────────────────────── */}
+      {/* ── Courses ───────────────────────────────────────────────────── */}
       <Section title="Courses">
         <Row
           icon={Bookmark}
           label="Mes listes sauvegardées"
           value={listsCount !== null ? `${listsCount} / 5 liste${listsCount > 1 ? 's' : ''}` : '…'}
           onClick={() => router.push('/listes')}
+        />
+        <Row
+          icon={Receipt}
+          label="Mes reçus"
+          value="30 derniers jours"
+          onClick={() => router.push('/recus')}
         />
       </Section>
 
