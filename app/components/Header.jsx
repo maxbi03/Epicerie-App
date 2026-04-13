@@ -81,7 +81,7 @@ export default function Header() {
     router.push('/');
   }
 
-  if (pathname === '/' || pathname === '/inscription' || pathname === '/reset') {
+  if (pathname === '/') {
     return null;
   }
 

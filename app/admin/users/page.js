@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Users, Phone, Mail, MapPin, CheckCircle2, XCircle, Search, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { Users, Phone, Mail, MapPin, CheckCircle2, XCircle, Search, ChevronDown, ChevronUp, Loader2, RotateCcw } from 'lucide-react';
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState([]);
@@ -10,6 +10,7 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
   const [expandedId, setExpandedId] = useState(null);
   const [sortBy, setSortBy] = useState('created_at');
+  const [resettingId, setResettingId] = useState(null);
   const searchParams = useSearchParams();
   const highlightId = searchParams.get('highlight');
 
@@ -54,6 +55,22 @@ export default function AdminUsersPage() {
   function formatMoney(cents) {
     if (!cents && cents !== 0) return '—';
     return (cents / 100).toFixed(2) + ' CHF';
+  }
+
+  async function resetSpent(userId) {
+    if (!confirm('Remettre total_spent à 0 pour cet utilisateur ?')) return;
+    setResettingId(userId);
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reset_spent', userId }),
+      });
+      if (res.ok) {
+        setUsers(prev => prev.map(u => u.id === userId ? { ...u, total_spent: 0 } : u));
+      }
+    } catch (e) { console.error(e); }
+    finally { setResettingId(null); }
   }
 
   if (loading) {
@@ -203,6 +220,25 @@ export default function AdminUsersPage() {
                   <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg ${user.address_verified ? 'bg-green-100 text-green-700' : 'bg-amber-50 text-amber-600'}`}>
                     Adresse {user.address_verified ? 'vérifiée' : 'non vérifiée'}
                   </span>
+                </div>
+
+                {/* Total dépensé + reset */}
+                <div className="flex items-center justify-between pt-1 border-t border-border-light">
+                  <div>
+                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Total dépensé</p>
+                    <p className="text-sm font-black text-text-primary">{formatMoney(user.total_spent)}</p>
+                  </div>
+                  <button
+                    onClick={() => resetSpent(user.id)}
+                    disabled={resettingId === user.id}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-orange-50 text-orange-600 text-[10px] font-black uppercase tracking-wider active:scale-95 transition-all disabled:opacity-50"
+                  >
+                    {resettingId === user.id
+                      ? <Loader2 size={12} className="animate-spin" />
+                      : <RotateCcw size={12} />
+                    }
+                    Reset dépenses
+                  </button>
                 </div>
               </div>
             )}
