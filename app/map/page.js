@@ -1,9 +1,41 @@
-import { MapPin, Navigation } from 'lucide-react';
+'use client';
+
+import { useState } from 'react';
+import { MapPin, Navigation, Loader2 } from 'lucide-react';
 
 const LAT = 46.4792;
 const LON = 6.8417;
 
 export default function MapPage() {
+  const [geoStatus, setGeoStatus] = useState('idle'); // idle | loading | error
+
+  function openHereWeGo() {
+    if (!navigator.geolocation) {
+      // Pas de géoloc dispo → ouvrir sans position de départ
+      window.open(`https://wego.here.com/directions/drive/mylocation/${LAT},${LON}`, '_blank', 'noreferrer');
+      return;
+    }
+    setGeoStatus('loading');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGeoStatus('idle');
+        const { latitude, longitude } = pos.coords;
+        window.open(
+          `https://wego.here.com/directions/drive/${latitude},${longitude}/${LAT},${LON}`,
+          '_blank',
+          'noreferrer'
+        );
+      },
+      () => {
+        // Permission refusée ou erreur → fallback sans position
+        setGeoStatus('error');
+        window.open(`https://wego.here.com/directions/drive/mylocation/${LAT},${LON}`, '_blank', 'noreferrer');
+        setTimeout(() => setGeoStatus('idle'), 3000);
+      },
+      { timeout: 8000, maximumAge: 60000 }
+    );
+  }
+
   return (
     <main className="relative max-w-md mx-auto w-full bg-app-bg shadow-2xl border-x border-border-light overflow-hidden h-full">
       <iframe
@@ -25,16 +57,21 @@ export default function MapPage() {
           </div>
         </div>
 
-        {/* Navigation — HERE WeGo (souverain européen) en priorité */}
-        <a
-          href={`https://wego.here.com/directions/drive/mylocation/${LAT},${LON}`}
-          target="_blank"
-          rel="noreferrer"
-          className="w-full mt-4 bg-primary text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:brightness-110 transition-all active:scale-95"
+        {/* Navigation HERE WeGo — départ depuis position GPS actuelle */}
+        <button
+          onClick={openHereWeGo}
+          disabled={geoStatus === 'loading'}
+          className="w-full mt-4 bg-primary text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:brightness-110 transition-all active:scale-95 disabled:opacity-70"
         >
-          <Navigation size={16} />
-          Y aller avec HERE WeGo
-        </a>
+          {geoStatus === 'loading' ? (
+            <><Loader2 size={16} className="animate-spin" /> Localisation…</>
+          ) : (
+            <><Navigation size={16} /> Y aller avec HERE WeGo</>
+          )}
+        </button>
+        {geoStatus === 'error' && (
+          <p className="text-[10px] text-text-muted text-center mt-1">Position non disponible — ouverture sans point de départ</p>
+        )}
 
         {/* Fallback Google Maps */}
         <a
