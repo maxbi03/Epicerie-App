@@ -16,7 +16,7 @@ function shortDate(iso) {
   const d = new Date(iso);
   const now = new Date();
   const diff = now - d;
-  if (diff < 60000) return 'À l'instant';
+  if (diff < 60000) return "À l'instant";
   if (diff < 3600000) return `Il y a ${Math.floor(diff / 60000)} min`;
   if (diff < 86400000) return `Il y a ${Math.floor(diff / 3600000)} h`;
   return d.toLocaleDateString('fr-CH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
