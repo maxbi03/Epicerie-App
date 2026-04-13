@@ -317,7 +317,7 @@ export default function HomePage() {
       {/* ── Bouton flottant Signaler ── */}
       <button
         onClick={openReport}
-        className="absolute bottom-5 right-4 size-11 rounded-full bg-card-bg border border-border-light shadow-md flex items-center justify-center text-text-muted active:scale-90 transition-all hover:border-red-200 hover:text-red-400 z-10"
+        className="absolute bottom-5 right-4 size-11 rounded-full bg-red-500 shadow-lg shadow-red-500/30 flex items-center justify-center text-white active:scale-90 transition-all z-10"
         aria-label="Signaler un problème"
       >
         <Flag size={16} />
