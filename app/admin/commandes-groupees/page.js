@@ -447,7 +447,8 @@ export default function CommandesGroupeesPage() {
           Modal — Nouvelle commande
       ══════════════════════════════════════ */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex flex-col" style={{ background: 'rgba(0,0,0,0.5)' }}>
+        <div className="fixed inset-0 z-50" style={{ background: 'rgba(0,0,0,0.5)' }}>
+          <div className="h-full max-w-md mx-auto flex flex-col">
           <div className="flex-1" onClick={() => setShowModal(false)} />
 
           <div className="bg-app-bg rounded-t-3xl max-h-[92vh] flex flex-col animate-slide-up">
@@ -593,6 +594,7 @@ export default function CommandesGroupeesPage() {
                 </button>
               )}
             </div>
+          </div>
           </div>
         </div>
       )}
