@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Flag, ShoppingBasket, Trash2, Wind, HelpCircle, Check, X, Loader2, Clock, AlertTriangle } from 'lucide-react';
+import { Flag, ShoppingBasket, Trash2, Wind, HelpCircle, Wrench, Check, X, Loader2, Clock, AlertTriangle } from 'lucide-react';
 
 const TYPE_META = {
   product_missing: { label: 'Produit manquant', Icon: ShoppingBasket, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20', pill: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' },
   product_damaged: { label: 'Produit abîmé / échu', Icon: Trash2, color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-900/20', pill: 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300' },
   store_dirty:     { label: 'Magasin sale', Icon: Wind, color: 'text-sky-600', bg: 'bg-sky-50 dark:bg-sky-900/20', pill: 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300' },
+  technical:       { label: 'Problème technique', Icon: Wrench, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-900/20', pill: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' },
   other:           { label: 'Autre problème', Icon: HelpCircle, color: 'text-text-muted', bg: 'bg-app-bg', pill: 'bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300' },
 };
 

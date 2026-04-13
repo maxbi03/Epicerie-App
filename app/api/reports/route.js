@@ -2,7 +2,7 @@ import { getSupabaseAdmin } from '../../lib/supabaseServer';
 import { NextResponse } from 'next/server';
 import { requireAuth } from '../../lib/auth';
 
-const TYPES = ['product_missing', 'product_damaged', 'store_dirty', 'other'];
+const TYPES = ['product_missing', 'product_damaged', 'store_dirty', 'technical', 'other'];
 
 export async function POST(request) {
   // Allow visitors (no auth required — anyone in the store can report)

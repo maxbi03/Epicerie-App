@@ -3,7 +3,7 @@
 import { STORE_LAT, STORE_LNG, DOOR_UNLOCK_RADIUS_M } from '../lib/config';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { MapPin, Lock, DoorOpen, Camera, Package, ChevronRight, Loader2, CheckCircle2, Phone, Newspaper, Flag, X, Send, ShoppingBasket, Trash2, Wind, HelpCircle } from 'lucide-react';
+import { MapPin, Lock, DoorOpen, Camera, Package, ChevronRight, Loader2, CheckCircle2, Phone, Newspaper, Flag, X, Send, ShoppingBasket, Trash2, Wind, HelpCircle, Wrench } from 'lucide-react';
 
 function haversine(lat1, lng1, lat2, lng2) {
   const R = 6371000;
@@ -117,6 +117,7 @@ export default function HomePage() {
     { key: 'product_missing', label: 'Produit manquant', Icon: ShoppingBasket, color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-700' },
     { key: 'product_damaged', label: 'Produit abîmé / échu', Icon: Trash2, color: 'text-red-500', bg: 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-700' },
     { key: 'store_dirty',     label: 'Magasin sale', Icon: Wind, color: 'text-sky-600', bg: 'bg-sky-50 border-sky-200 dark:bg-sky-900/20 dark:border-sky-700' },
+    { key: 'technical',       label: 'Problème technique', Icon: Wrench, color: 'text-violet-600', bg: 'bg-violet-50 border-violet-200 dark:bg-violet-900/20 dark:border-violet-700' },
     { key: 'other',           label: 'Autre problème', Icon: HelpCircle, color: 'text-text-muted', bg: 'bg-card-bg border-border-light' },
   ];
 
