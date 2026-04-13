@@ -33,6 +33,7 @@ export async function POST(request) {
         console.log('Stock update result:', result);
 
         const receipt = items.map(i => `${i.name} x${i.qty}`).join(', ');
+        const salePrice = Math.round(Number(transaction.amount) / 100 * 100);
         const { error: saleError } = await getSupabaseAdmin()
           .from(SALES_TABLE)
           .insert({
@@ -40,13 +41,23 @@ export async function POST(request) {
             client_name: metadata.client_name || null,
             user_id: metadata.user_id || null,
             receipt,
-            price: Math.round(Number(transaction.amount) / 100 * 100),
+            price: salePrice,
           });
 
         if (saleError) {
           console.error('Failed to record sale:', saleError.message);
         } else {
           console.log('Sale recorded via Payrexx webhook');
+        }
+
+        // Incrémenter total_spent sur l'utilisateur
+        if (metadata.user_id) {
+          const supabase = getSupabaseAdmin();
+          const { data: usr } = await supabase
+            .from('users').select('total_spent').eq('id', metadata.user_id).single();
+          await supabase.from('users')
+            .update({ total_spent: (usr?.total_spent || 0) + salePrice })
+            .eq('id', metadata.user_id);
         }
       }
 
@@ -75,6 +86,7 @@ export async function POST(request) {
         console.log('Stock update result:', result);
 
         const receipt = items.map(i => `${i.name} x${i.qty}`).join(', ');
+        const salePrice = Math.round(Number(payment.amount.value) * 100);
         const { error: saleError } = await getSupabaseAdmin()
           .from(SALES_TABLE)
           .insert({
@@ -82,13 +94,23 @@ export async function POST(request) {
             client_name: payment.metadata.client_name || null,
             user_id: payment.metadata.user_id || null,
             receipt,
-            price: Math.round(Number(payment.amount.value) * 100),
+            price: salePrice,
           });
 
         if (saleError) {
           console.error('Failed to record sale:', saleError.message);
         } else {
           console.log('Sale recorded:', paymentId);
+        }
+
+        // Incrémenter total_spent sur l'utilisateur
+        if (payment.metadata.user_id) {
+          const supabase = getSupabaseAdmin();
+          const { data: usr } = await supabase
+            .from('users').select('total_spent').eq('id', payment.metadata.user_id).single();
+          await supabase.from('users')
+            .update({ total_spent: (usr?.total_spent || 0) + salePrice })
+            .eq('id', payment.metadata.user_id);
         }
       }
 

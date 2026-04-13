@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Newspaper, Camera, ShoppingCart, Package, User, LayoutDashboard, LogOut, Menu } from 'lucide-react';
+import { Home, Newspaper, Camera, ShoppingCart, Package, Map, User, LayoutDashboard, LogOut, Menu } from 'lucide-react';
 import { getBasket, clearBasket } from '../lib/basket';
 
 const PAGE_TITLES = {
@@ -11,7 +11,7 @@ const PAGE_TITLES = {
   '/news': 'Le Fil Rouge',
   '/scanner': 'Scanner',
   '/panier': 'Mon Panier',
-  '/map': 'Carte des épiceries',
+  '/map': 'Où nous trouver',
   '/stock': 'Liste des produits',
   '/profil': 'Mon Profil',
   '/admin': 'Administration',
@@ -28,6 +28,10 @@ const NAV_LINKS = [
   { href: '/scanner', label: 'Scanner un produit', Icon: Camera },
   { href: '/panier', label: 'Mon Panier', Icon: ShoppingCart },
   { href: '/stock', label: 'Liste des produits', Icon: Package },
+];
+
+const LOCATION_LINKS = [
+  { href: '/map', label: 'Où nous trouver', Icon: Map },
 ];
 
 const ACCOUNT_LINKS = [
@@ -81,7 +85,7 @@ export default function Header() {
     router.push('/');
   }
 
-  if (pathname === '/' || pathname === '/inscription' || pathname === '/reset') {
+  if (pathname === '/') {
     return null;
   }
 
@@ -131,6 +135,17 @@ export default function Header() {
 
         <div className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
           {NAV_LINKS.map(link => (
+            <Link key={link.href} href={link.href} onClick={closeMenu}
+              className={`flex items-center gap-4 p-4 rounded-2xl transition-colors text-text-primary
+                ${pathname === link.href ? 'bg-primary-light text-primary' : 'hover:bg-border-light'}`}>
+              <link.Icon size={20} />
+              <span className="font-bold text-sm">{link.label}</span>
+            </Link>
+          ))}
+
+          <div className="py-4 px-4 text-[10px] font-black text-text-muted uppercase tracking-widest">Où nous trouver</div>
+
+          {LOCATION_LINKS.map(link => (
             <Link key={link.href} href={link.href} onClick={closeMenu}
               className={`flex items-center gap-4 p-4 rounded-2xl transition-colors text-text-primary
                 ${pathname === link.href ? 'bg-primary-light text-primary' : 'hover:bg-border-light'}`}>
