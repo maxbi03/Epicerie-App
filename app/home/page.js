@@ -178,7 +178,7 @@ export default function HomePage() {
 
   return (
     <>
-    <main className="h-full max-w-md mx-auto w-full flex flex-col px-4 pt-4 pb-4 overflow-hidden">
+    <main className="relative h-full max-w-md mx-auto w-full flex flex-col px-4 pt-4 pb-4 overflow-hidden">
 
       {/* ── Salutation ── */}
       <div className="shrink-0 mb-4">
