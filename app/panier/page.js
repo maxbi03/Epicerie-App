@@ -2,16 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ShoppingCart, Minus, Plus } from 'lucide-react';
+import { ShoppingCart, Minus, Plus, Lock } from 'lucide-react';
 import { getBasket, saveBasket } from '../lib/basket';
 
 export default function PanierPage() {
   const [basket, setBasket] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isVisitor, setIsVisitor] = useState(false);
 
   useEffect(() => {
     setBasket(getBasket());
+    setIsVisitor(sessionStorage.getItem('app_mode') === 'visitor');
   }, []);
 
   function updateBasket(newBasket) {
@@ -165,17 +167,24 @@ export default function PanierPage() {
           </div>
         )}
         <div className="rounded-3xl p-1 border border-gray-100 dark:border-white/10">
-          <button
-            onClick={handleCheckout}
-            disabled={groupedList.length === 0 || isLoading}
-            className={`w-full py-4 rounded-2xl font-black text-sm uppercase tracking-[0.1em] transition-all
-              ${groupedList.length === 0 || isLoading
-                ? 'bg-gray-200 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
-                : 'bg-primary text-white hover:brightness-105 active:scale-[0.98]'
-              }`}
-          >
-            {isLoading ? 'Redirection...' : groupedList.length === 0 ? 'Panier vide' : `Payer ${total.toFixed(2)} CHF`}
-          </button>
+          {isVisitor ? (
+            <Link href="/" className="w-full py-4 rounded-2xl font-black text-sm uppercase tracking-[0.1em] bg-primary/10 text-primary flex items-center justify-center gap-2 active:scale-[0.98] transition-all">
+              <Lock size={16} />
+              Connexion requise
+            </Link>
+          ) : (
+            <button
+              onClick={handleCheckout}
+              disabled={groupedList.length === 0 || isLoading}
+              className={`w-full py-4 rounded-2xl font-black text-sm uppercase tracking-[0.1em] transition-all
+                ${groupedList.length === 0 || isLoading
+                  ? 'bg-gray-200 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
+                  : 'bg-primary text-white hover:brightness-105 active:scale-[0.98]'
+                }`}
+            >
+              {isLoading ? 'Redirection...' : groupedList.length === 0 ? 'Panier vide' : `Payer ${total.toFixed(2)} CHF`}
+            </button>
+          )}
         </div>
       </div>
 

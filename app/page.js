@@ -313,7 +313,7 @@ export default function IndexPage() {
         <div className="flex justify-end mt-4">
           <button
             onClick={() => { sessionStorage.setItem('app_mode', 'visitor'); router.push('/home'); }}
-            className="text-sm font-bold text-green-600 px-4 py-2 rounded-full border border-green-200 hover:bg-green-50 transition-colors flex items-center gap-2"
+            className="text-sm font-bold text-primary px-4 py-2 rounded-full border border-primary/30 hover:bg-primary-light transition-colors flex items-center gap-2"
           >
             Mode Visiteur →
           </button>

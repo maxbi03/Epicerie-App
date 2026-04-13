@@ -254,8 +254,19 @@ export default function HomePage() {
           </Link>
         </div>
 
-        {/* ── 20% — ACTUALITÉ ── */}
-        {latestNews ? (
+        {/* ── 20% — ACTUALITÉ (membres) / CTA connexion (visiteurs) ── */}
+        {isVisitor ? (
+          <Link href="/" className="flex-[1] min-h-0 flex items-center gap-4 bg-primary/5 rounded-2xl border border-primary/20 px-4 active:scale-[0.98] transition-all">
+            <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <Lock size={18} className="text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-black text-sm text-text-primary leading-tight">Créer un compte</p>
+              <p className="text-xs text-text-muted">Accédez aux actualités et plus</p>
+            </div>
+            <ChevronRight size={16} className="text-primary/50 shrink-0" />
+          </Link>
+        ) : latestNews ? (
           <Link href="/news" className="flex-[1] min-h-0 flex items-center bg-card-bg rounded-2xl border border-border-light overflow-hidden active:scale-[0.98] transition-all">
             {latestNews.image1
               ? <img src={latestNews.image1} className="h-full w-24 object-cover shrink-0" alt="" />
