@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Newspaper, Camera, ShoppingCart, Package, Map, User, LayoutDashboard, LogOut, Menu } from 'lucide-react';
+import { Home, Newspaper, Camera, ShoppingCart, Package, Map, User, LayoutDashboard, LogOut, Menu, Boxes } from 'lucide-react';
 import { getBasket, clearBasket } from '../lib/basket';
 
 const PAGE_TITLES = {
@@ -142,6 +142,15 @@ export default function Header() {
               <span className="font-bold text-sm">{link.label}</span>
             </Link>
           ))}
+
+          {isAdminUser && (
+            <Link href="/admin/commandes-groupees" onClick={closeMenu}
+              className={`flex items-center gap-4 p-4 rounded-2xl transition-colors text-text-primary
+                ${pathname === '/admin/commandes-groupees' ? 'bg-primary-light text-primary' : 'hover:bg-border-light'}`}>
+              <Boxes size={20} />
+              <span className="font-bold text-sm">Commandes groupées</span>
+            </Link>
+          )}
 
           <div className="py-4 px-4 text-[10px] font-black text-text-muted uppercase tracking-widest">Où nous trouver</div>
 
