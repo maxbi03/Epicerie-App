@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Tag, Newspaper, Users, Receipt, DoorOpen, Flag } from 'lucide-react';
+import { LayoutDashboard, Tag, Newspaper, Users, Receipt, DoorOpen, Flag, ShoppingCart } from 'lucide-react';
 
 const TABS = [
   { href: '/admin', label: 'Tableau de bord', Icon: LayoutDashboard },
@@ -13,6 +13,7 @@ const TABS = [
   { href: '/admin/ventes', label: 'Ventes', Icon: Receipt },
   { href: '/admin/traffic', label: 'Traffic', Icon: DoorOpen },
   { href: '/admin/signalements', label: 'Signalements', Icon: Flag },
+  { href: '/admin/commandes-groupees', label: 'Cmd. groupées', Icon: ShoppingCart },
 ];
 
 export default function AdminLayout({ children }) {

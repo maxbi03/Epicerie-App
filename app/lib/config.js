@@ -11,6 +11,7 @@ export const PRODUCTS_TABLE = 'product_list';
 export const PRODUCTS_ID = 'id';
 export const SALES_TABLE = 'sales';
 export const NEWS_TABLE = 'news';
+export const BULK_ORDERS_TABLE = 'bulk_orders';
 
 // ─── Passerelle de paiement ───
 // 'mollie' ou 'payrexx'
