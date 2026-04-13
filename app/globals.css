@@ -60,18 +60,21 @@
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    padding: 24px;
-    display: flex;
-    justify-content: center;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100%;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block;
   }
 
   .receipt-paper {
     border: none !important;
     box-shadow: none !important;
     border-radius: 0 !important;
-    max-width: 300px !important;
-    width: 100%;
+    max-width: 100% !important;
+    width: 100% !important;
     background: white !important;
+    margin: 0 !important;
   }
 }
