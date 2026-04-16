@@ -50,28 +50,27 @@ export default function HomePage() {
       .catch(() => {});
 
     if (navigator.geolocation) {
-      const watchId = navigator.geolocation.watchPosition(
-        (pos) => {
-          lastCoords.current = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-          const dist = haversine(pos.coords.latitude, pos.coords.longitude, STORE_LAT, STORE_LNG);
-          setDistance(Math.round(dist));
-          setIsNearby(dist <= DOOR_UNLOCK_RADIUS_M);
-        },
-        (err) => {
-          if (err.code !== 1) {
-            navigator.geolocation.getCurrentPosition(
-              (pos) => {
-                const dist = haversine(pos.coords.latitude, pos.coords.longitude, STORE_LAT, STORE_LNG);
-                setDistance(Math.round(dist));
-                setIsNearby(dist <= DOOR_UNLOCK_RADIUS_M);
-              },
-              () => {},
-              { enableHighAccuracy: false, timeout: 10000, maximumAge: 30000 }
-            );
-          }
-        },
-        { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+      const updatePosition = (pos) => {
+        lastCoords.current = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        const dist = haversine(pos.coords.latitude, pos.coords.longitude, STORE_LAT, STORE_LNG);
+        setDistance(Math.round(dist));
+        setIsNearby(dist <= DOOR_UNLOCK_RADIUS_M);
+      };
+
+      // 1. Position instantanée depuis le cache du navigateur (même ancienne)
+      navigator.geolocation.getCurrentPosition(
+        updatePosition,
+        () => {},
+        { enableHighAccuracy: false, timeout: 3000, maximumAge: Infinity }
       );
+
+      // 2. Surveillance continue réseau/WiFi pour maintenir à jour
+      const watchId = navigator.geolocation.watchPosition(
+        updatePosition,
+        () => {},
+        { enableHighAccuracy: false, maximumAge: 15000, timeout: 20000 }
+      );
+
       return () => navigator.geolocation.clearWatch(watchId);
     }
   }, []);
@@ -81,11 +80,22 @@ export default function HomePage() {
     setDoorStatus('locating');
     setDoorError('');
     try {
-      const pos = lastCoords.current;
+      // Utiliser la position en cache, sinon en demander une maintenant
+      let pos = lastCoords.current;
       if (!pos) {
-        setDoorStatus('error');
-        setDoorError('Position GPS non disponible. Autorisez la localisation et réessayez.');
-        return;
+        pos = await new Promise((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(
+            (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+            reject,
+            { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
+          )
+        ).catch(() => null);
+        if (!pos) {
+          setDoorStatus('error');
+          setDoorError('Position non disponible. Autorisez la localisation et réessayez.');
+          return;
+        }
+        lastCoords.current = pos;
       }
       const dist = haversine(pos.lat, pos.lng, STORE_LAT, STORE_LNG);
       setDistance(Math.round(dist));
@@ -110,6 +120,14 @@ export default function HomePage() {
       setDoorError(err.message);
     }
   }
+
+  // Reset automatique de l'état error après 5s
+  useEffect(() => {
+    if (doorStatus === 'error') {
+      const t = setTimeout(() => { setDoorStatus('idle'); setDoorError(''); }, 5000);
+      return () => clearTimeout(t);
+    }
+  }, [doorStatus]);
 
   const canUnlock = !isVisitor && phoneVerified && isNearby;
 

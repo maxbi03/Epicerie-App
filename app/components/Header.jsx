@@ -45,7 +45,7 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const title = PAGE_TITLES[pathname] || "L'Épicerie";
+  const title = PAGE_TITLES[pathname] || "EPICO";
 
   useEffect(() => {
     setMenuOpen(false);
