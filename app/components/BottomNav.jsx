@@ -3,20 +3,27 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Home, Package, ScanLine, ShoppingCart, User } from 'lucide-react';
+import { Home, Package, ScanLine, ShoppingCart, User, LayoutDashboard } from 'lucide-react';
 import { getBasket } from '../lib/basket';
-
-const TABS = [
-  { href: '/home',    label: 'Accueil',  Icon: Home },
-  { href: '/stock',   label: 'Produits', Icon: Package },
-  { href: '/scanner', label: null,       Icon: ScanLine, center: true },
-  { href: '/panier',  label: 'Panier',   Icon: ShoppingCart },
-  { href: '/profil',  label: 'Profil',   Icon: User },
-];
 
 export default function BottomNav() {
   const pathname = usePathname();
   const [cartCount, setCartCount] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.user?.role === 'admin') setIsAdmin(true); });
+  }, []);
+
+  const TABS = [
+  { href: '/home',    label: 'Accueil',  Icon: Home },
+  { href: '/stock',   label: 'Produits', Icon: Package },
+  { href: '/scanner', label: 'Scanner',  Icon: ScanLine},
+  { href: '/panier',  label: 'Panier',   Icon: ShoppingCart },
+  { href: '/profil',  label: 'Profil',   Icon: User },
+  ];
 
   useEffect(() => {
     const update = () => setCartCount(getBasket().length);
@@ -36,29 +43,17 @@ export default function BottomNav() {
       className="fixed bottom-0 inset-x-0 z-50 flex justify-center pointer-events-none"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <nav className="pointer-events-auto mb-3 flex items-end gap-0.5 bg-white/80 backdrop-blur-2xl border border-black/[0.07] shadow-[0_8px_40px_rgba(0,0,0,0.18)] rounded-[26px] px-2 py-2">
+      <nav className="pointer-events-auto mb-3 flex items-end gap-0.5 backdrop-blur-2xl backdrop-saturate-150 rounded-[22px] px-3 py-3 border border-white/50 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.8),inset_0_-1px_0_0_rgba(255,255,255,0.2),inset_1px_0_0_0_rgba(255,255,255,0.3),inset_-1px_0_0_0_rgba(255,255,255,0.3),0_8px_32px_-4px_rgba(0,0,0,0.12),0_2px_8px_-2px_rgba(0,0,0,0.08)]">
         {TABS.map(({ href, label, Icon, center }) => {
           const isActive = pathname === href || (href !== '/home' && pathname.startsWith(href + '/'));
           const isCart = href === '/panier';
-
-          if (center) {
-            return (
-              <Link
-                key={href}
-                href={href}
-                className="relative -mt-5 mx-2 size-[52px] rounded-[18px] bg-primary flex items-center justify-center shadow-lg shadow-primary/40 active:scale-90 transition-all duration-150"
-              >
-                <Icon size={22} className="text-white" strokeWidth={2.2} />
-              </Link>
-            );
-          }
 
           return (
             <Link
               key={href}
               href={href}
-              className={`relative flex flex-col items-center gap-0.5 px-4 py-1.5 min-w-[58px] rounded-2xl transition-all duration-150 active:scale-90 ${
-                isActive ? 'text-primary' : 'text-gray-400'
+              className={`relative flex flex-col items-center gap-0.5 px-4 py-2 min-w-[58px] rounded-2xl transition-all duration-150 active:scale-90 ${
+                isActive ? 'text-primary bg-primary-light' : 'text-gray-400'
               }`}
             >
               <div className="relative">
@@ -70,7 +65,7 @@ export default function BottomNav() {
                 )}
               </div>
               {label && (
-                <span className={`text-[10px] font-bold leading-none ${isActive ? 'opacity-100' : 'opacity-50'}`}>
+                <span className={`pt-1 text-[10px] font-bold leading-none ${isActive ? 'opacity-100' : 'opacity-50'}`}>
                   {label}
                 </span>
               )}

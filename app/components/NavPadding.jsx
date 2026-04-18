@@ -1,14 +1,10 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
-
-// Réserve l'espace sous le contenu pour que la bottom nav ne le cache pas
+// La bottom nav se superpose à la page (pas de padding réservé).
+// Les pages qui ont besoin d'éviter le recouvrement peuvent ajouter leur propre pb.
 export default function NavPadding({ children }) {
-  const pathname = usePathname();
-  const hasNav = pathname !== '/' && !pathname.startsWith('/admin');
-
   return (
-    <div className={`h-full ${hasNav ? 'pb-24' : ''}`}>
+    <div className="h-full">
       {children}
     </div>
   );

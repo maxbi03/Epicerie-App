@@ -3,7 +3,10 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ChevronLeft, LayoutDashboard } from 'lucide-react';
+import { ChevronLeft, LayoutDashboard, Clock4 } from 'lucide-react';
+import { Righteous } from 'next/font/google';
+
+const righteous = Righteous({ subsets: ['latin'], weight: '400' });
 
 const PAGE_TITLES = {
   '/news':    'Le Fil Rouge',
@@ -57,7 +60,10 @@ export default function Header() {
       </div>
 
       {/* Centre : titre — toujours centré sur la page en absolu */}
-      <h1 className="absolute left-1/2 -translate-x-1/2 text-base font-black tracking-tight text-text-primary pointer-events-none">{title}</h1>
+      <div className='flex justify-center absolute left-1/2 -translate-x-1/2 items-center'>
+        <span className={`text-base font-black tracking-tight text-text-primary pointer-events-none ${righteous.className}`}>EPIC</span>
+        <Clock4 size={15}/>
+      </div>
 
       {/* Droite : admin */}
       <div className="flex justify-end">
