@@ -76,6 +76,15 @@ export default function Header() {
             <span className="text-xs font-bold text-primary">Admin</span>
           </Link>
         )}
+        {!isAdmin && (
+          <Link
+            href="/admin"
+            className="flex items-center gap-1.5 px-3 h-9 rounded-xl bg-primary/10 border border-primary/20 active:scale-90 transition-all"
+          >
+            <LayoutDashboard size={15} className="text-primary" />
+            <span className="text-xs font-bold text-primary">Admin</span>
+          </Link>
+        )}
       </div>
     </header>
   );
