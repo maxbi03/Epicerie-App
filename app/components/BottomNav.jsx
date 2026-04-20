@@ -33,10 +33,10 @@ export default function BottomNav() {
 
   return (
     <footer
-      className="shrink-0 w-full bg-card-bg border-t border-border-light no-print"
+      className="shrink-0 max-w-md mx-auto w-full bg-card-bg border-t border-border-light no-print"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <nav className="max-w-md mx-auto flex items-stretch">
+      <nav className="flex items-stretch">
         {TABS.map(({ href, label, Icon }) => {
           const isActive = pathname === href || (href !== '/home' && pathname.startsWith(href + '/'));
           const isCart = href === '/panier';
