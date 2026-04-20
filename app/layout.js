@@ -34,9 +34,7 @@ export default function RootLayout({ children }) {
       <body className={`${spaceGrotesk.className} bg-background-light antialiased h-dvh flex flex-col overflow-hidden`}>
         <Header />
         <main className="flex-1 overflow-hidden">
-          <NavPadding>
-            {children}
-          </NavPadding>
+          {children}
         </main>
         <BottomNav />
       </body>
