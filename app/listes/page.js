@@ -113,7 +113,7 @@ export default function ListesPage() {
 
   return (
     <>
-    <main className="max-w-md mx-auto px-5 pt-6 pb-24 h-full overflow-y-auto">
+    <main className="px-5 pt-6 pb-4 h-full overflow-y-auto">
 
       {/* En-tête */}
       <div className="flex items-center justify-between mb-6">

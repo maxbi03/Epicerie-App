@@ -5,7 +5,7 @@ const LON = 6.8417;
 
 export default function MapPage() {
   return (
-    <main className="relative max-w-md mx-auto w-full bg-app-bg shadow-2xl border-x border-border-light overflow-hidden h-full">
+    <main className="relative w-full bg-app-bg overflow-hidden h-full">
       <iframe
         className="w-full h-full border-none"
         src={`https://www.openstreetmap.org/export/embed.html?bbox=6.832,46.472,6.852,46.486&layer=mapnik&marker=${LAT},${LON}`}
