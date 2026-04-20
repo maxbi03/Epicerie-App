@@ -120,7 +120,7 @@ export default function PanierPage() {
   }
 
   return (
-    <main className="relative flex h-full max-w-md mx-auto flex-col bg-white dark:bg-gray-900 shadow-2xl overflow-hidden border-x border-gray-200 dark:border-white/10">
+    <main className="relative flex h-full max-w-md mx-auto flex-col bg-white dark:bg-gray-900 shadow-2xl overflow-hidden border-x border-gray-200 dark:border-white/10 pb-24">
 
       <div className="px-6 pt-6 pb-2 flex justify-between items-center shrink-0">
         <h2 className="text-2xl font-bold tracking-tight dark:text-white">Mon Panier</h2>
@@ -185,12 +185,6 @@ export default function PanierPage() {
 
       <div className="shrink-0 bg-white dark:bg-gray-900 px-6 pb-6 pt-4 border-t border-gray-100 dark:border-white/10">
         <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3">Résumé</h3>
-        <div className="bg-white dark:bg-white/5 rounded-2xl p-4 border border-gray-100 dark:border-white/5 mb-4">
-          <div className="flex justify-between text-sm font-bold dark:text-gray-300">
-            <span className="text-gray-400 uppercase text-[10px] tracking-widest">Total à payer</span>
-            <span>{total.toFixed(2)} CHF</span>
-          </div>
-        </div>
         {error && (
           <div className="mb-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
             <p className="text-xs text-red-600 dark:text-red-400 font-medium">{error}</p>

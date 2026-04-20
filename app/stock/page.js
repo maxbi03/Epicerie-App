@@ -49,15 +49,16 @@ export default function StockPage() {
       <main className="relative flex h-full max-w-md mx-auto flex-col overflow-hidden">
         <div className="px-5 pt-4 shrink-0">
 
+          {/*}
           <div className="flex justify-between items-end mb-6">
             <div>
               <h1 className="text-2xl font-bold text-text-primary">Stocks</h1>
-              <p className="text-sm text-text-secondary">Disponibilité en temps réel</p>
             </div>
             <span className="text-[9px] bg-card-bg border border-border-light px-2 py-1 rounded-lg font-black text-text-muted uppercase tracking-widest shadow-sm">
               Màj : En direct
             </span>
           </div>
+            */}
 
           <input
             type="text"
@@ -67,7 +68,7 @@ export default function StockPage() {
             className="w-full px-4 py-3 rounded-2xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white mb-4"
           />
 
-          <div className="flex gap-2 overflow-x-auto pb-4 mb-4">
+          <div className="flex gap-2 overflow-x-auto pb-0 mb-4">
             {getCategories(products).map(cat => (
               <button
                 key={cat}

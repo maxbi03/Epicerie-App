@@ -3,7 +3,7 @@
 import { STORE_LAT, STORE_LNG, DOOR_UNLOCK_RADIUS_M } from '../lib/config';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { MapPin, Lock, DoorOpen, Camera, Package, ChevronRight, Loader2, CheckCircle2, Phone, Newspaper, Flag, X, Send, ShoppingBasket, Trash2, Wind, HelpCircle, Wrench } from 'lucide-react';
+import { MapPin, Lock, DoorOpen, ChevronRight, Loader2, CheckCircle2, Phone, Newspaper, Flag, X, Send, ShoppingBasket, Trash2, Wind, HelpCircle, Wrench } from 'lucide-react';
 
 function haversine(lat1, lng1, lat2, lng2) {
   const R = 6371000;
@@ -50,28 +50,27 @@ export default function HomePage() {
       .catch(() => {});
 
     if (navigator.geolocation) {
-      const watchId = navigator.geolocation.watchPosition(
-        (pos) => {
-          lastCoords.current = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-          const dist = haversine(pos.coords.latitude, pos.coords.longitude, STORE_LAT, STORE_LNG);
-          setDistance(Math.round(dist));
-          setIsNearby(dist <= DOOR_UNLOCK_RADIUS_M);
-        },
-        (err) => {
-          if (err.code !== 1) {
-            navigator.geolocation.getCurrentPosition(
-              (pos) => {
-                const dist = haversine(pos.coords.latitude, pos.coords.longitude, STORE_LAT, STORE_LNG);
-                setDistance(Math.round(dist));
-                setIsNearby(dist <= DOOR_UNLOCK_RADIUS_M);
-              },
-              () => {},
-              { enableHighAccuracy: false, timeout: 10000, maximumAge: 30000 }
-            );
-          }
-        },
-        { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+      const updatePosition = (pos) => {
+        lastCoords.current = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        const dist = haversine(pos.coords.latitude, pos.coords.longitude, STORE_LAT, STORE_LNG);
+        setDistance(Math.round(dist));
+        setIsNearby(dist <= DOOR_UNLOCK_RADIUS_M);
+      };
+
+      // 1. Position instantanée depuis le cache du navigateur (même ancienne)
+      navigator.geolocation.getCurrentPosition(
+        updatePosition,
+        () => {},
+        { enableHighAccuracy: false, timeout: 3000, maximumAge: Infinity }
       );
+
+      // 2. Surveillance continue réseau/WiFi pour maintenir à jour
+      const watchId = navigator.geolocation.watchPosition(
+        updatePosition,
+        () => {},
+        { enableHighAccuracy: false, maximumAge: 15000, timeout: 20000 }
+      );
+
       return () => navigator.geolocation.clearWatch(watchId);
     }
   }, []);
@@ -81,11 +80,22 @@ export default function HomePage() {
     setDoorStatus('locating');
     setDoorError('');
     try {
-      const pos = lastCoords.current;
+      // Utiliser la position en cache, sinon en demander une maintenant
+      let pos = lastCoords.current;
       if (!pos) {
-        setDoorStatus('error');
-        setDoorError('Position GPS non disponible. Autorisez la localisation et réessayez.');
-        return;
+        pos = await new Promise((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(
+            (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+            reject,
+            { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
+          )
+        ).catch(() => null);
+        if (!pos) {
+          setDoorStatus('error');
+          setDoorError('Position non disponible. Autorisez la localisation et réessayez.');
+          return;
+        }
+        lastCoords.current = pos;
       }
       const dist = haversine(pos.lat, pos.lng, STORE_LAT, STORE_LNG);
       setDistance(Math.round(dist));
@@ -110,6 +120,14 @@ export default function HomePage() {
       setDoorError(err.message);
     }
   }
+
+  // Reset automatique de l'état error après 5s
+  useEffect(() => {
+    if (doorStatus === 'error') {
+      const t = setTimeout(() => { setDoorStatus('idle'); setDoorError(''); }, 5000);
+      return () => clearTimeout(t);
+    }
+  }, [doorStatus]);
 
   const canUnlock = !isVisitor && phoneVerified && isNearby;
 
@@ -179,7 +197,7 @@ export default function HomePage() {
 
   return (
     <>
-    <main className="relative h-full max-w-md mx-auto w-full flex flex-col px-4 pt-4 pb-4 overflow-hidden">
+    <main className="relative h-full max-w-md mx-auto w-full flex flex-col px-4 pt-4 pb-24 overflow-hidden">
 
       {/* ── Salutation ── */}
       <div className="shrink-0 mb-4">
@@ -272,45 +290,31 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* ── 20% — RACCOURCIS ── */}
-        <div className="flex-[1] min-h-0 grid grid-cols-2 gap-3">
-          <Link href="/scanner" className="h-full flex flex-col items-center justify-center gap-1.5 bg-card-bg rounded-2xl border border-border-light active:scale-[0.97] transition-all group">
-            <div className="size-11 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center group-active:scale-95 transition-transform">
-              <Camera size={20} className="text-primary" />
-            </div>
-            <span className="font-bold text-xs text-text-primary tracking-wide">Scanner</span>
-          </Link>
-          <Link href="/stock" className="h-full flex flex-col items-center justify-center gap-1.5 bg-card-bg rounded-2xl border border-border-light active:scale-[0.97] transition-all group">
-            <div className="size-11 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center group-active:scale-95 transition-transform">
-              <Package size={20} className="text-primary" />
-            </div>
-            <span className="font-bold text-xs text-text-primary tracking-wide">Produits</span>
-          </Link>
-        </div>
-
-        {/* ── 20% — ACTUALITÉ ── */}
+        {/* ── ACTUALITÉ ── */}
         {latestNews ? (
-          <Link href="/news" className="flex-[1] min-h-0 flex items-center bg-card-bg rounded-2xl border border-border-light overflow-hidden active:scale-[0.98] transition-all">
+          <Link href="/news" className="flex-[2] min-h-0 bg-card-bg rounded-3xl border border-border-light overflow-hidden active:scale-[0.98] transition-all flex flex-col">
             {latestNews.image1
-              ? <img src={latestNews.image1} className="h-full w-24 object-cover shrink-0" alt="" />
-              : <div className="h-full w-20 bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center shrink-0">
-                  <Newspaper size={22} className="text-primary/50" />
+              ? <img src={latestNews.image1} className="w-full flex-1 min-h-0 object-cover" alt="" />
+              : <div className="flex-1 min-h-0 bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center">
+                  <Newspaper size={32} className="text-primary/30" />
                 </div>
             }
-            <div className="flex-1 min-w-0 px-3.5">
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <span className={`size-1.5 rounded-full shrink-0 ${categoryColor}`} />
-                <span className="text-[9px] font-black uppercase tracking-widest text-text-muted">{categoryLabel}</span>
+            <div className="px-4 py-3 shrink-0">
+              <div className="flex items-center justify-between mb-0.5">
+                <div className="flex items-center gap-1.5">
+                  <span className={`size-1.5 rounded-full shrink-0 ${categoryColor}`} />
+                  <span className="text-[9px] font-black uppercase tracking-widest text-text-muted">{categoryLabel}</span>
+                </div>
+                <ChevronRight size={14} className="text-text-muted" />
               </div>
-              <p className="font-bold text-sm text-text-primary truncate leading-tight">{latestNews.title}</p>
+              <p className="font-bold text-sm text-text-primary leading-tight">{latestNews.title}</p>
               {latestNews.subtitle && (
                 <p className="text-xs text-text-muted truncate mt-0.5">{latestNews.subtitle}</p>
               )}
             </div>
-            <ChevronRight size={16} className="text-text-muted shrink-0 mr-3" />
           </Link>
         ) : (
-          <div className="flex-[1] min-h-0 rounded-2xl border border-border-light border-dashed bg-card-bg/50" />
+          <div className="flex-[2] min-h-0 rounded-3xl border border-border-light border-dashed bg-card-bg/50" />
         )}
 
       </div>

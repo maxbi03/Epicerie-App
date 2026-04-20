@@ -311,7 +311,7 @@ export default function ScannerPage() {
         #reader__header_message { display: none !important; }
       `}</style>
 
-      <div className="h-full max-w-md mx-auto bg-gray-950 flex flex-col overflow-hidden">
+      <div className="h-full max-w-md mx-auto bg-gray-950 flex flex-col overflow-hidden pb-24">
 
         {/* ── Zone caméra ── */}
         <div className="relative flex-[6] overflow-hidden">
@@ -450,19 +450,13 @@ export default function ScannerPage() {
           )}
 
           <div className="space-y-3">
-            <button
-              onClick={() => setManualOpen(o => !o)}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-white/10 border border-white/20 rounded-2xl text-white text-xs font-bold uppercase tracking-widest active:scale-95 transition-all"
-            >
-              <Keyboard size={16} /> {manualOpen ? 'Fermer la saisie' : 'Saisie manuelle'}
-            </button>
 
             {manualOpen && (
               <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 space-y-3">
                 <div className="w-full p-3 rounded-xl text-center text-lg font-bold bg-white/20 border border-white/30 text-white min-h-[50px] flex items-center justify-center select-none">
                   {barcodeInput
                     ? <span className="tracking-[0.15em]">{barcodeInput}<span className="animate-pulse">|</span></span>
-                    : <span className="text-white/40">2000000000xxx</span>
+                    : <span className="text-white/40">_____________</span>
                   }
                 </div>
                 <p className="text-center text-[10px] text-white/40 font-bold">{barcodeInput.length}/13 chiffres</p>
@@ -490,26 +484,12 @@ export default function ScannerPage() {
               </div>
             )}
 
-            <Link
-              href="/panier"
-              className="flex items-center justify-between bg-primary px-5 py-4 rounded-2xl active:scale-[0.98] transition-all"
+            <button
+              onClick={() => setManualOpen(o => !o)}
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-white/10 border border-white/20 rounded-2xl text-white text-xs font-bold uppercase tracking-widest active:scale-95 transition-all"
             >
-              <div className="flex items-center gap-3 text-white">
-                <div className="relative">
-                  <ShoppingCart size={20} />
-                  {cartCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-white text-primary text-[10px] font-black px-1.5 rounded-full">
-                      {cartCount}
-                    </span>
-                  )}
-                </div>
-                <span className="font-bold text-sm">Voir mon panier</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-black text-white/60 uppercase">Total :</span>
-                <span className="font-black text-white">{cartTotal} CHF</span>
-              </div>
-            </Link>
+              <Keyboard size={16} /> {manualOpen ? 'Fermer la saisie' : 'Saisie manuelle'}
+            </button>
           </div>
         </div>
       </div>

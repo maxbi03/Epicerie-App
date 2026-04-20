@@ -28,14 +28,14 @@ export default function ProductModal({ product, onClose, onAdd }) {
 
   return (
     <div
-      className="fixed inset-0 backdrop-blur-sm bg-black/60 z-50 flex items-end justify-center animate-fade-in"
+      className="fixed inset-0 backdrop-blur-sm bg-black/60 z-[60] flex items-center justify-center px-4 animate-fade-in"
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-gray-900 rounded-t-3xl w-full max-w-md overflow-y-auto max-h-[85vh] animate-slide-up"
+        className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-md overflow-y-auto max-h-[80vh] animate-slide-up shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
-        <div className="sticky top-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md px-5 py-4 flex items-center justify-between border-b border-gray-100 dark:border-white/10">
+        <div className="sticky top-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md px-5 py-4 flex items-center justify-between border-b border-gray-100 dark:border-white/10 rounded-t-3xl">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">Fiche produit</h2>
           <button
             onClick={onClose}
@@ -129,7 +129,7 @@ export default function ProductModal({ product, onClose, onAdd }) {
           </div>
         </div>
 
-        <div className="sticky bottom-0 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-white/10 p-5">
+        <div className="sticky bottom-0 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-white/10 p-3 rounded-b-3xl">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4 bg-gray-50 dark:bg-white/5 rounded-2xl px-4 py-2">
               <button
@@ -146,15 +146,17 @@ export default function ProductModal({ product, onClose, onAdd }) {
             <button
               onClick={addToBasket}
               disabled={product.stock === 0}
-              className="flex-1 bg-primary text-white font-black py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 min-w-0 bg-primary text-white font-black py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ShoppingCart size={18} />
-              <span>
-                {product.stock === 0
-                  ? 'Indisponible'
-                  : `Ajouter · ${(product.price * quantity).toFixed(2)} CHF`
-                }
-              </span>
+              {product.stock === 0 ? (
+                <span className="text-sm">Indisponible</span>
+              ) : (
+                <span className="flex items-baseline gap-1.5 whitespace-nowrap">
+                  <span className="text-sm">Ajouter</span>
+                  <span className="text-xs font-medium opacity-70">{(product.price * quantity).toFixed(2)} CHF</span>
+                </span>
+              )}
             </button>
           </div>
         </div>
