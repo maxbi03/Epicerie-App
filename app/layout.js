@@ -31,12 +31,14 @@ export default function RootLayout({ children }) {
       <head>
         <link rel="apple-touch-icon" sizes="180x180" href="public/icons/logo.png"/>
       </head>
-      <body className={`${spaceGrotesk.className} bg-background-light antialiased h-dvh flex flex-col overflow-hidden`}>
-        <Header />
-        <main className="flex-1 overflow-hidden">
-          {children}
-        </main>
-        <BottomNav />
+      <body className={`${spaceGrotesk.className} bg-app-bg antialiased h-dvh flex justify-center`}>
+        <div className="w-full max-w-md flex flex-col h-dvh overflow-hidden bg-app-bg shadow-xl shadow-black/5">
+          <Header />
+          <main className="flex-1 overflow-hidden">
+            {children}
+          </main>
+          <BottomNav />
+        </div>
       </body>
     </html>
   );
