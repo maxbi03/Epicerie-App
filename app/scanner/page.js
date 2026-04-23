@@ -311,7 +311,7 @@ export default function ScannerPage() {
         #reader__header_message { display: none !important; }
       `}</style>
 
-      <div className="h-full max-w-md mx-auto bg-gray-950 flex flex-col overflow-hidden pb-24">
+      <div className="h-full max-w-md mx-auto bg-gray-950 flex flex-col overflow-hidden">
 
         {/* ── Zone caméra ── */}
         <div className="relative flex-[6] overflow-hidden">
