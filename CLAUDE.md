@@ -114,7 +114,8 @@ Définis dans `app/styles/tokens.css`, consommés dans Tailwind v4 via `@theme i
 
 ### Navigation
 
-- Layout : `body (flex-col h-dvh)` → `Header (shrink-0)` → `main (flex-1 overflow-hidden)` → `BottomNav (shrink-0)`
+- Layout : `body (flex justify-center)` → `div (w-full max-w-md flex flex-col h-dvh)` → `Header (shrink-0)` → `main (flex-1 overflow-hidden)` → `BottomNav (shrink-0)`
+- Le `max-w-md` est centralisé dans le layout — les pages n'ont pas à le répéter
 - `BottomNav` est dans le flux normal (pas `fixed`) — `main` prend exactement l'espace entre les deux, rien ne passe sous la nav
 - `BottomNav` retourne `null` sur `/` et `/admin*` — `main` occupe alors tout l'espace automatiquement
 - `Header` — titre centré absolument (`absolute left-1/2 -translate-x-1/2`), bouton admin conditionnel à droite
