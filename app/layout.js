@@ -1,6 +1,7 @@
 import { Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import Header from './components/Header';
+import BottomNav from './components/BottomNav';
 import { APP_NAME, APP_DESCRIPTION, APP_LOGO } from './lib/config';
 
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'] });
@@ -34,6 +35,7 @@ export default function RootLayout({ children }) {
         <main className="flex-1 overflow-hidden">
           {children}
         </main>
+        <BottomNav />
       </body>
     </html>
   );
