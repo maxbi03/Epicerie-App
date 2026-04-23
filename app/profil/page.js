@@ -392,7 +392,7 @@ export default function ProfilPage() {
   );
 
   if (isVisitor) return (
-    <main className="max-w-md mx-auto px-5 pt-6 pb-24 h-full overflow-y-auto">
+    <main className="px-5 pt-6 pb-4 h-full overflow-y-auto">
       <div className="flex flex-col items-center mb-8">
         <div className="size-24 rounded-[2rem] bg-app-bg flex items-center justify-center border-2 border-border-light shadow-xl">
           <User size={40} className="text-text-muted" />
@@ -413,7 +413,7 @@ export default function ProfilPage() {
   const pwdStrength = getStrength(pwdForm.next);
 
   return (
-    <main className="max-w-md mx-auto px-5 pt-6 pb-28 h-full overflow-y-auto space-y-6">
+    <main className="px-5 pt-6 pb-4 h-full overflow-y-auto space-y-6">
 
       {/* ── Avatar + nom ──────────────────────────────────────────────────── */}
       <div className="flex flex-col items-center pt-2">

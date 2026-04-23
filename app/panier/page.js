@@ -120,7 +120,7 @@ export default function PanierPage() {
   }
 
   return (
-    <main className="relative flex h-full max-w-md mx-auto flex-col bg-white dark:bg-gray-900 shadow-2xl overflow-hidden border-x border-gray-200 dark:border-white/10">
+    <main className="relative flex h-full flex-col overflow-hidden">
 
       <div className="px-6 pt-6 pb-2 flex justify-between items-center shrink-0">
         <h2 className="text-2xl font-bold tracking-tight dark:text-white">Mon Panier</h2>

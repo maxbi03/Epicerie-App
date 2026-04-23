@@ -27,7 +27,7 @@ export default function RecusPage() {
   }, []);
 
   return (
-    <main className="max-w-md mx-auto px-5 pt-6 pb-24 h-full overflow-y-auto">
+    <main className="px-5 pt-6 pb-4 h-full overflow-y-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-black text-text-primary">Mes reçus</h1>
         <p className="text-xs text-text-muted mt-0.5">Conservés pendant 30 jours</p>

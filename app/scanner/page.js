@@ -311,10 +311,10 @@ export default function ScannerPage() {
         #reader__header_message { display: none !important; }
       `}</style>
 
-      <div className="h-full max-w-md mx-auto bg-gray-950 flex flex-col overflow-hidden">
+      <div className="h-full bg-gray-950 flex flex-col overflow-hidden">
 
         {/* ── Zone caméra ── */}
-        <div className="relative flex-[6] overflow-hidden">
+        <div className="relative flex-1 overflow-hidden">
 
           {/* Overlay selon l'état */}
           {showOverlay && (
@@ -428,7 +428,7 @@ export default function ScannerPage() {
         </div>
 
         {/* ── Zone contrôles ── */}
-        <div className="flex-[4.5] flex flex-col justify-between px-5 py-4 bg-gray-950">
+        <div className="shrink-0 flex flex-col gap-3 px-5 py-4 bg-gray-950">
           {unknownBarcode ? (
             <div className="bg-red-500/20 border border-red-500/40 rounded-2xl p-4 flex items-start gap-3">
               <div className="size-10 rounded-xl bg-red-500/20 flex items-center justify-center shrink-0">

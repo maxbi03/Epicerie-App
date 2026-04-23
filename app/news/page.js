@@ -64,7 +64,7 @@ export default function NewsPage() {
 
   return (
     <>
-      <main className="relative flex h-full max-w-md mx-auto flex-col bg-white dark:bg-gray-950 overflow-hidden border-x border-gray-200 dark:border-white/10">
+      <main className="relative flex h-full flex-col overflow-hidden">
 
         {/* ── Masthead ── */}
         <div className="shrink-0 px-5 pt-6 pb-3 border-b border-gray-200 dark:border-white/10">

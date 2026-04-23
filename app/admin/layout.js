@@ -46,7 +46,7 @@ export default function AdminLayout({ children }) {
   if (!authorized) return null;
 
   return (
-    <main className="relative flex h-full max-w-md mx-auto flex-col overflow-hidden">
+    <main className="relative flex h-full flex-col overflow-hidden">
       <div className="flex gap-1 px-4 pt-4 pb-2 overflow-x-auto shrink-0">
         {TABS.map(tab => (
           <Link

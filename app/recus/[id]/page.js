@@ -40,7 +40,7 @@ export default function ReceiptPage() {
   );
 
   if (error) return (
-    <main className="max-w-md mx-auto px-5 pt-6 pb-24 h-full overflow-y-auto">
+    <main className="px-5 pt-6 pb-4 h-full overflow-y-auto">
       <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-text-muted mb-6">
         <ChevronLeft size={16} /> Retour
       </button>

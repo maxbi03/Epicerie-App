@@ -6,17 +6,17 @@ import { useState, useEffect } from 'react';
 import { Home, Package, ScanLine, ShoppingCart, User } from 'lucide-react';
 import { getBasket } from '../lib/basket';
 
+const TABS = [
+  { href: '/home',    label: 'Accueil',  Icon: Home },
+  { href: '/stock',   label: 'Produits', Icon: Package },
+  { href: '/scanner', label: 'Scanner',  Icon: ScanLine },
+  { href: '/panier',  label: 'Panier',   Icon: ShoppingCart },
+  { href: '/profil',  label: 'Profil',   Icon: User },
+];
+
 export default function BottomNav() {
   const pathname = usePathname();
   const [cartCount, setCartCount] = useState(0);
-
-  const TABS = [
-    { href: '/home',    label: 'Accueil',  Icon: Home },
-    { href: '/stock',   label: 'Produits', Icon: Package },
-    { href: '/scanner', label: 'Scanner',  Icon: ScanLine },
-    { href: '/panier',  label: 'Panier',   Icon: ShoppingCart },
-    { href: '/profil',  label: 'Profil',   Icon: User },
-  ];
 
   useEffect(() => {
     const update = () => setCartCount(getBasket().length);
@@ -32,11 +32,11 @@ export default function BottomNav() {
   if (pathname === '/' || pathname.startsWith('/admin')) return null;
 
   return (
-    <div
+    <footer
       className="shrink-0 bg-primary-light dark:bg-gray-900 border-t border-primary/10 dark:border-white/10"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <nav className="flex items-end justify-around px-2 py-2 max-w-md mx-auto">
+      <nav className="flex items-end justify-around px-2 py-2">
         {TABS.map(({ href, label, Icon }) => {
           const isActive = pathname === href || (href !== '/home' && pathname.startsWith(href + '/'));
           const isCart = href === '/panier';
@@ -46,7 +46,7 @@ export default function BottomNav() {
               key={href}
               href={href}
               className={`relative flex flex-col items-center gap-0.5 px-4 py-2 min-w-[58px] rounded-2xl transition-all duration-150 active:scale-90 ${
-                isActive ? 'text-primary bg-primary-light' : 'text-gray-400'
+                isActive ? 'text-primary bg-white/60 dark:bg-primary-light' : 'text-gray-400'
               }`}
             >
               <div className="relative">
@@ -66,6 +66,6 @@ export default function BottomNav() {
           );
         })}
       </nav>
-    </div>
+    </footer>
   );
 }

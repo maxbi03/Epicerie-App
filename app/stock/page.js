@@ -46,7 +46,7 @@ export default function StockPage() {
 
   return (
     <>
-      <main className="relative flex h-full max-w-md mx-auto flex-col overflow-hidden">
+      <main className="relative flex h-full flex-col overflow-hidden">
         <div className="px-5 pt-4 shrink-0">
 
           {/*}
@@ -85,7 +85,7 @@ export default function StockPage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 pb-24">
+        <div className="flex-1 overflow-y-auto px-5 pb-4">
           <div className="space-y-3">
             {loadingProducts ? (
               <div className="flex justify-center py-10">

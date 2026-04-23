@@ -49,7 +49,7 @@ export default function ConfirmationPage() {
 
   if (status === 'loading') {
     return (
-      <div className="relative flex h-full max-w-md mx-auto flex-col bg-white dark:bg-gray-900 shadow-2xl overflow-hidden border-x border-gray-200 dark:border-white/10">
+      <div className="relative flex h-full flex-col overflow-hidden">
         <div className="flex-1 flex flex-col items-center justify-center px-10 text-center">
           <div className="size-16 border-4 border-green-200 border-t-green-600 rounded-full animate-spin mb-6"></div>
           <p className="text-sm text-gray-500 dark:text-gray-400">Vérification du paiement...</p>
@@ -60,7 +60,7 @@ export default function ConfirmationPage() {
 
   if (status === 'pending') {
     return (
-      <div className="relative flex h-full max-w-md mx-auto flex-col bg-white dark:bg-gray-900 shadow-2xl overflow-hidden border-x border-gray-200 dark:border-white/10">
+      <div className="relative flex h-full flex-col overflow-hidden">
         <div className="flex-1 flex flex-col items-center justify-center px-10 text-center">
           <div className="size-24 bg-yellow-50 dark:bg-yellow-900/20 rounded-full flex items-center justify-center mb-6">
             <Clock size={48} className="text-yellow-500" />
@@ -79,7 +79,7 @@ export default function ConfirmationPage() {
 
   if (status === 'error') {
     return (
-      <div className="relative flex h-full max-w-md mx-auto flex-col bg-white dark:bg-gray-900 shadow-2xl overflow-hidden border-x border-gray-200 dark:border-white/10">
+      <div className="relative flex h-full flex-col overflow-hidden">
         <div className="flex-1 flex flex-col items-center justify-center px-10 text-center">
           <div className="size-24 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-6">
             <XCircle size={48} className="text-red-500" />
@@ -97,7 +97,7 @@ export default function ConfirmationPage() {
   }
 
   return (
-    <div className="relative flex h-full max-w-md mx-auto flex-col bg-white dark:bg-gray-900 shadow-2xl overflow-hidden border-x border-gray-200 dark:border-white/10">
+    <div className="relative flex h-full flex-col overflow-hidden">
       <div className="flex-1 flex flex-col items-center justify-center px-10 text-center">
         <div className="size-24 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center mb-6">
           <CheckCircle size={48} className="text-green-600" />

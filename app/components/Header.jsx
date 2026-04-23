@@ -46,7 +46,7 @@ export default function Header() {
   const title = PAGE_TITLES[pathname] ?? 'EPICO';
 
   return (
-    <header className="relative shrink-0 z-[100] max-w-md mx-auto w-full flex items-center justify-between px-4 pt-4 pb-2">
+    <header className="relative shrink-0 z-[100] w-full flex items-center justify-between px-4 pt-4 pb-2">
       {/* Gauche : retour ou espace */}
       <div className="w-10">
         {backRoute && (
