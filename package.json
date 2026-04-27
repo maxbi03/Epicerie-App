@@ -6,7 +6,10 @@
     "dev": "next dev --experimental-https --webpack",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "generate:502": "node scripts/generate-502.mjs",
+    "prebuild": "node scripts/generate-502.mjs",
+    "predev": "node scripts/generate-502.mjs"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { ChevronLeft, LayoutDashboard, Clock4 } from 'lucide-react';
 import { Righteous } from 'next/font/google';
+import { APP_LOGO, APP_NAME } from '../lib/config';
 
 const righteous = Righteous({ subsets: ['latin'], weight: '400' });
 
@@ -61,22 +62,12 @@ export default function Header() {
 
       {/* Centre : titre — toujours centré sur la page en absolu */}
       <div className='flex justify-center absolute left-1/2 -translate-x-1/2 items-center'>
-        <span className={`text-base font-black tracking-tight text-text-primary pointer-events-none ${righteous.className}`}>EPIC</span>
-        <Clock4 size={15}/>
+        <img src={APP_LOGO} alt={APP_NAME} className="h-8 w-auto" />
       </div>
 
       {/* Droite : admin */}
       <div className="flex justify-end">
         {isAdmin && (
-          <Link
-            href="/admin"
-            className="flex items-center gap-1.5 px-3 h-9 rounded-xl bg-primary/10 border border-primary/20 active:scale-90 transition-all"
-          >
-            <LayoutDashboard size={15} className="text-primary" />
-            <span className="text-xs font-bold text-primary">Admin</span>
-          </Link>
-        )}
-        {!isAdmin && (
           <Link
             href="/admin"
             className="flex items-center gap-1.5 px-3 h-9 rounded-xl bg-primary/10 border border-primary/20 active:scale-90 transition-all"

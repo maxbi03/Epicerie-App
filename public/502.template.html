@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Service indisponible — EPICO</title>
-  <link rel="apple-touch-icon" href="/icons/logo.png">
+  <title>Service indisponible — {{APP_NAME}}</title>
+  <link rel="apple-touch-icon" href="{{APP_LOGO}}">
   <style>
     :root {
-      --logo-path: url('/icons/logo.png');
+      --logo-path: url('{{APP_LOGO}}');
       --primary: #669933;
       --primary-light: #eef4e6;
       --text-primary: #2e3d1a;
@@ -107,7 +107,7 @@
 </head>
 <body>
   <main class="card">
-    <div class="logo" role="img" aria-label="EPICO"></div>
+    <div class="logo" role="img" aria-label="{{APP_NAME}}"></div>
     <span class="badge">Erreur 502</span>
     <div class="code">502</div>
     <h1>Service momentanément indisponible</h1>
