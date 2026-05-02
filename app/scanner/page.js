@@ -284,7 +284,7 @@ export default function ScannerPage() {
         <p className="text-sm text-text-secondary leading-relaxed mb-6">Créez un compte pour utiliser cette fonctionnalité.</p>
         <div className="grid grid-cols-2 gap-3">
           <Link href="/" className="py-4 rounded-2xl bg-primary text-white font-black text-xs uppercase tracking-widest text-center">Se connecter</Link>
-          <Link href="/" className="py-4 rounded-2xl bg-primary-light text-forest-green font-black text-xs uppercase tracking-widest text-center">Créer un compte</Link>
+          <Link href="/?register=1" className="py-4 rounded-2xl bg-primary-light text-forest-green font-black text-xs uppercase tracking-widest text-center">Créer un compte</Link>
         </div>
         <Link href="/home" className="block mt-5 text-xs font-bold text-text-muted">Retour à l'accueil</Link>
       </div>

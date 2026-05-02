@@ -41,6 +41,7 @@ export async function POST(request) {
 
         if (count === 0) {
           const result = await updateStockAfterPayment(items);
+          const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
           const { error: saleError } = await sb
             .from(SALES_TABLE)
@@ -50,6 +51,8 @@ export async function POST(request) {
               user_id: metadata.user_id || null,
               receipt,
               price: priceInCents,
+              items_json: items,
+              expires_at: expiresAt,
             });
 
           if (saleError) {
@@ -84,6 +87,7 @@ export async function POST(request) {
 
         if (count === 0) {
           const result = await updateStockAfterPayment(items);
+          const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
           const { error: saleError } = await sb
             .from(SALES_TABLE)
@@ -93,6 +97,8 @@ export async function POST(request) {
               user_id: payment.metadata.user_id || null,
               receipt,
               price: Math.round(Number(payment.amount.value) * 100),
+              items_json: items,
+              expires_at: expiresAt,
             });
 
           if (saleError) {

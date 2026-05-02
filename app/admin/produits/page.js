@@ -1,8 +1,10 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { fetchAdminProducts, createProduct, updateProduct, deleteProduct } from '../../lib/adminService';
-import { Pencil, X, AlertTriangle, Eye, EyeOff, Package, Plus, Minus, Check } from 'lucide-react';
+import { Pencil, X, AlertTriangle, Eye, EyeOff, Check, Printer, Tag } from 'lucide-react';
+
+// ─── helpers produits ──────────────────────────────────────────────────────────
 
 function getCategories(products) {
   return [...new Set(products.map(p => p.category).filter(Boolean))].sort();
@@ -11,9 +13,97 @@ function getCategoriesFilter(products) {
   return ['Tous', ...getCategories(products)];
 }
 
-const EMPTY_FORM = { name: '', barcode: '', price_chf: '', quantity: '', description: '', category: 'Divers', image_url: '', producer: '', badge: '', stock_shelf: '0', stock_back: '0' };
+const EMPTY_FORM = { name: '', barcode: '', price_chf: '', quantity: '', description: '', category: 'Divers', image_url: '', producer: '', badge: '', stock_shelf: '0', stock_back: '0', expiry_date: '', discount_percent: '', discount_until: '' };
 
-export default function AdminProduits() {
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const diff = new Date(dateStr) - new Date();
+  return Math.ceil(diff / 86400000);
+}
+
+function LabelPrintModal({ product, onClose }) {
+  const discountedPrice = product.discount_percent > 0
+    ? Number(product.price_chf) * (1 - Number(product.discount_percent) / 100)
+    : null;
+  return (
+    <div className="fixed inset-0 backdrop-blur-sm z-[60] flex items-center justify-center px-5">
+      <div className="bg-white rounded-3xl w-full max-w-xs shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+          <p className="text-xs font-black text-gray-500 uppercase tracking-widest">Aperçu étiquette</p>
+          <button onClick={onClose} className="size-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400"><X size={16} /></button>
+        </div>
+        <div id="print-label" className="p-5 bg-white">
+          {product.discount_percent > 0 && (
+            <div className="bg-red-500 text-white text-center py-2 rounded-xl mb-3">
+              <p className="text-2xl font-black">ACTION -{product.discount_percent}%</p>
+            </div>
+          )}
+          <p className="text-lg font-black text-gray-900 text-center leading-tight mb-1">{product.name}</p>
+          <p className="text-xs text-gray-500 text-center mb-3">{product.quantity} · {product.producer}</p>
+          {discountedPrice !== null ? (
+            <div className="text-center">
+              <p className="text-sm text-gray-400 line-through">{Number(product.price_chf).toFixed(2)} CHF</p>
+              <p className="text-3xl font-black text-red-600">{discountedPrice.toFixed(2)} CHF</p>
+            </div>
+          ) : (
+            <p className="text-3xl font-black text-gray-900 text-center">{Number(product.price_chf).toFixed(2)} CHF</p>
+          )}
+          {product.expiry_date && (
+            <p className="text-[10px] text-center text-gray-400 mt-3 border-t border-gray-100 pt-2">
+              À consommer de préférence avant le {new Date(product.expiry_date).toLocaleDateString('fr-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+            </p>
+          )}
+          {product.discount_until && (
+            <p className="text-[10px] text-center text-red-400 mt-1">Offre valable jusqu'au {new Date(product.discount_until).toLocaleDateString('fr-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })}</p>
+          )}
+        </div>
+        <div className="px-5 pb-5">
+          <button
+            onClick={() => {
+              const discPrice = product.discount_percent > 0
+                ? (Number(product.price_chf) * (1 - Number(product.discount_percent) / 100)).toFixed(2)
+                : null;
+              const expiryStr = product.expiry_date
+                ? new Date(product.expiry_date).toLocaleDateString('fr-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                : null;
+              const untilStr = product.discount_until
+                ? new Date(product.discount_until).toLocaleDateString('fr-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                : null;
+              const win = window.open('', '_blank');
+              win.document.write(`<!DOCTYPE html><html><head><title>Étiquette ${product.name}</title>
+<style>
+  body{font-family:Arial,sans-serif;margin:0;padding:24px;max-width:300px}
+  .action{background:#ef4444;color:#fff;text-align:center;padding:10px;border-radius:10px;margin-bottom:12px;font-size:22px;font-weight:900}
+  .name{font-size:18px;font-weight:900;text-align:center;margin-bottom:4px}
+  .sub{font-size:11px;color:#888;text-align:center;margin-bottom:12px}
+  .oldprice{font-size:13px;color:#aaa;text-align:center;text-decoration:line-through}
+  .price{font-size:34px;font-weight:900;text-align:center;color:${discPrice ? '#dc2626' : '#111'}}
+  .note{font-size:10px;color:#bbb;text-align:center;margin-top:12px;border-top:1px solid #eee;padding-top:8px}
+  @media print{body{margin:0}}
+</style></head><body>
+  ${product.discount_percent > 0 ? `<div class="action">ACTION -${product.discount_percent}%</div>` : ''}
+  <div class="name">${product.name}</div>
+  <div class="sub">${[product.quantity, product.producer].filter(Boolean).join(' · ')}</div>
+  ${discPrice ? `<div class="oldprice">${Number(product.price_chf).toFixed(2)} CHF</div><div class="price">${discPrice} CHF</div>` : `<div class="price">${Number(product.price_chf).toFixed(2)} CHF</div>`}
+  ${expiryStr ? `<div class="note">À consommer de préférence avant le ${expiryStr}</div>` : ''}
+  ${untilStr ? `<div class="note" style="color:#ef4444">Offre valable jusqu'au ${untilStr}</div>` : ''}
+</body></html>`);
+              win.document.close();
+              win.focus();
+              win.print();
+            }}
+            className="w-full py-3 bg-primary text-white font-black rounded-2xl flex items-center justify-center gap-2"
+          >
+            <Printer size={16} /> Imprimer
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+// ─── Vue Catalogue (produits) ─────────────────────────────────────────────────
+
+function CatalogueView() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -24,10 +114,7 @@ export default function AdminProduits() {
   const [activeCategory, setActiveCategory] = useState('Tous');
   const [stockFilter, setStockFilter] = useState('all');
   const [error, setError] = useState('');
-  const [showDelivery, setShowDelivery] = useState(false);
-  const [deliveryQtys, setDeliveryQtys] = useState({});
-  const [deliverySaving, setDeliverySaving] = useState(false);
-  const [deliveryDone, setDeliveryDone] = useState(false);
+  const [printLabel, setPrintLabel] = useState(null);
 
   async function loadProducts() {
     try {
@@ -63,6 +150,9 @@ export default function AdminProduits() {
       badge: product.badge || '',
       stock_shelf: String(product.stock_shelf ?? 0),
       stock_back: String(product.stock_back ?? 0),
+      expiry_date: product.expiry_date ? product.expiry_date.slice(0, 10) : '',
+      discount_percent: product.discount_percent != null ? String(product.discount_percent) : '',
+      discount_until: product.discount_until ? product.discount_until.slice(0, 10) : '',
     });
     setShowForm(true);
     setError('');
@@ -126,51 +216,6 @@ export default function AdminProduits() {
     setForm(prev => ({ ...prev, [field]: value }));
   }
 
-  function openDelivery() {
-    setDeliveryQtys({});
-    setDeliveryDone(false);
-    setShowDelivery(true);
-  }
-
-  function setDeliveryQty(id, value) {
-    const n = Math.max(0, parseInt(value, 10) || 0);
-    setDeliveryQtys(prev => ({ ...prev, [id]: n }));
-  }
-
-  function adjustDeliveryQty(id, delta) {
-    setDeliveryQtys(prev => ({ ...prev, [id]: Math.max(0, (prev[id] ?? 0) + delta) }));
-  }
-
-  async function handleDeliverySubmit() {
-    const items = Object.entries(deliveryQtys)
-      .filter(([, qty]) => qty > 0)
-      .map(([id, qty]) => ({ id, qty }));
-    if (items.length === 0) return;
-    setDeliverySaving(true);
-    try {
-      const res = await fetch('/api/admin/products/stock', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'delivery', items }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Erreur');
-      }
-      setDeliveryDone(true);
-      await loadProducts();
-      setTimeout(() => setShowDelivery(false), 1200);
-    } catch (err) {
-      setError(err.message);
-      setShowDelivery(false);
-    } finally {
-      setDeliverySaving(false);
-    }
-  }
-
-  const activeProducts = products.filter(p => p.is_active === true);
-  const deliveryTotal = Object.values(deliveryQtys).reduce((s, q) => s + (q || 0), 0);
-
   const filtered = products.filter(p => {
     const matchCat = activeCategory === 'Tous' || p.category === activeCategory;
     const matchSearch = (p.name || '').toLowerCase().includes(search.toLowerCase());
@@ -178,21 +223,13 @@ export default function AdminProduits() {
     const s = p.stock_shelf ?? 0;
     const b = p.stock_back ?? 0;
     const complete = isProductComplete(p);
-    if (stockFilter === 'active') {
-      return p.is_active === true;
-    }
-    if (stockFilter === 'inactive') {
-      return complete && p.is_active === false;
-    }
-    if (stockFilter === 'incomplete') {
-      return !complete;
-    }
-    if (stockFilter === 'low') {
-      return complete && (s > 0 || b > 0) && (s <= 5 || b <= 5);
-    }
-    if (stockFilter === 'out') {
-      return complete && s === 0 && b === 0;
-    }
+    if (stockFilter === 'active') return p.is_active === true;
+    if (stockFilter === 'inactive') return complete && p.is_active === false;
+    if (stockFilter === 'incomplete') return !complete;
+    if (stockFilter === 'low') return complete && (s > 0 || b > 0) && (s <= 5 || b <= 5);
+    if (stockFilter === 'out') return complete && s === 0 && b === 0;
+    if (stockFilter === 'dlc') { const d = daysUntil(p.expiry_date); return d !== null && d <= 7; }
+    if (stockFilter === 'promo') return Number(p.discount_percent) > 0;
     return true;
   }).sort((a, b) => {
     const aInactive = a.is_active === false ? 0 : 1;
@@ -215,12 +252,6 @@ export default function AdminProduits() {
             <p className="text-sm text-text-secondary">{products.length} produits</p>
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={openDelivery}
-              className="flex items-center gap-1.5 px-4 py-2.5 bg-amber-500 text-white text-xs font-bold rounded-xl active:scale-95 transition-all"
-            >
-              <Package size={14} /> Livraison
-            </button>
             <button
               onClick={openCreate}
               className="px-4 py-2.5 bg-primary text-white text-xs font-bold rounded-xl active:scale-95 transition-all"
@@ -272,6 +303,8 @@ export default function AdminProduits() {
             { key: 'incomplete', label: 'Incomplets' },
             { key: 'low', label: 'Stock faible' },
             { key: 'out', label: 'Rupture' },
+            { key: 'dlc', label: 'DLC proche' },
+            { key: 'promo', label: 'En promo' },
           ].map(f => (
             <button
               key={f.key}
@@ -282,6 +315,8 @@ export default function AdminProduits() {
                   : f.key === 'out' ? 'bg-red-500 text-white'
                   : f.key === 'incomplete' ? 'bg-orange-400 text-white'
                   : f.key === 'inactive' ? 'bg-gray-400 text-white'
+                  : f.key === 'dlc' ? 'bg-purple-500 text-white'
+                  : f.key === 'promo' ? 'bg-red-500 text-white'
                   : 'bg-primary text-white'
                   : 'bg-card-bg text-text-secondary border border-border-light'
                 }`}
@@ -308,10 +343,14 @@ export default function AdminProduits() {
               const backStock = product.stock_back ?? 0;
               const outOfStock = shelfStock === 0 && backStock === 0;
               const lowStock = !outOfStock && (shelfStock <= 5 || backStock <= 5);
+              const dlcDays = daysUntil(product.expiry_date);
+              const dlcUrgent = dlcDays !== null && dlcDays <= 7;
+              const hasDiscount = Number(product.discount_percent) > 0;
               return (
                 <div key={product.id} className={`flex items-center gap-3 rounded-2xl p-3 border shadow-sm ${
                   incomplete ? 'bg-orange-50 border-orange-200'
                   : manuallyInactive ? 'bg-gray-50 border-gray-200'
+                  : dlcUrgent ? 'bg-purple-50/60 border-purple-200'
                   : outOfStock ? 'bg-red-50/50 border-red-200'
                   : lowStock ? 'bg-amber-50/50 border-amber-200'
                   : 'bg-card-bg border-border-light'
@@ -326,6 +365,8 @@ export default function AdminProduits() {
                       {manuallyInactive && <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 shrink-0">Inactif</span>}
                       {!inactive && outOfStock && <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-red-100 text-red-500 shrink-0">Rupture</span>}
                       {!inactive && lowStock && <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-amber-100 text-amber-600 shrink-0">Stock faible</span>}
+                      {dlcUrgent && <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-purple-100 text-purple-600 shrink-0">DLC {dlcDays <= 0 ? 'dépassée' : `J-${dlcDays}`}</span>}
+                      {hasDiscount && <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-red-100 text-red-600 shrink-0">-{product.discount_percent}%</span>}
                     </div>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <span className="text-[10px] text-text-muted">{Number(product.price_chf || 0).toFixed(2)} CHF</span>
@@ -335,6 +376,11 @@ export default function AdminProduits() {
                     </div>
                   </div>
                   <div className="flex gap-1 shrink-0">
+                    {(hasDiscount || dlcUrgent) && (
+                      <button onClick={() => setPrintLabel(product)} className="size-9 flex items-center justify-center rounded-xl bg-purple-50 text-purple-500 text-sm active:scale-90 transition-all">
+                        <Printer size={15} />
+                      </button>
+                    )}
                     {isProductComplete(product) && (
                       <button onClick={() => handleToggleActive(product)} className={`size-9 flex items-center justify-center rounded-xl text-sm active:scale-90 transition-all ${product.is_active ? 'bg-green-50 text-green-500' : 'bg-gray-100 text-gray-400'}`}>
                         {product.is_active ? <Eye size={16} /> : <EyeOff size={16} />}
@@ -432,6 +478,34 @@ export default function AdminProduits() {
                 </div>
               </div>
 
+              <div className="border-t border-border-light pt-3 mt-1">
+                <p className="text-[10px] font-black text-text-muted uppercase tracking-widest mb-3 flex items-center gap-1.5"><Tag size={11} /> Promotion & DLC</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">DLC (date limite)</label>
+                    <input type="date" value={form.expiry_date} onChange={e => updateField('expiry_date', e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">Remise %</label>
+                    <input type="number" min="0" max="100" step="1" placeholder="0" value={form.discount_percent} onChange={e => updateField('discount_percent', e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
+                  </div>
+                </div>
+                {Number(form.discount_percent) > 0 && (
+                  <div className="mt-3">
+                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">Promo valable jusqu'au</label>
+                    <input type="date" value={form.discount_until} onChange={e => updateField('discount_until', e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
+                  </div>
+                )}
+                {Number(form.discount_percent) > 0 && form.price_chf && (
+                  <p className="text-xs text-red-500 font-bold mt-2">
+                    Prix après remise : {(Number(form.price_chf) * (1 - Number(form.discount_percent) / 100)).toFixed(2)} CHF
+                  </p>
+                )}
+              </div>
+
               <button type="submit" disabled={saving}
                 className="w-full bg-primary text-white font-black py-3 rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all disabled:opacity-50">
                 {saving ? 'Enregistrement...' : editingId ? 'Modifier' : 'Créer le produit'}
@@ -441,101 +515,14 @@ export default function AdminProduits() {
         </div>
       )}
 
-      {/* ── Modale Livraison ── */}
-      {showDelivery && (
-        <div className="fixed inset-0 backdrop-blur-sm z-50 flex items-end justify-center animate-fade-in" onClick={() => !deliverySaving && setShowDelivery(false)}>
-          <div className="bg-card-bg rounded-t-3xl w-full max-w-md flex flex-col max-h-[90vh] animate-slide-up" onClick={e => e.stopPropagation()}>
+      {printLabel && <LabelPrintModal product={printLabel} onClose={() => setPrintLabel(null)} />}
 
-            {/* Header */}
-            <div className="shrink-0 px-5 pt-5 pb-4 border-b border-border-light">
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2">
-                  <div className="size-9 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                    <Package size={16} className="text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <h2 className="text-lg font-black text-text-primary">Livraison fournisseur</h2>
-                </div>
-                <button onClick={() => setShowDelivery(false)} className="size-9 flex items-center justify-center rounded-full hover:bg-app-bg transition-colors text-text-secondary">
-                  <X size={18} />
-                </button>
-              </div>
-              <p className="text-xs text-text-muted ml-11">Saisir les quantités reçues → ajoutées au stock réserve</p>
-            </div>
-
-            {/* Product list */}
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
-              {activeProducts.map(product => {
-                const qty = deliveryQtys[product.id] ?? 0;
-                const hasQty = qty > 0;
-                return (
-                  <div key={product.id} className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 border transition-all ${hasQty ? 'bg-amber-50 dark:bg-amber-900/15 border-amber-200 dark:border-amber-700' : 'bg-app-bg border-border-light'}`}>
-                    {/* Image */}
-                    <div className="size-10 rounded-xl overflow-hidden bg-white border border-gray-200 dark:border-white/10 shrink-0">
-                      {product.image_url && <img src={product.image_url} className="w-full h-full object-contain" alt="" />}
-                    </div>
-
-                    {/* Name + current stock */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-text-primary truncate">{product.name}</p>
-                      <p className="text-[10px] text-text-muted">Réserve actuelle : <span className="font-bold">{product.stock_back ?? 0}</span></p>
-                    </div>
-
-                    {/* Qty stepper */}
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        onClick={() => adjustDeliveryQty(product.id, -1)}
-                        className={`size-8 flex items-center justify-center rounded-lg transition-all active:scale-90 ${hasQty ? 'bg-amber-200 dark:bg-amber-700 text-amber-700 dark:text-amber-200' : 'bg-gray-100 dark:bg-white/10 text-text-muted'}`}
-                      >
-                        <Minus size={12} />
-                      </button>
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        min="0"
-                        value={qty || ''}
-                        placeholder="0"
-                        onChange={e => setDeliveryQty(product.id, e.target.value)}
-                        className={`w-12 text-center text-sm font-black rounded-lg border py-1.5 transition-all outline-none dark:bg-white/5 dark:text-white ${hasQty ? 'border-amber-300 dark:border-amber-600 bg-white text-amber-700' : 'border-border dark:border-white/10'}`}
-                      />
-                      <button
-                        onClick={() => adjustDeliveryQty(product.id, 1)}
-                        className={`size-8 flex items-center justify-center rounded-lg transition-all active:scale-90 ${hasQty ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-white/10 text-text-muted'}`}
-                      >
-                        <Plus size={12} />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Footer */}
-            <div className="shrink-0 px-4 pb-6 pt-3 border-t border-border-light">
-              {deliveryTotal > 0 && (
-                <p className="text-center text-xs text-text-muted mb-3">
-                  <span className="font-black text-amber-600">{deliveryTotal} unité{deliveryTotal > 1 ? 's' : ''}</span> à ajouter en réserve
-              </p>
-              )}
-              <button
-                onClick={handleDeliverySubmit}
-                disabled={deliveryTotal === 0 || deliverySaving || deliveryDone}
-                className={`w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 ${
-                  deliveryDone ? 'bg-green-500 text-white' : 'bg-amber-500 text-white shadow-lg shadow-amber-500/25'
-                }`}
-              >
-                {deliveryDone ? (
-                  <><Check size={16} /> Stock mis à jour !</>
-                ) : deliverySaving ? (
-                  <><div className="size-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Enregistrement...</>
-                ) : (
-                  <><Package size={16} /> Valider la livraison</>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
+// ─── Page principale ──────────────────────────────────────────────────────────
+
+export default function AdminProduits() {
+  return <CatalogueView />;
+}

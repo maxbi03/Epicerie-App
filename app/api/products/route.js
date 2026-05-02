@@ -18,6 +18,9 @@ function normalizeProduct(row) {
     stock: Number(stock ?? 0),
     quantity: row.quantity ?? '',
     description: row.description ?? '',
+    discount_percent: row.discount_percent ?? null,
+    discount_until: row.discount_until ?? null,
+    expiry_date: row.expiry_date ?? null,
   };
 }
 

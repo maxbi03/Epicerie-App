@@ -3,6 +3,8 @@ import { requireAdmin } from '../../../lib/adminUtils';
 import { NextResponse } from 'next/server';
 import { PRODUCTS_TABLE, SALES_TABLE } from '../../../lib/config';
 
+const DEFAULT_STOCK_THRESHOLD = 3;
+
 export async function GET(request) {
   const { authorized } = await requireAdmin(request);
   if (!authorized) {
@@ -11,113 +13,79 @@ export async function GET(request) {
 
   const sb = getSupabaseAdmin();
 
-  const { count: totalProducts } = await sb
+  // Produits actifs sous le seuil de stock rayon
+  const { data: belowThresholdProducts } = await sb
     .from(PRODUCTS_TABLE)
-    .select('*', { count: 'exact', head: true });
-
-  const { count: activeProducts } = await sb
-    .from(PRODUCTS_TABLE)
-    .select('*', { count: 'exact', head: true })
-    .eq('is_active', true);
-
-  const { count: incomplete } = await sb
-    .from(PRODUCTS_TABLE)
-    .select('*', { count: 'exact', head: true })
-    .eq('is_active', false);
-
-  const { count: outOfStock } = await sb
-    .from(PRODUCTS_TABLE)
-    .select('*', { count: 'exact', head: true })
+    .select('id, name, stock_shelf')
     .eq('is_active', true)
-    .eq('stock_shelf', 0);
+    .lt('stock_shelf', DEFAULT_STOCK_THRESHOLD)
+    .order('stock_shelf', { ascending: true });
 
-  const { count: lowStock } = await sb
-    .from(PRODUCTS_TABLE)
-    .select('*', { count: 'exact', head: true })
-    .eq('is_active', true)
-    .gt('stock_shelf', 0)
-    .lte('stock_shelf', 5);
+  const belowThreshold = belowThresholdProducts || [];
 
-  // Stock shelf stats
-  const { count: shelfOutOfStock } = await sb
-    .from(PRODUCTS_TABLE)
-    .select('*', { count: 'exact', head: true })
-    .eq('is_active', true)
-    .eq('stock_shelf', 0);
-
-  const { count: shelfLow } = await sb
-    .from(PRODUCTS_TABLE)
-    .select('*', { count: 'exact', head: true })
-    .eq('is_active', true)
-    .gt('stock_shelf', 0)
-    .lte('stock_shelf', 5);
-
-  const { count: shelfOk } = await sb
-    .from(PRODUCTS_TABLE)
-    .select('*', { count: 'exact', head: true })
-    .eq('is_active', true)
-    .gt('stock_shelf', 5);
-
-  // Stock back stats
-  const { count: backOutOfStock } = await sb
-    .from(PRODUCTS_TABLE)
-    .select('*', { count: 'exact', head: true })
-    .eq('is_active', true)
-    .eq('stock_back', 0);
-
-  const { count: backLow } = await sb
-    .from(PRODUCTS_TABLE)
-    .select('*', { count: 'exact', head: true })
-    .eq('is_active', true)
-    .gt('stock_back', 0)
-    .lte('stock_back', 5);
-
-  const { count: backOk } = await sb
-    .from(PRODUCTS_TABLE)
-    .select('*', { count: 'exact', head: true })
-    .eq('is_active', true)
-    .gt('stock_back', 5);
-
-  // Sales stats
-  const { count: totalSales } = await sb
-    .from(SALES_TABLE)
-    .select('*', { count: 'exact', head: true });
-
+  // Ventes
   const { data: salesData } = await sb
     .from(SALES_TABLE)
     .select('price, created_at');
 
-  // Prices are stored in centimes (bigint), divide by 100 for display
-  const totalRevenue = (salesData || []).reduce((sum, s) => sum + Number(s.price || 0), 0) / 100;
-
-  // Sales today
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayISO = today.toISOString();
-
-  const salesToday = (salesData || []).filter(s => s.created_at >= todayISO);
-  const revenueToday = salesToday.reduce((sum, s) => sum + Number(s.price || 0), 0) / 100;
-
-  // Sales this month
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
-  const salesMonth = (salesData || []).filter(s => s.created_at >= monthStart);
+  const yearStart  = new Date(today.getFullYear(), 0, 1).toISOString();
+
+  const allSales = salesData || [];
+
+  const salesToday = allSales.filter(s => s.created_at >= todayISO);
+  const salesMonth = allSales.filter(s => s.created_at >= monthStart);
+  const salesYear  = allSales.filter(s => s.created_at >= yearStart);
+
+  const revenueToday = salesToday.reduce((sum, s) => sum + Number(s.price || 0), 0) / 100;
   const revenueMonth = salesMonth.reduce((sum, s) => sum + Number(s.price || 0), 0) / 100;
+  const revenueYear  = salesYear.reduce((sum, s)  => sum + Number(s.price || 0), 0) / 100;
+
+  // Graphique 7 jours (pour le sous-menu ventes)
+  const chart7d = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - (6 - i));
+    const dayStr = d.toISOString().slice(0, 10);
+    const daySales = allSales.filter(s => s.created_at?.slice(0, 10) === dayStr);
+    return {
+      date: dayStr,
+      revenue: daySales.reduce((sum, s) => sum + Number(s.price || 0), 0) / 100,
+      count: daySales.length,
+    };
+  });
+
+  // Produits (pour le sous-menu produits)
+  const { count: totalProducts }  = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true });
+  const { count: activeProducts } = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true }).eq('is_active', true);
+  const { count: inactive }       = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true }).eq('is_active', false);
+
+  const { count: shelfOut } = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true }).eq('is_active', true).eq('stock_shelf', 0);
+  const { count: shelfLow } = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true }).eq('is_active', true).gt('stock_shelf', 0).lte('stock_shelf', 5);
+  const { count: shelfOk }  = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true }).eq('is_active', true).gt('stock_shelf', 5);
+  const { count: backOut }  = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true }).eq('is_active', true).eq('stock_back', 0);
+  const { count: backLow }  = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true }).eq('is_active', true).gt('stock_back', 0).lte('stock_back', 5);
+  const { count: backOk }   = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true }).eq('is_active', true).gt('stock_back', 5);
 
   return NextResponse.json({
-    totalProducts: totalProducts ?? 0,
-    activeProducts: activeProducts ?? 0,
-    incomplete: incomplete ?? 0,
-    outOfStock: outOfStock ?? 0,
-    lowStock: lowStock ?? 0,
-    shelf: { outOfStock: shelfOutOfStock ?? 0, low: shelfLow ?? 0, ok: shelfOk ?? 0 },
-    back: { outOfStock: backOutOfStock ?? 0, low: backLow ?? 0, ok: backOk ?? 0 },
     sales: {
-      total: totalSales ?? 0,
       today: salesToday.length,
       month: salesMonth.length,
-      totalRevenue,
+      year:  salesYear.length,
       revenueToday,
       revenueMonth,
+      revenueYear,
+    },
+    belowThreshold,
+    chart7d,
+    products: {
+      total: totalProducts ?? 0,
+      active: activeProducts ?? 0,
+      inactive: inactive ?? 0,
+      shelf: { out: shelfOut ?? 0, low: shelfLow ?? 0, ok: shelfOk ?? 0 },
+      back:  { out: backOut  ?? 0, low: backLow  ?? 0, ok: backOk  ?? 0 },
     },
   });
 }

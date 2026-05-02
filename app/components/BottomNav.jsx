@@ -29,7 +29,7 @@ export default function BottomNav() {
     };
   }, []);
 
-  if (pathname === '/' || pathname.startsWith('/admin')) return null;
+  if (pathname === '/' || pathname.startsWith('/admin') || pathname.startsWith('/producteur')) return null;
 
   return (
     <footer

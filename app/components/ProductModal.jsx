@@ -8,9 +8,11 @@ import { Box } from 'lucide-react';
 
 export default function ProductModal({ product, onClose, onAdd }) {
   const [quantity, setQuantity] = useState(1);
+  const [isVisitor, setIsVisitor] = useState(false);
 
   useEffect(() => {
     setQuantity(1);
+    try { setIsVisitor(sessionStorage.getItem('app_mode') === 'visitor'); } catch {}
   }, [product]);
 
   if (!product) return null;
@@ -53,11 +55,18 @@ export default function ProductModal({ product, onClose, onAdd }) {
           <div>
             <div className="flex items-start justify-between gap-3">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">{product.name}</h3>
-              {product.badge && (
-                  <span className="shrink-0 text-[10px] font-black uppercase tracking-widest bg-green-100 text-green-700 px-2 py-1 rounded-lg">
+              <div className="flex flex-col gap-1 shrink-0">
+                {product.discount_percent > 0 && (
+                  <span className="text-[10px] font-black uppercase tracking-widest bg-red-500 text-white px-2 py-1 rounded-lg text-center">
+                    ACTION -{product.discount_percent}%
+                  </span>
+                )}
+                {product.badge && (
+                  <span className="text-[10px] font-black uppercase tracking-widest bg-green-100 text-green-700 px-2 py-1 rounded-lg">
                     {product.badge}
                   </span>
-              )}
+                )}
+              </div>
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{product.category}</p>
           </div>
@@ -65,9 +74,21 @@ export default function ProductModal({ product, onClose, onAdd }) {
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-gray-50 dark:bg-white/5 rounded-2xl p-4">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Prix unitaire</p>
-              <p className="text-2xl font-black text-gray-900 dark:text-white">
-                {product.price.toFixed(2)} <span className="text-sm font-bold">CHF</span>
-              </p>
+              {product.discount_percent > 0 ? (
+                <>
+                  <p className="text-sm text-gray-400 line-through">{product.price.toFixed(2)} CHF</p>
+                  <p className="text-2xl font-black text-red-600">
+                    {(product.price * (1 - product.discount_percent / 100)).toFixed(2)} <span className="text-sm font-bold">CHF</span>
+                  </p>
+                  {product.discount_until && (
+                    <p className="text-[10px] text-red-400 mt-1">jusqu'au {new Date(product.discount_until).toLocaleDateString('fr-CH', { day: '2-digit', month: '2-digit' })}</p>
+                  )}
+                </>
+              ) : (
+                <p className="text-2xl font-black text-gray-900 dark:text-white">
+                  {product.price.toFixed(2)} <span className="text-sm font-bold">CHF</span>
+                </p>
+              )}
               {product.unit && (
                 <p className="text-xs text-gray-400">/ {product.unit}</p>
               )}
@@ -130,35 +151,46 @@ export default function ProductModal({ product, onClose, onAdd }) {
         </div>
 
         <div className="sticky bottom-0 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-white/10 p-3 rounded-b-3xl">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4 bg-gray-50 dark:bg-white/5 rounded-2xl px-4 py-2">
-              <button
-                onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                className="size-9 flex items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-sm font-bold text-gray-700 dark:text-white text-lg active:scale-90 transition-all"
-              ><Minus size={18} /></button>
-              <span className="text-lg font-black text-gray-900 dark:text-white min-w-[2ch] text-center">{quantity}</span>
-              <button
-                onClick={() => setQuantity(q => Math.min(q + 1, product.stock))}
-                className="size-9 flex items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-sm font-bold text-gray-700 dark:text-white text-lg active:scale-90 transition-all"
-              ><Plus size={18} /></button>
-            </div>
-
-            <button
-              onClick={addToBasket}
-              disabled={product.stock === 0}
-              className="flex-1 min-w-0 bg-primary text-white font-black py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+          {isVisitor ? (
+            <a href="/?register=1" className="w-full py-3.5 rounded-2xl font-black text-sm bg-primary/10 text-primary flex items-center justify-center gap-2 active:scale-[0.98] transition-all">
               <ShoppingCart size={18} />
-              {product.stock === 0 ? (
-                <span className="text-sm">Indisponible</span>
-              ) : (
-                <span className="flex items-baseline gap-1.5 whitespace-nowrap">
-                  <span className="text-sm">Ajouter</span>
-                  <span className="text-xs font-medium opacity-70">{(product.price * quantity).toFixed(2)} CHF</span>
-                </span>
-              )}
-            </button>
-          </div>
+              Créer un compte pour acheter
+            </a>
+          ) : (
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4 bg-gray-50 dark:bg-white/5 rounded-2xl px-4 py-2">
+                <button
+                  onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                  className="size-9 flex items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-sm font-bold text-gray-700 dark:text-white text-lg active:scale-90 transition-all"
+                ><Minus size={18} /></button>
+                <span className="text-lg font-black text-gray-900 dark:text-white min-w-[2ch] text-center">{quantity}</span>
+                <button
+                  onClick={() => setQuantity(q => Math.min(q + 1, product.stock))}
+                  className="size-9 flex items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-sm font-bold text-gray-700 dark:text-white text-lg active:scale-90 transition-all"
+                ><Plus size={18} /></button>
+              </div>
+
+              <button
+                onClick={addToBasket}
+                disabled={product.stock === 0}
+                className="flex-1 min-w-0 bg-primary text-white font-black py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ShoppingCart size={18} />
+                {product.stock === 0 ? (
+                  <span className="text-sm">Indisponible</span>
+                ) : (
+                  <span className="flex items-baseline gap-1.5 whitespace-nowrap">
+                    <span className="text-sm">Ajouter</span>
+                    <span className="text-xs font-medium opacity-70">
+                      {((product.discount_percent > 0
+                        ? product.price * (1 - product.discount_percent / 100)
+                        : product.price) * quantity).toFixed(2)} CHF
+                    </span>
+                  </span>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -104,8 +104,13 @@ export default function StockPage() {
                     {product.image && <img src={product.image} className="w-full h-full object-contain" alt={product.name} />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <h4 className="font-bold text-sm text-text-primary truncate">{product.name}</h4>
+                      {product.discount_percent > 0 && (
+                        <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md bg-red-500 text-white shrink-0">
+                          -{product.discount_percent}%
+                        </span>
+                      )}
                     </div>
                     <p className="text-[10px] text-text-muted mt-0.5">{product.origin}</p>
                     <div className="mt-1.5">
@@ -113,8 +118,18 @@ export default function StockPage() {
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <span className="font-black text-sm text-text-primary">{product.price.toFixed(2)}</span>
-                    <span className="text-[10px] text-text-muted block">CHF</span>
+                    {product.discount_percent > 0 ? (
+                      <>
+                        <span className="text-[10px] text-text-muted line-through block">{product.price.toFixed(2)}</span>
+                        <span className="font-black text-sm text-red-600">{(product.price * (1 - product.discount_percent / 100)).toFixed(2)}</span>
+                        <span className="text-[10px] text-text-muted block">CHF</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="font-black text-sm text-text-primary">{product.price.toFixed(2)}</span>
+                        <span className="text-[10px] text-text-muted block">CHF</span>
+                      </>
+                    )}
                   </div>
                 </button>
               ))

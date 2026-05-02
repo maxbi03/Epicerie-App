@@ -182,7 +182,7 @@ export default function ListesPage() {
           {/* Bouton nouvelle liste */}
           {lists.length < MAX_LISTS ? (
             <button onClick={openModal}
-              className="w-full flex items-center justify-center gap-2 py-4 rounded-3xl border-2 border-dashed border-border-light text-text-muted text-sm font-bold active:scale-[0.98] transition-all hover:border-primary hover:text-primary">
+              className="w-full flex items-center justify-center gap-2 py-4 rounded-3xl bg-primary text-white text-sm font-black shadow-md shadow-primary/20 active:scale-[0.98] transition-all">
               <Plus size={16} /> Nouvelle liste
             </button>
           ) : (

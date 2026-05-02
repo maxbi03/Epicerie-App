@@ -33,6 +33,12 @@ export default function HomePage() {
   useEffect(() => {
     const visitor = sessionStorage.getItem('app_mode') === 'visitor';
     setIsVisitor(visitor);
+
+    fetch('/api/news')
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data) && data.length > 0) setLatestNews(data[0]); })
+      .catch(() => {});
+
     if (visitor) { setGreeting('Visiteur'); return; }
 
     fetch('/api/auth/me')
@@ -43,11 +49,6 @@ export default function HomePage() {
         setPhoneVerified(!!data.user.phone_verified);
         setUserId(data.user.id);
       });
-
-    fetch('/api/news')
-      .then(r => r.json())
-      .then(data => { if (Array.isArray(data) && data.length > 0) setLatestNews(data[0]); })
-      .catch(() => {});
 
     if (navigator.geolocation) {
       const updatePosition = (pos) => {
@@ -134,7 +135,7 @@ export default function HomePage() {
   const REPORT_TYPES = [
     { key: 'product_missing', label: 'Produit manquant', Icon: ShoppingBasket, color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-700' },
     { key: 'product_damaged', label: 'Produit abîmé / échu', Icon: Trash2, color: 'text-red-500', bg: 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-700' },
-    { key: 'store_dirty',     label: 'Magasin sale', Icon: Wind, color: 'text-sky-600', bg: 'bg-sky-50 border-sky-200 dark:bg-sky-900/20 dark:border-sky-700' },
+    { key: 'store_dirty',     label: 'Propreté magasin', Icon: Wind, color: 'text-sky-600', bg: 'bg-sky-50 border-sky-200 dark:bg-sky-900/20 dark:border-sky-700' },
     { key: 'technical',       label: 'Problème technique', Icon: Wrench, color: 'text-violet-600', bg: 'bg-violet-50 border-violet-200 dark:bg-violet-900/20 dark:border-violet-700' },
     { key: 'other',           label: 'Autre problème', Icon: HelpCircle, color: 'text-text-muted', bg: 'bg-card-bg border-border-light' },
   ];
@@ -282,7 +283,7 @@ export default function HomePage() {
                 <Link href="/" className="py-3 rounded-xl bg-primary text-white font-black text-[10px] uppercase tracking-widest text-center active:scale-[0.98] transition-all">
                   Se connecter
                 </Link>
-                <Link href="/" className="py-3 rounded-xl bg-primary-light text-primary font-black text-[10px] uppercase tracking-widest text-center active:scale-[0.98] transition-all border border-primary/20">
+                <Link href="/?register=1" className="py-3 rounded-xl bg-primary-light text-primary font-black text-[10px] uppercase tracking-widest text-center active:scale-[0.98] transition-all border border-primary/20">
                   Créer un compte
                 </Link>
               </div>
@@ -320,13 +321,15 @@ export default function HomePage() {
       </div>
 
       {/* ── Bouton flottant Signaler ── */}
-      <button
-        onClick={openReport}
-        className="absolute bottom-5 right-4 size-11 rounded-full bg-red-500 shadow-lg shadow-red-500/30 flex items-center justify-center text-white active:scale-90 transition-all z-10"
-        aria-label="Signaler un problème"
-      >
-        <Flag size={16} />
-      </button>
+      {!isVisitor && (
+        <button
+          onClick={openReport}
+          className="absolute bottom-5 right-4 size-11 rounded-full bg-red-500 shadow-lg shadow-red-500/30 flex items-center justify-center text-white active:scale-90 transition-all z-10"
+          aria-label="Signaler un problème"
+        >
+          <Flag size={16} />
+        </button>
+      )}
     </main>
 
     {/* ── Bottom sheet signalement ── */}

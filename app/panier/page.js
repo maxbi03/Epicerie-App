@@ -234,9 +234,9 @@ export default function PanierPage() {
 
         <div className="rounded-3xl p-1 border border-gray-100 dark:border-white/10">
           {isVisitor ? (
-            <Link href="/" className="w-full py-4 rounded-2xl font-black text-sm uppercase tracking-[0.1em] bg-primary/10 text-primary flex items-center justify-center gap-2 active:scale-[0.98] transition-all">
+            <Link href="/?register=1" className="w-full py-4 rounded-2xl font-black text-sm uppercase tracking-[0.1em] bg-primary/10 text-primary flex items-center justify-center gap-2 active:scale-[0.98] transition-all">
               <Lock size={16} />
-              Connexion requise
+              Créer un compte
             </Link>
           ) : (
             <button

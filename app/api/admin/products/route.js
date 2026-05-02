@@ -61,7 +61,7 @@ export async function POST(request) {
   }
 
   const body = await request.json();
-  const { name, barcode, price_chf, quantity, category, image_url, producer, description, badge, stock_shelf } = body;
+  const { name, barcode, price_chf, quantity, category, image_url, producer, description, badge, stock_shelf, expiry_date, discount_percent, discount_until } = body;
 
   const cleanName = (name || '').trim();
   const cleanBarcode = barcode && barcode.trim() !== '' ? barcode.trim() : null;
@@ -89,6 +89,9 @@ export async function POST(request) {
     quantity: quantity || '',
     stock_shelf: Math.max(0, Number(stock_shelf ?? 0)),
     is_active: isComplete(body),
+    expiry_date: expiry_date || null,
+    discount_percent: discount_percent !== '' && discount_percent != null ? Math.min(100, Math.max(0, Number(discount_percent))) : null,
+    discount_until: discount_until || null,
   };
 
   const { data, error } = await sb
@@ -117,7 +120,7 @@ export async function PATCH(request) {
     return NextResponse.json({ error: 'ID requis' }, { status: 400 });
   }
 
-  const ALLOWED = ['name', 'barcode', 'price_chf', 'quantity', 'category', 'image_url', 'producer', 'description', 'badge', 'stock_shelf', 'stock_back', 'is_active'];
+  const ALLOWED = ['name', 'barcode', 'price_chf', 'quantity', 'category', 'image_url', 'producer', 'description', 'badge', 'stock_shelf', 'stock_back', 'is_active', 'expiry_date', 'discount_percent', 'discount_until'];
   const fields = {};
   for (const key of ALLOWED) {
     if (rawFields[key] !== undefined) fields[key] = rawFields[key];
@@ -127,6 +130,9 @@ export async function PATCH(request) {
   if (fields.price_chf != null) fields.price_chf = Number(fields.price_chf);
   if (fields.stock_shelf != null) fields.stock_shelf = Math.max(0, Number(fields.stock_shelf));
   if (fields.stock_back != null) fields.stock_back = Math.max(0, Number(fields.stock_back));
+  if (fields.discount_percent != null) fields.discount_percent = fields.discount_percent === '' ? null : Math.min(100, Math.max(0, Number(fields.discount_percent)));
+  if (fields.expiry_date === '') fields.expiry_date = null;
+  if (fields.discount_until === '') fields.discount_until = null;
 
   // Check uniqueness
   const sb = getSupabaseAdmin();

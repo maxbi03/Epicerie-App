@@ -56,6 +56,13 @@ export default function IndexPage() {
     setTimeout(() => setSplashDone(true), 1750);
   }, []);
 
+  // Ouvre directement le modal inscription si ?register=1
+  useEffect(() => {
+    if (!splashDone) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('register') === '1') openModal();
+  }, [splashDone]);
+
   // Restaure l'étape OTP si l'app a redémarré pendant la vérification SMS
   useEffect(() => {
     if (!splashDone) return;

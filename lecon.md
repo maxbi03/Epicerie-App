@@ -68,6 +68,28 @@ Ce fichier se met à jour au fil des conversations. Il capture ce qui a été ap
 
 ---
 
+## Portail producteur
+
+- Auth séparée via `producer_token` cookie (30j), géré dans `app/lib/producerAuth.js`
+- Dynamic import argon2 obligatoire (webpack ne supporte pas les modules natifs) : `const argon2 = (await import('argon2')).default ?? (await import('argon2'))`
+- Lien produits ↔ producteur par correspondance texte : `product_list.producer === producers.name` (exact)
+- Tables sans RLS (accès via service_role uniquement) : `producers`, `producer_deliveries`, `producer_invoices`, `producer_proposals`
+- `/producteur*` exclu de `BottomNav` (même traitement que `/admin*`)
+
+## Cross-composant sans Redux
+
+- Pattern `window.dispatchEvent(new CustomEvent('nom'))` pour notifier layout d'une action dans une page enfant
+- Ex : badge signalements rechargé via `reports-updated` event depuis `signalements/page.js`
+- Badge pending fournisseurs : chargé indépendamment de l'onglet actif (sinon 0 quand on est sur l'onglet Factures)
+
+## Admin produits — DLC / Remise
+
+- `expiry_date` (date), `discount_percent` (numeric 0-100), `discount_until` (date) ajoutés sur `product_list`
+- `daysUntil(dateStr)` = différence en jours entiers depuis aujourd'hui, `null` si pas de date
+- Badge DLC s'affiche si `daysUntil <= 7`, badge "-X%" si `discount_percent > 0`
+- Bouton imprimer (Printer icon) visible seulement quand produit a un discount ou DLC urgent
+- Impression : `window.open()` + HTML inline stylé (pas `innerHTML` + Tailwind, pas de CSS dans la popup)
+
 ## Divers
 
 - Commentaires JS : uniquement quand le POURQUOI n'est pas évident dans le code

@@ -45,6 +45,10 @@ export default function AdminSignalements() {
 
   useEffect(() => { loadReports(); }, [filter]);
 
+  function notifyLayout() {
+    window.dispatchEvent(new Event('reports-updated'));
+  }
+
   async function handleResolve(id) {
     setUpdating(id);
     try {
@@ -55,6 +59,7 @@ export default function AdminSignalements() {
       });
       if (!res.ok) throw new Error();
       setReports(prev => prev.map(r => r.id === id ? { ...r, status: 'resolved' } : r));
+      notifyLayout();
     } catch {
       setError('Erreur lors de la mise à jour');
     } finally {
@@ -72,6 +77,7 @@ export default function AdminSignalements() {
       });
       if (!res.ok) throw new Error();
       setReports(prev => prev.map(r => r.id === id ? { ...r, status: 'pending' } : r));
+      notifyLayout();
     } catch {
       setError('Erreur lors de la mise à jour');
     } finally {
@@ -90,6 +96,7 @@ export default function AdminSignalements() {
       });
       if (!res.ok) throw new Error();
       setReports(prev => prev.filter(r => r.id !== id));
+      notifyLayout();
     } catch {
       setError('Erreur lors de la suppression');
     } finally {

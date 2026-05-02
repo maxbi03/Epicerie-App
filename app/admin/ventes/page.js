@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Receipt, Search, Loader2, ShoppingCart, ChevronDown, ChevronUp } from 'lucide-react';
+import { Receipt, Search, Loader2, ShoppingCart, ChevronDown, ChevronUp, Download } from 'lucide-react';
 
 export default function AdminSalesPage() {
   const [sales, setSales] = useState([]);
@@ -65,6 +65,27 @@ export default function AdminSalesPage() {
   const todaySales = sales.filter(s => s.created_at && new Date(s.created_at).toDateString() === new Date().toDateString());
   const todayRevenue = todaySales.reduce((sum, s) => sum + (Number(s.price) || 0), 0);
 
+  function exportCSV() {
+    const rows = [
+      ['Date', 'Client', 'Montant CHF', 'Articles'],
+      ...filtered.map(s => [
+        formatDate(s.created_at),
+        s.client_name || 'Inconnu',
+        (Number(s.price) / 100).toFixed(2),
+        `"${(s.receipt || '').replace(/"/g, '""')}"`,
+      ]),
+    ];
+    const csv = rows.map(r => r.join(';')).join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const label = period === 'today' ? 'aujourd_hui' : period === 'week' ? '7_jours' : period === 'month' ? 'ce_mois' : 'toutes';
+    a.download = `ventes_${label}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -91,7 +112,7 @@ export default function AdminSalesPage() {
         </div>
       </div>
 
-      {/* Filtres */}
+      {/* Filtres + export */}
       <div className="flex gap-2">
         <div className="flex-1 relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
@@ -113,6 +134,14 @@ export default function AdminSalesPage() {
           <option value="week">7 jours</option>
           <option value="month">Ce mois</option>
         </select>
+        <button
+          onClick={exportCSV}
+          disabled={filtered.length === 0}
+          className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-card-bg border border-border-light text-xs font-bold text-text-secondary active:scale-95 transition-all disabled:opacity-40"
+          title="Exporter en CSV"
+        >
+          <Download size={14} />
+        </button>
       </div>
 
       {/* Liste */}

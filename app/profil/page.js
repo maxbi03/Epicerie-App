@@ -404,7 +404,7 @@ export default function ProfilPage() {
         <p className="text-sm text-text-secondary leading-relaxed">Créez un compte pour accéder aux fonctionnalités de l'épicerie.</p>
         <div className="grid grid-cols-2 gap-3 mt-6">
           <Link href="/" className="py-4 rounded-2xl bg-primary text-white font-black text-xs uppercase tracking-widest text-center">Se connecter</Link>
-          <Link href="/" className="py-4 rounded-2xl bg-primary-light text-forest-green font-black text-xs uppercase tracking-widest text-center">Créer un compte</Link>
+          <Link href="/?register=1" className="py-4 rounded-2xl bg-primary-light text-forest-green font-black text-xs uppercase tracking-widest text-center">Créer un compte</Link>
         </div>
       </div>
     </main>
