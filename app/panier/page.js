@@ -76,31 +76,21 @@ export default function PanierPage() {
   }, {});
 
   const groupedList = Object.values(grouped);
-  const total = groupedList.reduce((sum, p) => sum + p.price * p.quantity, 0);
+  // Prix unitaire remise appliquée (doit correspondre au recalcul serveur)
+  const unitPrice = (p) => (p.discount_percent > 0 ? p.price * (1 - p.discount_percent / 100) : p.price);
+  const total = groupedList.reduce((sum, p) => sum + unitPrice(p) * p.quantity, 0);
 
   async function handleCheckout() {
     setIsLoading(true);
     setError(null);
     try {
-      let clientName = null;
-      let clientUserId = null;
-      try {
-        const me = await fetch('/api/auth/me');
-        if (me.ok) {
-          const { user } = await me.json();
-          clientName = user?.name || null;
-          clientUserId = user?.id || null;
-        }
-      } catch (e) { console.warn('[checkout] fetch user info:', e); }
-
+      // Le serveur recalcule prix/total depuis la DB et dérive l'identité de la
+      // session : on n'envoie que les identifiants et quantités.
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          items: groupedList,
-          total,
-          client_name: clientName,
-          user_id: clientUserId,
+          items: groupedList.map(p => ({ id: p.id, quantity: p.quantity })),
         }),
       });
       const data = await res.json();
@@ -158,7 +148,7 @@ export default function PanierPage() {
                   </div>
                   <div className="text-right">
                     <span className="text-sm font-black text-green-900 dark:text-white">
-                      {(product.price * product.quantity).toFixed(2)} CHF
+                      {(unitPrice(product) * product.quantity).toFixed(2)} CHF
                     </span>
                   </div>
                 </div>

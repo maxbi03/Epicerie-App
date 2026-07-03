@@ -1,62 +1,83 @@
 import { NextResponse } from 'next/server';
+import { randomUUID } from 'crypto';
 import { PAYMENT_GATEWAY } from '../../lib/config';
+import { getSession } from '../../lib/auth';
+import { getSupabaseAdmin } from '../../lib/supabaseServer';
+import { loadCartPricing } from '../../lib/checkout';
+
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://localhost:3000';
 
 export async function POST(request) {
   try {
-    const { items, total, client_name, user_id } = await request.json();
-
-    if (!items || items.length === 0) {
-      return NextResponse.json({ error: 'Panier vide' }, { status: 400 });
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
     }
 
-    const description = items
-      .map(item => `${item.name} x${item.quantity}`)
-      .join(', ');
+    const { items: requestedItems } = await request.json();
 
-    const baseUrl = request.headers.get('origin') || 'http://localhost:3000';
+    // Recalcul serveur : le client n'envoie que { id, quantity }. Prix et total
+    // sont recalculés depuis la DB, jamais lus depuis la requête.
+    let items, totalCents;
+    try {
+      ({ items, totalCents } = await loadCartPricing(requestedItems));
+    } catch (e) {
+      return NextResponse.json({ error: e.message }, { status: 400 });
+    }
+
+    // Identité dérivée de la session, jamais du body.
+    const { data: user } = await getSupabaseAdmin()
+      .from('users')
+      .select('name')
+      .eq('id', session.userId)
+      .maybeSingle();
+
+    const orderRef = randomUUID();
+    const totalChf = (totalCents / 100).toFixed(2);
+    const description = items.map((i) => `${i.name} x${i.qty}`).join(', ');
+
     const metadata = {
-      items: JSON.stringify(items.map(i => ({ id: i.id, name: i.name, qty: i.quantity, price: i.price }))),
-      client_name: client_name || null,
-      user_id: user_id || null,
+      items: JSON.stringify(items),
+      client_name: user?.name || null,
+      user_id: session.userId,
+      order_ref: orderRef,
     };
 
     if (PAYMENT_GATEWAY === 'payrexx') {
       const { createPayrexxGateway } = await import('../../lib/payrexx.js');
 
       const gateway = await createPayrexxGateway({
-        amountInCents: Math.round(Number(total) * 100),
+        amountInCents: totalCents,
         currency: 'CHF',
         purpose: `Épico - ${description}`.substring(0, 255),
-        successRedirectUrl: `${baseUrl}/panier/confirmation?status=success`,
-        failedRedirectUrl: `${baseUrl}/panier/confirmation?status=failed`,
+        successRedirectUrl: `${BASE_URL}/panier/confirmation?status=success`,
+        failedRedirectUrl: `${BASE_URL}/panier/confirmation?status=failed`,
         referenceId: JSON.stringify(metadata),
       });
 
-      console.log('Payrexx gateway created:', gateway.id);
       return NextResponse.json({ checkoutUrl: gateway.link, paymentId: String(gateway.id) });
-
-    } else {
-      const { createMollieClient } = await import('@mollie/api-client');
-      const mollieClient = createMollieClient({ apiKey: process.env.MOLLIE_API_KEY });
-
-      const paymentData = {
-        amount: { currency: 'CHF', value: Number(total).toFixed(2) },
-        description: `Épico - ${description}`.substring(0, 255),
-        redirectUrl: `${baseUrl}/panier/confirmation?status=success`,
-        metadata,
-      };
-
-      const isLocal = baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1') || baseUrl.includes('192.168.');
-      if (!isLocal) {
-        paymentData.webhookUrl = `${baseUrl}/api/checkout/webhook`;
-      }
-
-      console.log('Creating Mollie payment:', JSON.stringify(paymentData));
-      const payment = await mollieClient.payments.create(paymentData);
-      return NextResponse.json({ checkoutUrl: payment.getCheckoutUrl(), paymentId: payment.id });
     }
+
+    const { createMollieClient } = await import('@mollie/api-client');
+    const mollieClient = createMollieClient({ apiKey: process.env.MOLLIE_API_KEY });
+
+    const paymentData = {
+      amount: { currency: 'CHF', value: totalChf },
+      description: `Épico - ${description}`.substring(0, 255),
+      redirectUrl: `${BASE_URL}/panier/confirmation?status=success`,
+      metadata,
+    };
+
+    const isLocal = BASE_URL.includes('localhost') || BASE_URL.includes('127.0.0.1') || BASE_URL.includes('192.168.');
+    if (!isLocal) {
+      paymentData.webhookUrl = `${BASE_URL}/api/checkout/webhook`;
+    }
+
+    const payment = await mollieClient.payments.create(paymentData);
+    console.log('Mollie payment created:', payment.id, `${totalChf} CHF`);
+    return NextResponse.json({ checkoutUrl: payment.getCheckoutUrl(), paymentId: payment.id });
   } catch (error) {
-    console.error('Payment error:', error);
+    console.error('Payment error:', error.message);
     return NextResponse.json(
       { error: error.message || 'Erreur lors de la création du paiement' },
       { status: 500 }

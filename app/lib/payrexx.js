@@ -70,3 +70,7 @@ export async function createPayrexxGateway({ amountInCents, currency, purpose, s
 export async function getPayrexxGateway(gatewayId) {
   return payrexxRequest('GET', `Gateway/${gatewayId}`);
 }
+
+export async function getPayrexxTransaction(transactionId) {
+  return payrexxRequest('GET', `Transaction/${transactionId}`);
+}

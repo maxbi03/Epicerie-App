@@ -102,6 +102,17 @@ Ce fichier se met à jour au fil des conversations. Il capture ce qui a été ap
 - `POST /api/users` (legacy, sans appelant front) : verrouillé — session requise, `id` forcé à `session.userId`, champs sensibles (`phone_verified`, `role`, `total_spent`, `email`) jamais acceptés depuis le body. La création de compte se fait via `verify-phone/confirm`, pas ici.
 - Routes admin GET : sélectionner des colonnes explicites, jamais `select('*')` sur `users` (fuite de `password_hash`).
 
+## Sécurité — paiement (lot 02)
+
+- **Le client n'envoie que `[{ id, quantity }]`** au checkout. Prix, total et identité (`user_id`, `client_name`) sont recalculés/dérivés côté serveur (`app/lib/checkout.js` → `loadCartPricing`). Ne JAMAIS refaire confiance à un prix ou total venant du body.
+- **Prix remisé fait foi** : prix facturé = `price × (1 - discount_percent/100)` si `discount_percent > 0`. Le front (panier + ProductModal) et le serveur appliquent la même formule → affichage == montant facturé. Avant, le panier facturait le prix brut (bug corrigé).
+- **Idempotence par `order_ref`** : UUID généré au checkout, mis dans la metadata de la passerelle, colonne `sales.order_ref` UNIQUE. `finalizePaidOrder()` insère en `upsert(..., { onConflict: 'order_ref', ignoreDuplicates: true })` et ne décrémente stock / incrémente total_spent que si l'insert a réellement eu lieu. Protège contre retry webhook + double verify + course webhook↔verify, pour les deux passerelles.
+- **`total_spent` atomique** via RPC `increment_total_spent(p_user_id, p_amount)` (fonction SQL) au lieu d'un read-then-write.
+- **`BASE_URL` = `process.env.NEXT_PUBLIC_BASE_URL`** (jamais le header `origin`, manipulable) pour les URLs de redirection et de webhook.
+- **Webhook = re-fetch, jamais le body** : Mollie re-fetch le paiement via l'API ; Payrexx re-fetch la transaction (`getPayrexxTransaction`) pour vérifier statut + montant. Un faux POST « confirmed » n'a plus d'effet.
+- Logique commune aux deux passerelles factorisée dans `finalizePaidOrder` (montants toujours en centimes en entrée). Bascule Mollie↔Payrexx = uniquement la constante `PAYMENT_GATEWAY` dans `config.js`.
+- **Migration** : `supabase/migrations/20260703042537_payment_idempotency.sql` (colonne + index unique + fonction RPC) à exécuter sur la base.
+
 ## Divers
 
 - Commentaires JS : uniquement quand le POURQUOI n'est pas évident dans le code
