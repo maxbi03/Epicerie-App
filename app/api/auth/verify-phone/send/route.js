@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSession, signOtpToken, verifyToken, OTP_COOKIE, PENDING_REG_COOKIE } from '../../../../lib/auth';
 import { getSupabaseAdmin } from '../../../../lib/supabaseServer';
 import { normalizePhone, validatePhone } from '../../../../lib/phone';
+import { hashOtp } from '../../../../lib/otp';
 import { cookies } from 'next/headers';
 
 /** Génère un code OTP à 6 chiffres cryptographiquement sûr */
@@ -77,7 +78,7 @@ export async function POST(request) {
       const code = generateOtp();
       await sendSms(phone, code);
 
-      const otpToken = await signOtpToken({ pendingId: pending.id, phone, code, attempts: 0 });
+      const otpToken = await signOtpToken({ pendingId: pending.id, phone, codeHash: hashOtp(code), attempts: 0 });
       const response = NextResponse.json({ ok: true });
       response.cookies.set(OTP_COOKIE, otpToken, {
         httpOnly: true,
@@ -132,7 +133,7 @@ export async function POST(request) {
       const code = generateOtp();
       await sendSms(phone, code);
 
-      const otpToken = await signOtpToken({ userId: session.userId, phone, newPhone: phone, code, attempts: 0 });
+      const otpToken = await signOtpToken({ userId: session.userId, phone, newPhone: phone, codeHash: hashOtp(code), attempts: 0 });
       const response = NextResponse.json({ ok: true });
       response.cookies.set(OTP_COOKIE, otpToken, {
         httpOnly: true,
@@ -175,7 +176,7 @@ export async function POST(request) {
     const code = generateOtp();
     await sendSms(phone, code);
 
-    const otpToken = await signOtpToken({ userId: session.userId, phone, code, attempts: 0 });
+    const otpToken = await signOtpToken({ userId: session.userId, phone, codeHash: hashOtp(code), attempts: 0 });
     const response = NextResponse.json({ ok: true });
     response.cookies.set(OTP_COOKIE, otpToken, {
       httpOnly: true,

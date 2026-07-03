@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSession, verifyToken, signToken, signOtpToken, OTP_COOKIE, AUTH_COOKIE, PENDING_REG_COOKIE } from '../../../../lib/auth';
 import { getSupabaseAdmin } from '../../../../lib/supabaseServer';
+import { verifyOtp } from '../../../../lib/otp';
 import { cookies } from 'next/headers';
 
 const MAX_ATTEMPTS = 5; // tentatives max avant invalidation du code
@@ -45,7 +46,7 @@ export async function POST(request) {
     }
 
     // Code incorrect → incrémenter le compteur dans un nouveau token
-    if (String(otpPayload.code) !== String(code).trim()) {
+    if (!verifyOtp(code, otpPayload.codeHash)) {
       const remaining = MAX_ATTEMPTS - attempts - 1;
 
       // Réémettre le token avec attempts+1 (même durée résiduelle ~10min)

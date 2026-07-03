@@ -118,6 +118,14 @@ Ce fichier se met à jour au fil des conversations. Il capture ce qui a été ap
 - Retrait du secret de repli codé en dur (`'secret-de-ouf'`) dans `door/unlock`. Si `DOOR_SECRET` manque, l'ouverture est refusée (500) au lieu d'utiliser un secret public.
 - **Reporté volontairement** (attaque jugée trop improbable au stade actuel, à faire évoluer plus tard) : migration vers un broker MQTT privé + TLS, et le token HMAC anti-rejeu (nécessite de modifier le firmware ESP32). Tant qu'on reste sur le broker public `broker.hivemq.com`, le message `unlock:<DOOR_SECRET>` reste capturable/rejouable — risque accepté pour l'instant.
 
+## Sécurité — OTP & login (lot 04)
+
+- **Le code OTP n'est plus stocké en clair.** Le cookie `phone_otp` (JWT signé mais non chiffré, donc décodable en base64) contient désormais `codeHash = HMAC-SHA256(code, pepper)` au lieu de `code`. `app/lib/otp.js` → `hashOtp` / `verifyOtp` (comparaison temps constant). Le SMS envoie toujours le code en clair, seul le token stocke le hash. Pepper = `OTP_PEPPER` (optionnel) sinon `JWT_SECRET`.
+  - Les 3 flux OTP de `verify-phone/send` (inscription, changement de numéro, vérif numéro existant) utilisent `codeHash`. `confirm` compare via `verifyOtp`.
+- **Rate limiting login** (`api/auth/login`) : verrou après 5 échecs sur fenêtre glissante 15 min, verrou 15 min. Table `login_attempts` + RPCs atomiques `record_login_failure` / `clear_login_attempts` (SELECT FOR UPDATE). Message toujours générique (« Identifiants incorrects ») pour ne pas révéler l'existence de l'email.
+- **Anti-énumération par timing** : on vérifie toujours un hash argon2 (réel ou factice mis en cache) même si l'email n'existe pas, pour que le temps de réponse soit constant.
+- **Migration** : `supabase/migrations/20260703044847_login_rate_limit.sql`.
+
 ## Divers
 
 - Commentaires JS : uniquement quand le POURQUOI n'est pas évident dans le code
