@@ -1,6 +1,5 @@
 import { getSupabaseAdmin } from '../../lib/supabaseServer';
 import { NextResponse } from 'next/server';
-import { requireAuth } from '../../lib/auth';
 
 const TYPES = ['product_missing', 'product_damaged', 'store_dirty', 'technical', 'other'];
 

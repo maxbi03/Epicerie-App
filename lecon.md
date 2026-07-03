@@ -126,6 +126,17 @@ Ce fichier se met à jour au fil des conversations. Il capture ce qui a été ap
 - **Anti-énumération par timing** : on vérifie toujours un hash argon2 (réel ou factice mis en cache) même si l'email n'existe pas, pour que le temps de réponse soit constant.
 - **Migration** : `supabase/migrations/20260703044847_login_rate_limit.sql`.
 
+## Nettoyage (lot 08)
+
+- Supprimé (code mort confirmé sans appelant) : `app/lib/supabaseClient.js`, `app/lib/userService.js` (les 3 exports jamais appelés — le profil appelle `/api/users/[id]` en direct), route `POST /api/users`, import fantôme `requireAuth` dans `reports`.
+- `next-pwa` (v5, non maintenu) retiré de `package.json` : seul `@ducanh2912/next-pwa` (v10) est importé dans `next.config.mjs`.
+- `payrexx.js` n'est PAS mort malgré l'absence d'import statique : chargé via `await import('.../payrexx.js')` (dynamique, conditionnel à `PAYMENT_GATEWAY`).
+
+## Prep migration (scripts/)
+
+- `scripts/baseline.sql` : comptage dynamique de toutes les tables + agrégats sensibles. À lancer avant/après la migration DB pour prouver l'intégrité. 100 % Postgres standard (Supabase et local).
+- `scripts/smoke-test.md` : checklist des parcours manuels à valider avant de merger `dev`, et après la migration. `avatars` = bucket Storage (pas une table) → migration vérifiée via la section Profil.
+
 ## Divers
 
 - Commentaires JS : uniquement quand le POURQUOI n'est pas évident dans le code
