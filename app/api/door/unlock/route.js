@@ -7,7 +7,7 @@ import mqtt from 'mqtt';
 const MQTT_BROKER = process.env.MQTT_BROKER || 'mqtt://broker.hivemq.com:1883';
 const MQTT_TOPIC = process.env.MQTT_TOPIC || 'epico/door/command';
 const MQTT_STATUS_TOPIC = process.env.MQTT_STATUS_TOPIC || 'epico/door/status';
-const DOOR_SECRET = process.env.DOOR_SECRET || 'secret-de-ouf';
+const DOOR_SECRET = process.env.DOOR_SECRET;
 const DOOR_CONFIRM_TIMEOUT = 10000; // 10s max pour attendre la confirmation ESP32
 
 async function logTraffic(user, name, success) {
@@ -147,6 +147,11 @@ export async function POST(request) {
     }
 
     // 4. Envoyer la commande MQTT et attendre la confirmation de l'ESP32
+    if (!DOOR_SECRET) {
+      console.error('DOOR_SECRET manquant : ouverture refusée.');
+      return NextResponse.json({ error: 'Configuration du système de porte incomplète.' }, { status: 500 });
+    }
+
     let success = false;
     try {
       const result = await unlockDoorWithConfirmation();

@@ -113,6 +113,11 @@ Ce fichier se met à jour au fil des conversations. Il capture ce qui a été ap
 - Logique commune aux deux passerelles factorisée dans `finalizePaidOrder` (montants toujours en centimes en entrée). Bascule Mollie↔Payrexx = uniquement la constante `PAYMENT_GATEWAY` dans `config.js`.
 - **Migration** : `supabase/migrations/20260703042537_payment_idempotency.sql` (colonne + index unique + fonction RPC) à exécuter sur la base.
 
+## Sécurité — porte IoT (lot 03, partiel)
+
+- Retrait du secret de repli codé en dur (`'secret-de-ouf'`) dans `door/unlock`. Si `DOOR_SECRET` manque, l'ouverture est refusée (500) au lieu d'utiliser un secret public.
+- **Reporté volontairement** (attaque jugée trop improbable au stade actuel, à faire évoluer plus tard) : migration vers un broker MQTT privé + TLS, et le token HMAC anti-rejeu (nécessite de modifier le firmware ESP32). Tant qu'on reste sur le broker public `broker.hivemq.com`, le message `unlock:<DOOR_SECRET>` reste capturable/rejouable — risque accepté pour l'instant.
+
 ## Divers
 
 - Commentaires JS : uniquement quand le POURQUOI n'est pas évident dans le code
