@@ -1,14 +1,14 @@
 import { getSupabaseAdmin } from '../../../lib/supabaseServer';
-import { getSession } from '../../../lib/auth';
+import { requireAdmin as requireAdminUser } from '../../../lib/adminUtils';
 import { NextResponse } from 'next/server';
 import { BULK_ORDERS_TABLE } from '../../../lib/config';
 
 async function requireAdmin() {
-  const session = await getSession();
-  if (!session || session.role !== 'admin') {
+  const { authorized, user } = await requireAdminUser();
+  if (!authorized) {
     return { session: null, error: NextResponse.json({ error: 'Non autorisé' }, { status: 403 }) };
   }
-  return { session, error: null };
+  return { session: user, error: null };
 }
 
 // ── GET — liste toutes les commandes (filtre optionnel ?status=) ──

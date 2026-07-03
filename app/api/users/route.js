@@ -1,19 +1,20 @@
 import { getSupabaseAdmin } from '../../lib/supabaseServer';
+import { getSession } from '../../lib/auth';
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {
-  const profile = await request.json();
+  // Un utilisateur ne peut modifier que son propre profil, et jamais les
+  // champs sensibles (phone_verified, role, total_spent, email…) qui sont
+  // gérés exclusivement par les flux serveur dédiés.
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
 
-  if (!profile.id) {
-    return NextResponse.json({ error: 'id is required' }, { status: 400 });
-  }
+  const profile = await request.json();
 
   const { data, error } = await getSupabaseAdmin()
     .from('users')
-    .upsert({
-      id: profile.id,
+    .update({
       name: profile.name ?? null,
-      email: profile.email ?? null,
       phone: profile.phone ?? null,
       address: profile.address ?? null,
       street: profile.street ?? null,
@@ -23,8 +24,8 @@ export async function POST(request) {
       country: profile.country ?? 'CH',
       address_label: profile.address_label ?? null,
       address_verified: profile.address_verified ?? false,
-      phone_verified: profile.phone_verified ?? false,
-    }, { onConflict: 'id' })
+    })
+    .eq('id', session.userId)
     .select()
     .single();
 

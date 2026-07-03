@@ -90,6 +90,18 @@ Ce fichier se met à jour au fil des conversations. Il capture ce qui a été ap
 - Bouton imprimer (Printer icon) visible seulement quand produit a un discount ou DLC urgent
 - Impression : `window.open()` + HTML inline stylé (pas `innerHTML` + Tailwind, pas de CSS dans la popup)
 
+## Sécurité — autorisation des routes (lot 01)
+
+- **Garde-fou central `proxy.js`** (racine) : en Next 16, `middleware.js` est déprécié → utiliser `proxy.js` exportant `export async function proxy(request)`. Runtime edge : vérifie seulement la présence/validité du JWT via `jose` (pas d'accès DB possible en edge).
+  - `/api/*` hors liste blanche → 401 si pas de JWT valide. Liste blanche = login, register, logout, me, verify-phone/*, checkout/webhook, products, news, address-search, reports.
+  - `/admin*` (pages) → redirige vers `/home` si pas de JWT. Le rôle admin reste vérifié dans le layout + les routes (défense en profondeur).
+- **Le JWT ne contient QUE `{ userId, email }`** — jamais `role`. Ne JAMAIS se fier à `session.role` (toujours `undefined`). Le rôle se vérifie en DB :
+  - Admin → `requireAdmin()` de `lib/adminUtils.js` (lookup `users.role`). C'est le seul mécanisme admin valide.
+  - Producteur → `requireProducer()` de `lib/producerAuth.js` : source de vérité = existence d'une ligne `producers` liée au `user_id` (via `.maybeSingle()`). Ne dépend plus de `session.role`.
+- Supprimé : le helper `isAdmin()` basé sur `NEXT_PUBLIC_ADMIN_EMAIL` (variable publique exposée au client — à ne jamais réintroduire pour de l'autorisation).
+- `POST /api/users` (legacy, sans appelant front) : verrouillé — session requise, `id` forcé à `session.userId`, champs sensibles (`phone_verified`, `role`, `total_spent`, `email`) jamais acceptés depuis le body. La création de compte se fait via `verify-phone/confirm`, pas ici.
+- Routes admin GET : sélectionner des colonnes explicites, jamais `select('*')` sur `users` (fuite de `password_hash`).
+
 ## Divers
 
 - Commentaires JS : uniquement quand le POURQUOI n'est pas évident dans le code
