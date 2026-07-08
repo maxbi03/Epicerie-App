@@ -49,13 +49,25 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Un compte existe déjà avec cet email.' }, { status: 409 });
     }
 
+    // Vérifier l'unicité du téléphone avant d'envoyer un SMS (contrainte unique en DB)
+    const normalizedPhone = normalizePhone(phone);
+    const { data: existingPhone } = await getSupabaseAdmin()
+      .from('users')
+      .select('id')
+      .eq('phone', normalizedPhone)
+      .maybeSingle();
+
+    if (existingPhone) {
+      return NextResponse.json({ error: 'Ce numéro de téléphone est déjà utilisé.' }, { status: 409 });
+    }
+
     const password_hash = await argon2.hash(password);
 
     const pendingToken = await signPendingRegToken({
       id:               randomUUID(),
       name:             name.trim(),
       email:            email.toLowerCase(),
-      phone:            normalizePhone(phone),
+      phone:            normalizedPhone,
       address:          address ?? null,
       postal_code:      postal_code ?? null,
       city:             city ?? null,

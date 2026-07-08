@@ -112,6 +112,11 @@ Ce fichier se met à jour au fil des conversations. Il capture ce qui a été ap
 - **Webhook = re-fetch, jamais le body** : Mollie re-fetch le paiement via l'API ; Payrexx re-fetch la transaction (`getPayrexxTransaction`) pour vérifier statut + montant. Un faux POST « confirmed » n'a plus d'effet.
 - Logique commune aux deux passerelles factorisée dans `finalizePaidOrder` (montants toujours en centimes en entrée). Bascule Mollie↔Payrexx = uniquement la constante `PAYMENT_GATEWAY` dans `config.js`.
 - **Migration** : `supabase/migrations/20260703042537_payment_idempotency.sql` (colonne + index unique + fonction RPC) à exécuter sur la base.
+- ⚠️ **Piège** : l'index unique sur `order_ref` doit être **NON partiel**. Un index partiel (`where order_ref is not null`) fait échouer `upsert({...}, { onConflict: 'order_ref' })` avec `42P10` (« no unique constraint matching the ON CONFLICT specification ») → `verify` renvoie 500 → la page confirmation affiche « Paiement en cours » au lieu de « confirmé ». Postgres autorise déjà plusieurs NULL dans un index unique standard, le partiel est inutile.
+
+## Inscription — unicité téléphone
+
+- La table `users` a une contrainte unique sur `phone` (`users_new_phone_key`). L'inscription vérifie désormais l'unicité du téléphone dans `register` (avant l'envoi du SMS) ET dans `verify-phone/confirm` (filet avant l'insert) → renvoie un 409 clair au lieu d'un 500 générique.
 
 ## Sécurité — porte IoT (lot 03, partiel)
 

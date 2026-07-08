@@ -82,7 +82,7 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Code invalide' }, { status: 400 });
       }
 
-      // Vérifier une dernière fois que l'email n'a pas été pris entre-temps
+      // Vérifier une dernière fois que l'email et le téléphone ne sont pas pris
       const { data: existing } = await getSupabaseAdmin()
         .from('users')
         .select('id')
@@ -92,6 +92,19 @@ export async function POST(request) {
       if (existing) {
         return NextResponse.json(
           { error: 'Un compte existe déjà avec cet email.' },
+          { status: 409 }
+        );
+      }
+
+      const { data: existingPhone } = await getSupabaseAdmin()
+        .from('users')
+        .select('id')
+        .eq('phone', pending.phone)
+        .maybeSingle();
+
+      if (existingPhone) {
+        return NextResponse.json(
+          { error: 'Ce numéro de téléphone est déjà utilisé par un autre compte.' },
           { status: 409 }
         );
       }
