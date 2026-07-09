@@ -32,10 +32,37 @@ export async function PATCH(request, { params }) {
   const patch = await request.json();
 
   // Champs autorisés à modifier
-  const ALLOWED = ['name', 'phone', 'address', 'postal_code', 'city', 'country', 'address_verified'];
+  const ALLOWED = ['name', 'email', 'phone', 'address', 'postal_code', 'city', 'country', 'address_verified'];
   const safePatch = {};
   for (const key of ALLOWED) {
     if (patch[key] !== undefined) safePatch[key] = patch[key];
+  }
+
+  // Nom : trim + longueur minimale
+  if (safePatch.name !== undefined) {
+    safePatch.name = String(safePatch.name).trim();
+    if (safePatch.name.length < 2) {
+      return NextResponse.json({ error: 'Nom trop court (2 caractères minimum).' }, { status: 400 });
+    }
+  }
+
+  // Email : normaliser, valider, vérifier l'unicité, réinitialiser email_verified si changé
+  if (safePatch.email !== undefined) {
+    const email = String(safePatch.email).toLowerCase().trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+      return NextResponse.json({ error: 'Format d\'email invalide.' }, { status: 400 });
+    }
+    safePatch.email = email;
+
+    const { data: taken } = await getSupabaseAdmin()
+      .from('users').select('id').eq('email', email).maybeSingle();
+    if (taken && taken.id !== id) {
+      return NextResponse.json({ error: 'Cet email est déjà utilisé.' }, { status: 409 });
+    }
+
+    const { data: current } = await getSupabaseAdmin()
+      .from('users').select('email').eq('id', id).single();
+    if (current && current.email !== email) safePatch.email_verified = false;
   }
 
   // Si le téléphone change, remettre phone_verified à false

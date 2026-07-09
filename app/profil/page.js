@@ -102,6 +102,12 @@ export default function ProfilPage() {
   const [phoneSuccess, setPhoneSuccess]       = useState(false);
   const [phoneResendCooldown, setPhoneResendCooldown] = useState(0);
 
+  // ── Identité (nom + email)
+  const [idForm, setIdForm]       = useState({ name: '', email: '' });
+  const [idSaving, setIdSaving]   = useState(false);
+  const [idError, setIdError]     = useState('');
+  const [idSuccess, setIdSuccess] = useState(false);
+
   // ── Adresse
   const [addrForm, setAddrForm]         = useState({ address: '', npa: '', city: '' });
   const [addrQuery, setAddrQuery]       = useState('');
@@ -301,6 +307,39 @@ export default function ProfilPage() {
     setAddrSugg([]); setShowAddrSugg(false);
   }
 
+  // ── Identité (nom + email) ────────────────────────────────────────────────────
+
+  function openIdentityPanel() {
+    setIdForm({ name: profile?.name || '', email: profile?.email || '' });
+    setIdError(''); setIdSuccess(false);
+    setPanel('identity');
+  }
+
+  async function saveIdentity() {
+    setIdError(''); setIdSuccess(false);
+    const name = idForm.name.trim();
+    const email = idForm.email.trim().toLowerCase();
+    if (name.length < 2) { setIdError('Nom trop court (2 caractères minimum).'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { setIdError('Format d\'email invalide.'); return; }
+    setIdSaving(true);
+    try {
+      const res = await fetch(`/api/users/${profile.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setProfile(p => ({ ...p, name: data.name, email: data.email, email_verified: data.email_verified }));
+      setIdSuccess(true);
+      setTimeout(() => { setIdSuccess(false); setPanel(null); }, 1500);
+    } catch (err) {
+      setIdError(err.message);
+    } finally {
+      setIdSaving(false);
+    }
+  }
+
   async function saveAddress() {
     setAddrError(''); setAddrSuccess(false);
     setAddrSaving(true);
@@ -468,8 +507,8 @@ export default function ProfilPage() {
 
       {/* ── Informations personnelles ──────────────────────────────────────── */}
       <Section title="Informations personnelles">
-        {/* Nom : lecture seule */}
-        <Row icon={User} label="Nom complet" value={profile?.name || '—'} />
+        {/* Nom : ouvre le panneau d'édition identité */}
+        <Row icon={User} label="Nom complet" value={profile?.name || '—'} onClick={openIdentityPanel} />
         {/* Téléphone : ouvre le panneau de changement */}
         <Row
           icon={Phone}
@@ -478,9 +517,46 @@ export default function ProfilPage() {
           badge={<Badge verified={!!profile?.phone_verified} />}
           onClick={openPhonePanel}
         />
-        {/* Email : lecture seule */}
-        <Row icon={Mail} label="Email" value={profile?.email || '—'} badge={<Badge verified={!!profile?.email_verified} />} />
+        {/* Email : ouvre le panneau d'édition identité */}
+        <Row icon={Mail} label="Email" value={profile?.email || '—'} badge={<Badge verified={!!profile?.email_verified} />} onClick={openIdentityPanel} />
       </Section>
+
+      {/* ── Panneau édition nom / email ────────────────────────────────────── */}
+      {panel === 'identity' && (
+        <div className="bg-card-bg rounded-[1.75rem] border border-border-light shadow-sm p-5 space-y-4 -mt-3">
+          <p className="text-xs text-text-muted">Modifiez votre nom et votre email. Changer votre email demandera une nouvelle vérification.</p>
+          <div>
+            <label className="text-[10px] font-black uppercase tracking-widest text-text-muted block mb-1">Nom complet</label>
+            <input
+              type="text"
+              value={idForm.name}
+              onChange={e => setIdForm(f => ({ ...f, name: e.target.value }))}
+              className="w-full px-4 py-3 rounded-2xl border border-border-light bg-input-bg text-text-primary text-sm outline-none focus:border-primary"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-black uppercase tracking-widest text-text-muted block mb-1">Email</label>
+            <input
+              type="email"
+              value={idForm.email}
+              onChange={e => setIdForm(f => ({ ...f, email: e.target.value }))}
+              className="w-full px-4 py-3 rounded-2xl border border-border-light bg-input-bg text-text-primary text-sm outline-none focus:border-primary"
+            />
+          </div>
+          {idError && <p className="text-xs text-red-500">{idError}</p>}
+          {idSuccess && <p className="text-xs text-green-600">Enregistré ✓</p>}
+          <div className="flex gap-2">
+            <button onClick={saveIdentity} disabled={idSaving}
+              className="flex-1 py-3 rounded-2xl bg-primary text-white font-bold text-sm disabled:opacity-60 transition-all">
+              {idSaving ? 'Enregistrement…' : 'Enregistrer'}
+            </button>
+            <button onClick={() => setPanel(null)}
+              className="flex-1 py-3 rounded-2xl bg-app-bg text-text-secondary font-bold text-sm transition-all">
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Panneau changement de numéro ───────────────────────────────────── */}
       {panel === 'phone' && (

@@ -143,11 +143,23 @@ export default function PanierPage() {
                     {product.image && <img src={product.image} className="w-full h-full object-contain" alt={product.name} />}
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-bold text-sm text-green-900 dark:text-gray-200">{product.name}</h4>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-sm text-green-900 dark:text-gray-200">{product.name}</h4>
+                      {product.discount_percent > 0 && (
+                        <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-red-100 text-red-600 shrink-0">
+                          -{product.discount_percent}%
+                        </span>
+                      )}
+                    </div>
                     <p className="text-[10px] text-gray-400 font-medium">{product.origin}</p>
                   </div>
                   <div className="text-right">
-                    <span className="text-sm font-black text-green-900 dark:text-white">
+                    {product.discount_percent > 0 && (
+                      <span className="block text-[10px] text-gray-400 line-through">
+                        {(product.price * product.quantity).toFixed(2)} CHF
+                      </span>
+                    )}
+                    <span className={`text-sm font-black ${product.discount_percent > 0 ? 'text-red-600' : 'text-green-900 dark:text-white'}`}>
                       {(unitPrice(product) * product.quantity).toFixed(2)} CHF
                     </span>
                   </div>

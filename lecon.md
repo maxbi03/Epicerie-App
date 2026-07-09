@@ -142,6 +142,12 @@ Ce fichier se met à jour au fil des conversations. Il capture ce qui a été ap
 - `scripts/baseline.sql` : comptage dynamique de toutes les tables + agrégats sensibles. À lancer avant/après la migration DB pour prouver l'intégrité. 100 % Postgres standard (Supabase et local).
 - `scripts/smoke-test.md` : checklist des parcours manuels à valider avant de merger `dev`, et après la migration. `avatars` = bucket Storage (pas une table) → migration vérifiée via la section Profil.
 
+## Corrections smoke-test (dev)
+
+- **Redirect admin** : le proxy gère le cas non-connecté (`/admin` → 307 `/home`). Pour un connecté non-admin, le garde reste dans `admin/layout.js` (fetch `/api/auth/me` → rôle). `router.push('/home')` ne naviguait pas de façon fiable (page blanche) → remplacé par `window.location.replace('/home')` (redirection dure garantie) + spinner tant que non autorisé (jamais de `return null` blanc).
+- **Nom + email éditables** dans le profil : panneau `panel === 'identity'` (comme le téléphone). Backend `PATCH /api/users/[id]` autorise `email` avec validation + unicité (409) + reset `email_verified` si changé. Rappel : après changement d'email, la reconnexion se fait avec le nouvel email (le JWT courant reste valide car basé sur `userId`, pas l'email).
+- **Badge remise dans le panier** : `-X%` + prix barré + prix rouge, cohérent avec la liste produits. Le prix unitaire remisé (`unitPrice`) doit toujours matcher le recalcul serveur (lot 02).
+
 ## Divers
 
 - Commentaires JS : uniquement quand le POURQUOI n'est pas évident dans le code
