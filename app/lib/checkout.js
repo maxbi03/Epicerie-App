@@ -1,6 +1,7 @@
-import { getSupabaseAdmin } from './supabaseServer';
+import { db } from './db';
+import { product_list, sales } from './db/schema';
+import { inArray, sql } from 'drizzle-orm';
 import { updateStockAfterPayment } from './updateStock';
-import { PRODUCTS_TABLE, PRODUCTS_ID, SALES_TABLE } from './config';
 
 /** Prix unitaire effectif en centimes, remise appliquée si discount_percent > 0. */
 export function effectivePriceCents(row) {
@@ -42,14 +43,9 @@ export async function loadCartPricing(requested) {
   }
 
   const ids = [...qtyById.keys()];
-  const { data: rows, error } = await getSupabaseAdmin()
-    .from(PRODUCTS_TABLE)
-    .select('*')
-    .in(PRODUCTS_ID, ids);
+  const rows = await db.select().from(product_list).where(inArray(product_list.id, ids));
 
-  if (error) throw new Error(error.message);
-
-  const byId = new Map((rows || []).map((r) => [r[PRODUCTS_ID] ?? r.id, r]));
+  const byId = new Map(rows.map((r) => [r.id, r]));
 
   const items = [];
   let totalCents = 0;
@@ -81,43 +77,38 @@ export async function loadCartPricing(requested) {
  */
 export async function finalizePaidOrder({ orderRef, items, clientName, userId, priceCents }) {
   if (!orderRef) throw new Error('order_ref manquant');
-  const sb = getSupabaseAdmin();
 
   const receipt = items.map((i) => `${i.name} x${i.qty}`).join(', ');
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
   // ON CONFLICT DO NOTHING : ne renvoie une ligne que si l'insert a réellement eu lieu.
-  const { data: inserted, error: insertError } = await sb
-    .from(SALES_TABLE)
-    .upsert(
-      {
-        order_ref: orderRef,
-        created_at: new Date().toISOString(),
-        client_name: clientName || null,
-        user_id: userId || null,
-        receipt,
-        price: priceCents,
-        items_json: items,
-        expires_at: expiresAt,
-      },
-      { onConflict: 'order_ref', ignoreDuplicates: true }
-    )
-    .select('order_ref');
+  const inserted = await db
+    .insert(sales)
+    .values({
+      order_ref: orderRef,
+      created_at: new Date().toISOString(),
+      client_name: clientName || null,
+      user_id: userId || null,
+      receipt,
+      price: priceCents,
+      items_json: items,
+      expires_at: expiresAt,
+    })
+    .onConflictDoNothing({ target: sales.order_ref })
+    .returning({ order_ref: sales.order_ref });
 
-  if (insertError) throw new Error(insertError.message);
-
-  if (!inserted || inserted.length === 0) {
+  if (inserted.length === 0) {
     return { alreadyProcessed: true };
   }
 
   await updateStockAfterPayment(items);
 
   if (userId) {
-    const { error: rpcError } = await sb.rpc('increment_total_spent', {
-      p_user_id: userId,
-      p_amount: priceCents,
-    });
-    if (rpcError) console.error('increment_total_spent failed:', rpcError.message);
+    try {
+      await db.execute(sql`select increment_total_spent(${userId}::uuid, ${priceCents})`);
+    } catch (e) {
+      console.error('increment_total_spent failed:', e.message);
+    }
   }
 
   return { alreadyProcessed: false };
