@@ -159,7 +159,8 @@ Ce fichier se met à jour au fil des conversations. Il capture ce qui a été ap
   - Supabase exige SSL mais `sslmode=require` est traité en `verify-full` (bloque) → passer `ssl: { rejectUnauthorized: false }` en objet dans la config Drizzle (pas dans l'URL). La config détecte localhost pour désactiver le SSL en local.
   - Connexion **directe** Supabase (`db.<ref>.supabase.co:5432`) OK ici ; sinon utiliser le pooler.
   - `maxValue: 9223372036854775807` généré par l'introspection dépasse la précision JS → simplifier `sales.id` en `.generatedByDefaultAsIdentity()` sans options.
-- **Reste à faire** : migration des données (source → local, avec cast texte→numérique), réécriture de l'accès données (Supabase JS → Drizzle, ~117 requêtes), remplacement du Storage avatars (fichiers locaux), sauvegardes `pg_dump`.
+- **Données migrées ✅** : `scripts/migrate-data.mjs` (source → local, renommages + cast texte→numérique, re-jouable) + `scripts/verify-migration.mjs` (parité comptages + agrégats). Vérifié : 13 tables OK, price_chf converti sans perte.
+- **Reste à faire** : réécriture de l'accès données (Supabase JS → Drizzle, ~117 requêtes / ~39 fichiers), remplacement du Storage avatars (fichiers locaux), sauvegardes `pg_dump`, bascule + smoke-test.
 - 🐛 À corriger séparément : `users.total_spent` en numeric(10,2) mais incrémenté en centimes → affichage ×100 (bug pré-existant).
 
 ## Divers
