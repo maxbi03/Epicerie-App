@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from '../../../lib/supabaseServer';
 import { requireAdmin } from '../../../lib/adminUtils';
 
 const USER_COLUMNS =
-  'id, name, email, phone, phone_verified, email_verified, address, address_label, street, house_number, postal_code, city, country, address_verified, role, total_spent, created_at, avatar_url';
+  'id, name, email, phone, phone_verified, email_verified, address, postal_code, city, country, address_verified, role, total_spent, created_at, avatar_url';
 
 export async function GET() {
   const { authorized } = await requireAdmin();

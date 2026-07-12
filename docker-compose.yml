@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: epico-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: epico
+      POSTGRES_PASSWORD: epico
+      POSTGRES_DB: epico
+    ports:
+      - "5432:5432"
+    volumes:
+      - epico_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U epico -d epico"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  epico_pgdata:

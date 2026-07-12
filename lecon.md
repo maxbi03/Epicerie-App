@@ -148,6 +148,20 @@ Ce fichier se met à jour au fil des conversations. Il capture ce qui a été ap
 - **Nom + email éditables** dans le profil : panneau `panel === 'identity'` (comme le téléphone). Backend `PATCH /api/users/[id]` autorise `email` avec validation + unicité (409) + reset `email_verified` si changé. Rappel : après changement d'email, la reconnexion se fait avec le nouvel email (le JWT courant reste valide car basé sur `userId`, pas l'email).
 - **Badge remise dans le panier** : `-X%` + prix barré + prix rouge, cohérent avec la liste produits. Le prix unitaire remisé (`unitPrice`) doit toujours matcher le recalcul serveur (lot 02).
 
+## Migration DB Supabase → Postgres local (lot 10, en cours)
+
+- **Client** : Drizzle. **Hébergement** : dev sur Mac (Docker), puis ancien laptop Windows 11 (Docker Desktop + WSL2), puis VPS Infomaniak (Docker). Même `docker-compose.yml` partout. La base reste **privée** (l'app lui parle en localhost) ; seule l'app doit être publique (webhooks Mollie).
+- **Env** (`.env.local`) : `SUPABASE_DB_URL` = source (Supabase), `DATABASE_URL` = cible locale (`postgresql://epico:epico@localhost:5432/epico`).
+- **Postgres local** : `docker compose up -d` → conteneur `epico-postgres`, volume `epico_pgdata` (données persistées). `postgres:16`.
+- **Schéma cible** : `app/lib/db/schema.ts` (Drizzle). Dérivé de l'introspection (`drizzle/schema.ts`) avec : types corrigés dans `product_list` (`price_chf` numeric, `stock_shelf`/`stock_back` integer, `updated_at` timestamptz), colonnes CSV renommées (`Prix unit. [CHF]` → `prix_unit_chf`, `Prix d'achat [CHF]` → `prix_achat_chf`, etc. — **toutes gardées**), policies RLS Supabase retirées. Appliqué via `npx drizzle-kit push`.
+- **Fonctions SQL** : `app/lib/db/functions.sql` (les 3 RPC), à appliquer après `push` sur chaque base.
+- **Pièges rencontrés** :
+  - Supabase exige SSL mais `sslmode=require` est traité en `verify-full` (bloque) → passer `ssl: { rejectUnauthorized: false }` en objet dans la config Drizzle (pas dans l'URL). La config détecte localhost pour désactiver le SSL en local.
+  - Connexion **directe** Supabase (`db.<ref>.supabase.co:5432`) OK ici ; sinon utiliser le pooler.
+  - `maxValue: 9223372036854775807` généré par l'introspection dépasse la précision JS → simplifier `sales.id` en `.generatedByDefaultAsIdentity()` sans options.
+- **Reste à faire** : migration des données (source → local, avec cast texte→numérique), réécriture de l'accès données (Supabase JS → Drizzle, ~117 requêtes), remplacement du Storage avatars (fichiers locaux), sauvegardes `pg_dump`.
+- 🐛 À corriger séparément : `users.total_spent` en numeric(10,2) mais incrémenté en centimes → affichage ×100 (bug pré-existant).
+
 ## Divers
 
 - Commentaires JS : uniquement quand le POURQUOI n'est pas évident dans le code
