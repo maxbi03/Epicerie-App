@@ -1,6 +1,8 @@
-import { getSupabaseAdmin } from '../../lib/supabaseServer';
 import { NextResponse } from 'next/server';
-import { PRODUCTS_TABLE, PRODUCTS_ID } from '../../lib/config';
+import { db } from '../../lib/db';
+import { product_list } from '../../lib/db/schema';
+import { eq, asc } from 'drizzle-orm';
+import { PRODUCTS_ID } from '../../lib/config';
 
 function normalizeProduct(row) {
   const stock = row.stock_shelf ?? row.stock_total ?? row.stock ?? row.quantity ?? row.qty ?? 0;
@@ -25,16 +27,16 @@ function normalizeProduct(row) {
 }
 
 export async function GET() {
-  const { data, error } = await getSupabaseAdmin()
-    .from(PRODUCTS_TABLE)
-    .select('*')
-    .eq('is_active', true)
-    .order('name', { ascending: true });
+  try {
+    const data = await db
+      .select()
+      .from(product_list)
+      .where(eq(product_list.is_active, true))
+      .orderBy(asc(product_list.name));
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const products = data.map(normalizeProduct).filter(p => p.id != null);
+    return NextResponse.json(products);
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
-
-  const products = (data || []).map(normalizeProduct).filter(p => p.id != null);
-  return NextResponse.json(products);
 }
