@@ -1,19 +1,17 @@
 import { NextResponse } from 'next/server';
-import { getSupabaseAdmin } from '../../../lib/supabaseServer';
+import { db } from '../../../lib/db';
+import { traffic } from '../../../lib/db/schema';
+import { desc } from 'drizzle-orm';
 import { requireAdmin } from '../../../lib/adminUtils';
 
 export async function GET() {
   const { authorized } = await requireAdmin();
   if (!authorized) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
 
-  const { data, error } = await getSupabaseAdmin()
-    .from('traffic')
-    .select('*')
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    const data = await db.select().from(traffic).orderBy(desc(traffic.created_at));
+    return NextResponse.json(data);
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
-
-  return NextResponse.json(data);
 }

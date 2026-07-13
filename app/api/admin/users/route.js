@@ -1,20 +1,28 @@
 import { NextResponse } from 'next/server';
-import { getSupabaseAdmin } from '../../../lib/supabaseServer';
+import { db } from '../../../lib/db';
+import { users } from '../../../lib/db/schema';
+import { eq } from 'drizzle-orm';
 import { requireAdmin } from '../../../lib/adminUtils';
 
-const USER_COLUMNS =
-  'id, name, email, phone, phone_verified, email_verified, address, postal_code, city, country, address_verified, role, total_spent, created_at, avatar_url';
+const USER_COLUMNS = {
+  id: users.id, name: users.name, email: users.email, phone: users.phone,
+  phone_verified: users.phone_verified, email_verified: users.email_verified,
+  address: users.address, postal_code: users.postal_code, city: users.city,
+  country: users.country, address_verified: users.address_verified,
+  role: users.role, total_spent: users.total_spent, created_at: users.created_at,
+  avatar_url: users.avatar_url,
+};
 
 export async function GET() {
   const { authorized } = await requireAdmin();
   if (!authorized) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
 
-  const { data, error } = await getSupabaseAdmin()
-    .from('users')
-    .select(USER_COLUMNS);
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+  try {
+    const data = await db.select(USER_COLUMNS).from(users);
+    return NextResponse.json(data);
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }
 
 // PATCH /api/admin/users — actions admin sur un utilisateur
@@ -28,13 +36,12 @@ export async function PATCH(request) {
   if (action === 'reset_spent') {
     if (!userId) return NextResponse.json({ error: 'userId requis' }, { status: 400 });
 
-    const { error } = await getSupabaseAdmin()
-      .from('users')
-      .update({ total_spent: 0 })
-      .eq('id', userId);
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ ok: true });
+    try {
+      await db.update(users).set({ total_spent: 0 }).where(eq(users.id, userId));
+      return NextResponse.json({ ok: true });
+    } catch (e) {
+      return NextResponse.json({ error: e.message }, { status: 500 });
+    }
   }
 
   return NextResponse.json({ error: 'Action inconnue' }, { status: 400 });

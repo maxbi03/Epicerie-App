@@ -1,7 +1,8 @@
-import { getSupabaseAdmin } from '../../../lib/supabaseServer';
+import { db } from '../../../lib/db';
+import { product_list } from '../../../lib/db/schema';
+import { eq } from 'drizzle-orm';
 import { requireAdmin } from '../../../lib/adminUtils';
 import { NextResponse } from 'next/server';
-import { PRODUCTS_TABLE, PRODUCTS_ID } from '../../../lib/config';
 
 export async function PATCH(request) {
   const { authorized } = await requireAdmin(request);
@@ -15,17 +16,13 @@ export async function PATCH(request) {
     return NextResponse.json({ error: 'Liste de mises à jour requise' }, { status: 400 });
   }
 
-  const sb = getSupabaseAdmin();
   const errors = [];
 
   for (const { id, stock_shelf } of updates) {
-    const { error } = await sb
-      .from(PRODUCTS_TABLE)
-      .update({ stock_shelf: Math.max(0, Number(stock_shelf)) })
-      .eq(PRODUCTS_ID, id);
-
-    if (error) {
-      errors.push({ id, error: error.message });
+    try {
+      await db.update(product_list).set({ stock_shelf: Math.max(0, Number(stock_shelf)) }).where(eq(product_list.id, id));
+    } catch (e) {
+      errors.push({ id, error: e.message });
     }
   }
 

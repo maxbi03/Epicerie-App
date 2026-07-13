@@ -1,9 +1,15 @@
-import { getSupabaseAdmin } from '../../../lib/supabaseServer';
+import { db } from '../../../lib/db';
+import { product_list, sales } from '../../../lib/db/schema';
+import { and, eq, gt, lt, lte, asc, sql } from 'drizzle-orm';
 import { requireAdmin } from '../../../lib/adminUtils';
 import { NextResponse } from 'next/server';
-import { PRODUCTS_TABLE, SALES_TABLE } from '../../../lib/config';
 
 const DEFAULT_STOCK_THRESHOLD = 3;
+
+async function countProducts(where) {
+  const [{ count }] = await db.select({ count: sql`count(*)::int` }).from(product_list).where(where);
+  return count;
+}
 
 export async function GET(request) {
   const { authorized } = await requireAdmin(request);
@@ -11,30 +17,21 @@ export async function GET(request) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
   }
 
-  const sb = getSupabaseAdmin();
-
   // Produits actifs sous le seuil de stock rayon
-  const { data: belowThresholdProducts } = await sb
-    .from(PRODUCTS_TABLE)
-    .select('id, name, stock_shelf')
-    .eq('is_active', true)
-    .lt('stock_shelf', DEFAULT_STOCK_THRESHOLD)
-    .order('stock_shelf', { ascending: true });
-
-  const belowThreshold = belowThresholdProducts || [];
+  const belowThreshold = await db
+    .select({ id: product_list.id, name: product_list.name, stock_shelf: product_list.stock_shelf })
+    .from(product_list)
+    .where(and(eq(product_list.is_active, true), lt(product_list.stock_shelf, DEFAULT_STOCK_THRESHOLD)))
+    .orderBy(asc(product_list.stock_shelf));
 
   // Ventes
-  const { data: salesData } = await sb
-    .from(SALES_TABLE)
-    .select('price, created_at');
+  const allSales = await db.select({ price: sales.price, created_at: sales.created_at }).from(sales);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayISO = today.toISOString();
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
   const yearStart  = new Date(today.getFullYear(), 0, 1).toISOString();
-
-  const allSales = salesData || [];
 
   const salesToday = allSales.filter(s => s.created_at >= todayISO);
   const salesMonth = allSales.filter(s => s.created_at >= monthStart);
@@ -58,16 +55,16 @@ export async function GET(request) {
   });
 
   // Produits (pour le sous-menu produits)
-  const { count: totalProducts }  = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true });
-  const { count: activeProducts } = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true }).eq('is_active', true);
-  const { count: inactive }       = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true }).eq('is_active', false);
+  const totalProducts  = await countProducts(undefined);
+  const activeProducts = await countProducts(eq(product_list.is_active, true));
+  const inactive       = await countProducts(eq(product_list.is_active, false));
 
-  const { count: shelfOut } = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true }).eq('is_active', true).eq('stock_shelf', 0);
-  const { count: shelfLow } = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true }).eq('is_active', true).gt('stock_shelf', 0).lte('stock_shelf', 5);
-  const { count: shelfOk }  = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true }).eq('is_active', true).gt('stock_shelf', 5);
-  const { count: backOut }  = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true }).eq('is_active', true).eq('stock_back', 0);
-  const { count: backLow }  = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true }).eq('is_active', true).gt('stock_back', 0).lte('stock_back', 5);
-  const { count: backOk }   = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true }).eq('is_active', true).gt('stock_back', 5);
+  const shelfOut = await countProducts(and(eq(product_list.is_active, true), eq(product_list.stock_shelf, 0)));
+  const shelfLow = await countProducts(and(eq(product_list.is_active, true), gt(product_list.stock_shelf, 0), lte(product_list.stock_shelf, 5)));
+  const shelfOk  = await countProducts(and(eq(product_list.is_active, true), gt(product_list.stock_shelf, 5)));
+  const backOut  = await countProducts(and(eq(product_list.is_active, true), eq(product_list.stock_back, 0)));
+  const backLow  = await countProducts(and(eq(product_list.is_active, true), gt(product_list.stock_back, 0), lte(product_list.stock_back, 5)));
+  const backOk   = await countProducts(and(eq(product_list.is_active, true), gt(product_list.stock_back, 5)));
 
   return NextResponse.json({
     sales: {

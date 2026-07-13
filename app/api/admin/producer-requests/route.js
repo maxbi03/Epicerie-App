@@ -1,6 +1,15 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../lib/adminUtils';
-import { getSupabaseAdmin } from '../../../lib/supabaseServer';
+import { db } from '../../../lib/db';
+import { producer_invoices, producer_proposals, producers } from '../../../lib/db/schema';
+import { eq, desc } from 'drizzle-orm';
+
+function withNestedProducer(rows) {
+  return rows.map(({ producer_name, producer_email, ...r }) => ({
+    ...r,
+    producers: r.producer_id ? { name: producer_name, email: producer_email } : null,
+  }));
+}
 
 export async function GET(request) {
   const { authorized } = await requireAdmin();
@@ -9,26 +18,43 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const view = searchParams.get('view') || 'proposals';
 
-  const sb = getSupabaseAdmin();
+  try {
+    if (view === 'invoices') {
+      const rows = await db
+        .select({
+          id: producer_invoices.id, producer_id: producer_invoices.producer_id,
+          delivery_id: producer_invoices.delivery_id, invoice_number: producer_invoices.invoice_number,
+          items: producer_invoices.items, amount_chf: producer_invoices.amount_chf,
+          status: producer_invoices.status, notes: producer_invoices.notes,
+          sent_at: producer_invoices.sent_at, paid_at: producer_invoices.paid_at,
+          created_at: producer_invoices.created_at,
+          producer_name: producers.name, producer_email: producers.email,
+        })
+        .from(producer_invoices)
+        .leftJoin(producers, eq(producer_invoices.producer_id, producers.id))
+        .orderBy(desc(producer_invoices.created_at));
 
-  if (view === 'invoices') {
-    const { data, error } = await sb
-      .from('producer_invoices')
-      .select('*, producers(name, email)')
-      .order('created_at', { ascending: false });
+      return NextResponse.json(withNestedProducer(rows));
+    }
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json(data ?? []);
+    // proposals (default)
+    const rows = await db
+      .select({
+        id: producer_proposals.id, producer_id: producer_proposals.producer_id,
+        type: producer_proposals.type, product_id: producer_proposals.product_id,
+        data: producer_proposals.data, status: producer_proposals.status,
+        admin_note: producer_proposals.admin_note, created_at: producer_proposals.created_at,
+        updated_at: producer_proposals.updated_at,
+        producer_name: producers.name, producer_email: producers.email,
+      })
+      .from(producer_proposals)
+      .leftJoin(producers, eq(producer_proposals.producer_id, producers.id))
+      .orderBy(desc(producer_proposals.created_at));
+
+    return NextResponse.json(withNestedProducer(rows));
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
-
-  // proposals (default)
-  const { data, error } = await sb
-    .from('producer_proposals')
-    .select('*, producers(name, email)')
-    .order('created_at', { ascending: false });
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data ?? []);
 }
 
 export async function PATCH(request) {
@@ -38,29 +64,22 @@ export async function PATCH(request) {
   const { id, type, status, admin_note } = await request.json();
   if (!id || !status) return NextResponse.json({ error: 'id et status requis' }, { status: 400 });
 
-  const sb = getSupabaseAdmin();
+  try {
+    if (type === 'invoice') {
+      const updates = { status };
+      if (status === 'paid') updates.paid_at = new Date().toISOString();
+      const [data] = await db.update(producer_invoices).set(updates).where(eq(producer_invoices.id, id)).returning();
+      return NextResponse.json(data);
+    }
 
-  if (type === 'invoice') {
-    const updates = { status };
-    if (status === 'paid') updates.paid_at = new Date().toISOString();
-    const { data, error } = await sb
-      .from('producer_invoices')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    // proposal
+    const [data] = await db
+      .update(producer_proposals)
+      .set({ status, admin_note: admin_note || null })
+      .where(eq(producer_proposals.id, id))
+      .returning();
     return NextResponse.json(data);
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
-
-  // proposal
-  const { data, error } = await sb
-    .from('producer_proposals')
-    .update({ status, admin_note: admin_note || null })
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
 }

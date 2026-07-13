@@ -1,7 +1,8 @@
-import { getSupabaseAdmin } from '../../../lib/supabaseServer';
+import { db } from '../../../lib/db';
+import { news } from '../../../lib/db/schema';
+import { eq, desc } from 'drizzle-orm';
 import { requireAdmin } from '../../../lib/adminUtils';
 import { NextResponse } from 'next/server';
-import { NEWS_TABLE } from '../../../lib/config';
 
 export async function GET(request) {
   const { authorized } = await requireAdmin(request);
@@ -9,16 +10,12 @@ export async function GET(request) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
   }
 
-  const { data, error } = await getSupabaseAdmin()
-    .from(NEWS_TABLE)
-    .select('*')
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    const data = await db.select().from(news).orderBy(desc(news.created_at));
+    return NextResponse.json(data);
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
-
-  return NextResponse.json(data || []);
 }
 
 export async function POST(request) {
@@ -33,7 +30,7 @@ export async function POST(request) {
   if (!title || !title.trim()) {
     return NextResponse.json({ error: 'Le titre est requis' }, { status: 400 });
   }
-  const news = {
+  const newsRow = {
     created_at: new Date().toISOString(),
     category: category || 'com',
     type: type && type.trim() ? type.trim() : null,
@@ -47,20 +44,15 @@ export async function POST(request) {
     is_published: true,
   };
 
-  const { data, error } = await getSupabaseAdmin()
-    .from(NEWS_TABLE)
-    .insert(news)
-    .select()
-    .single();
-
-  if (error) {
-    if (error.code === '23505') {
+  try {
+    const [data] = await db.insert(news).values(newsRow).returning();
+    return NextResponse.json(data, { status: 201 });
+  } catch (e) {
+    if (e.code === '23505') {
       return NextResponse.json({ error: 'Une publication avec ce titre existe déjà' }, { status: 409 });
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
-
-  return NextResponse.json(data, { status: 201 });
 }
 
 export async function PATCH(request) {
@@ -88,21 +80,15 @@ export async function PATCH(request) {
     }
   }
 
-  const { data, error } = await getSupabaseAdmin()
-    .from(NEWS_TABLE)
-    .update(update)
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) {
-    if (error.code === '23505') {
+  try {
+    const [data] = await db.update(news).set(update).where(eq(news.id, id)).returning();
+    return NextResponse.json(data);
+  } catch (e) {
+    if (e.code === '23505') {
       return NextResponse.json({ error: 'Une publication avec ce titre existe déjà' }, { status: 409 });
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
-
-  return NextResponse.json(data);
 }
 
 export async function DELETE(request) {
@@ -117,14 +103,10 @@ export async function DELETE(request) {
     return NextResponse.json({ error: 'ID requis' }, { status: 400 });
   }
 
-  const { error } = await getSupabaseAdmin()
-    .from(NEWS_TABLE)
-    .delete()
-    .eq('id', id);
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    await db.delete(news).where(eq(news.id, id));
+    return NextResponse.json({ success: true });
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
-
-  return NextResponse.json({ success: true });
 }

@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Proposer avant d'implémenter uniquement si la demande est ambiguë
 - Si une information dans CLAUDE.md ou lecon.md semble obsolète ou incertaine, demander confirmation à l'utilisateur avant d'agir dessus
 - Langue : français
+- **Au début de chaque tâche, recommander le modèle le plus adapté** avec une courte justification. Repère : Opus / Fable pour la sécurité, le paiement, l'IoT et l'architecture complexe ; Sonnet pour l'implémentation standard, le refactor et la conversion mécanique ; Haiku pour le nettoyage à faible risque (suppression de code mort, edits triviaux).
 
 ## Mémoire du projet
 

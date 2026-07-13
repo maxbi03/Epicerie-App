@@ -1,7 +1,8 @@
-import { getSupabaseAdmin } from '../../../../lib/supabaseServer';
+import { db } from '../../../../lib/db';
+import { product_list } from '../../../../lib/db/schema';
+import { eq, inArray } from 'drizzle-orm';
 import { requireAdmin } from '../../../../lib/adminUtils';
 import { NextResponse } from 'next/server';
-import { PRODUCTS_TABLE, PRODUCTS_ID } from '../../../../lib/config';
 
 /**
  * POST /api/admin/products/stock
@@ -33,43 +34,37 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Aucune quantité valide saisie' }, { status: 400 });
   }
 
-  const sb = getSupabaseAdmin();
-
   // Fetch current stock_back values for all impacted products
   const ids = validItems.map(i => i.id);
-  const { data: current, error: fetchError } = await sb
-    .from(PRODUCTS_TABLE)
-    .select(`${PRODUCTS_ID}, stock_back`)
-    .in(PRODUCTS_ID, ids);
-
-  if (fetchError) {
-    return NextResponse.json({ error: fetchError.message }, { status: 500 });
+  let current;
+  try {
+    current = await db
+      .select({ id: product_list.id, stock_back: product_list.stock_back })
+      .from(product_list)
+      .where(inArray(product_list.id, ids));
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
 
-  const currentMap = Object.fromEntries((current || []).map(p => [p[PRODUCTS_ID] ?? p.id, Number(p.stock_back ?? 0)]));
+  const currentMap = Object.fromEntries(current.map(p => [p.id, Number(p.stock_back ?? 0)]));
 
   // Apply increments
   const updates = validItems.map(({ id, qty }) => ({
-    [PRODUCTS_ID]: id,
+    id,
     stock_back: (currentMap[id] ?? 0) + Number(qty),
   }));
 
   const results = await Promise.allSettled(
-    updates.map(({ [PRODUCTS_ID]: id, stock_back }) =>
-      sb
-        .from(PRODUCTS_TABLE)
-        .update({ stock_back })
-        .eq(PRODUCTS_ID, id)
-        .select(`${PRODUCTS_ID}, stock_back`)
-        .single()
+    updates.map(({ id, stock_back }) =>
+      db.update(product_list).set({ stock_back }).where(eq(product_list.id, id)).returning({ id: product_list.id, stock_back: product_list.stock_back })
     )
   );
 
-  const errors = results.filter(r => r.status === 'rejected' || r.value?.error);
+  const errors = results.filter(r => r.status === 'rejected');
   if (errors.length > 0) {
     return NextResponse.json({ error: `${errors.length} mise(s) à jour échouée(s)` }, { status: 500 });
   }
 
-  const updated = results.map(r => r.value.data).filter(Boolean);
+  const updated = results.map(r => r.value[0]).filter(Boolean);
   return NextResponse.json({ success: true, updated, count: updated.length });
 }

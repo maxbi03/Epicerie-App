@@ -1,4 +1,6 @@
-import { getSupabaseAdmin } from '../../../lib/supabaseServer';
+import { db } from '../../../lib/db';
+import { reports, users } from '../../../lib/db/schema';
+import { eq, desc } from 'drizzle-orm';
 import { requireAdmin } from '../../../lib/adminUtils';
 import { NextResponse } from 'next/server';
 
@@ -9,18 +11,30 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get('status'); // 'pending' | 'resolved' | null = all
 
-  const sb = getSupabaseAdmin();
-  let query = sb
-    .from('reports')
-    .select('*, users(name, email)')
-    .order('created_at', { ascending: false });
+  try {
+    const base = db
+      .select({
+        id: reports.id, user_id: reports.user_id, type: reports.type,
+        description: reports.description, status: reports.status,
+        resolved_at: reports.resolved_at, created_at: reports.created_at,
+        user_name: users.name, user_email: users.email,
+      })
+      .from(reports)
+      .leftJoin(users, eq(reports.user_id, users.id))
+      .orderBy(desc(reports.created_at));
 
-  if (status) query = query.eq('status', status);
+    const rows = status ? await base.where(eq(reports.status, status)) : await base;
 
-  const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    // Reproduit la forme imbriquée du join Supabase (`*, users(name, email)`)
+    const data = rows.map(({ user_name, user_email, ...r }) => ({
+      ...r,
+      users: r.user_id ? { name: user_name, email: user_email } : null,
+    }));
 
-  return NextResponse.json(data || []);
+    return NextResponse.json(data);
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }
 
 export async function PATCH(request) {
@@ -32,15 +46,16 @@ export async function PATCH(request) {
     return NextResponse.json({ error: 'Paramètres invalides' }, { status: 400 });
   }
 
-  const { data, error } = await getSupabaseAdmin()
-    .from('reports')
-    .update({ status, resolved_at: status === 'resolved' ? new Date().toISOString() : null })
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+  try {
+    const [data] = await db
+      .update(reports)
+      .set({ status, resolved_at: status === 'resolved' ? new Date().toISOString() : null })
+      .where(eq(reports.id, id))
+      .returning();
+    return NextResponse.json(data);
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }
 
 export async function DELETE(request) {
@@ -50,7 +65,10 @@ export async function DELETE(request) {
   const { id } = await request.json();
   if (!id) return NextResponse.json({ error: 'ID requis' }, { status: 400 });
 
-  const { error } = await getSupabaseAdmin().from('reports').delete().eq('id', id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ success: true });
+  try {
+    await db.delete(reports).where(eq(reports.id, id));
+    return NextResponse.json({ success: true });
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }

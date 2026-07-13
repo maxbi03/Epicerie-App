@@ -1,7 +1,8 @@
-import { getSupabaseAdmin } from '../../../lib/supabaseServer';
+import { db } from '../../../lib/db';
+import { product_list } from '../../../lib/db/schema';
+import { eq, ne, ilike, asc, sql, and } from 'drizzle-orm';
 import { requireAdmin } from '../../../lib/adminUtils';
 import { NextResponse } from 'next/server';
-import { PRODUCTS_TABLE, PRODUCTS_ID } from '../../../lib/config';
 
 const REQUIRED_FIELDS = ['name', 'barcode', 'price_chf', 'quantity', 'category', 'image_url', 'producer'];
 
@@ -16,42 +17,43 @@ function isComplete(product) {
   });
 }
 
+async function countMatching(where) {
+  const [{ count }] = await db.select({ count: sql`count(*)::int` }).from(product_list).where(where);
+  return count;
+}
+
 export async function GET(request) {
   const { authorized } = await requireAdmin(request);
   if (!authorized) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
   }
 
-  const { data, error } = await getSupabaseAdmin()
-    .from(PRODUCTS_TABLE)
-    .select('*')
-    .order('name', { ascending: true });
+  try {
+    const data = await db.select().from(product_list).orderBy(asc(product_list.name));
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+    // Recalculate is_active for all products and fix any mismatches
+    const toFix = [];
+    const mapped = data.map(p => {
+      const correct = isComplete(p);
+      if (p.is_active !== correct) {
+        toFix.push({ id: p.id, is_active: correct });
+      }
+      return { ...p, is_active: correct };
+    });
 
-  // Recalculate is_active for all products and fix any mismatches
-  const sb = getSupabaseAdmin();
-  const toFix = [];
-  const mapped = (data || []).map(p => {
-    const correct = isComplete(p);
-    if (p.is_active !== correct) {
-      toFix.push({ id: p[PRODUCTS_ID] ?? p.id, is_active: correct });
+    // Batch fix mismatched products in background
+    if (toFix.length > 0) {
+      Promise.all(
+        toFix.map(({ id, is_active }) =>
+          db.update(product_list).set({ is_active }).where(eq(product_list.id, id))
+        )
+      ).catch(err => console.error('Failed to fix is_active:', err));
     }
-    return { ...p, id: p[PRODUCTS_ID] ?? p.id, is_active: correct };
-  });
 
-  // Batch fix mismatched products in background
-  if (toFix.length > 0) {
-    Promise.all(
-      toFix.map(({ id, is_active }) =>
-        sb.from(PRODUCTS_TABLE).update({ is_active }).eq(PRODUCTS_ID, id)
-      )
-    ).catch(err => console.error('Failed to fix is_active:', err));
+    return NextResponse.json(mapped);
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
-
-  return NextResponse.json(mapped);
 }
 
 export async function POST(request) {
@@ -67,13 +69,12 @@ export async function POST(request) {
   const cleanBarcode = barcode && barcode.trim() !== '' ? barcode.trim() : null;
 
   // Check uniqueness
-  const sb = getSupabaseAdmin();
   if (cleanName) {
-    const { count } = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true }).ilike('name', cleanName);
+    const count = await countMatching(ilike(product_list.name, cleanName));
     if (count > 0) return NextResponse.json({ error: 'Un produit avec ce nom existe déjà' }, { status: 409 });
   }
   if (cleanBarcode) {
-    const { count } = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true }).eq('barcode', cleanBarcode);
+    const count = await countMatching(eq(product_list.barcode, cleanBarcode));
     if (count > 0) return NextResponse.json({ error: 'Un produit avec ce code-barres existe déjà' }, { status: 409 });
   }
 
@@ -94,17 +95,12 @@ export async function POST(request) {
     discount_until: discount_until || null,
   };
 
-  const { data, error } = await sb
-    .from(PRODUCTS_TABLE)
-    .insert(product)
-    .select()
-    .single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    const [data] = await db.insert(product_list).values(product).returning();
+    return NextResponse.json(data, { status: 201 });
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
-
-  return NextResponse.json(data, { status: 201 });
 }
 
 export async function PATCH(request) {
@@ -135,40 +131,29 @@ export async function PATCH(request) {
   if (fields.discount_until === '') fields.discount_until = null;
 
   // Check uniqueness
-  const sb = getSupabaseAdmin();
   if (fields.name) {
-    const { count } = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true }).ilike('name', fields.name).neq(PRODUCTS_ID, id);
+    const count = await countMatching(and(ilike(product_list.name, fields.name), ne(product_list.id, id)));
     if (count > 0) return NextResponse.json({ error: 'Un produit avec ce nom existe déjà' }, { status: 409 });
   }
   if (fields.barcode) {
-    const { count } = await sb.from(PRODUCTS_TABLE).select('*', { count: 'exact', head: true }).eq('barcode', fields.barcode).neq(PRODUCTS_ID, id);
+    const count = await countMatching(and(eq(product_list.barcode, fields.barcode), ne(product_list.id, id)));
     if (count > 0) return NextResponse.json({ error: 'Un produit avec ce code-barres existe déjà' }, { status: 409 });
   }
 
   // Fetch current product to merge and recalculate is_active
-  const { data: current } = await sb
-    .from(PRODUCTS_TABLE)
-    .select('*')
-    .eq(PRODUCTS_ID, id)
-    .single();
+  const [current] = await db.select().from(product_list).where(eq(product_list.id, id)).limit(1);
 
   if (current && !_manual_toggle) {
     const merged = { ...current, ...fields };
     fields.is_active = isComplete(merged);
   }
 
-  const { data, error } = await sb
-    .from(PRODUCTS_TABLE)
-    .update(fields)
-    .eq(PRODUCTS_ID, id)
-    .select()
-    .single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    const [data] = await db.update(product_list).set(fields).where(eq(product_list.id, id)).returning();
+    return NextResponse.json(data);
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
-
-  return NextResponse.json(data);
 }
 
 export async function DELETE(request) {
@@ -184,14 +169,10 @@ export async function DELETE(request) {
     return NextResponse.json({ error: 'ID requis' }, { status: 400 });
   }
 
-  const { error } = await getSupabaseAdmin()
-    .from(PRODUCTS_TABLE)
-    .delete()
-    .eq(PRODUCTS_ID, id);
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    await db.delete(product_list).where(eq(product_list.id, id));
+    return NextResponse.json({ success: true });
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
-
-  return NextResponse.json({ success: true });
 }
