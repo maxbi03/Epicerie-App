@@ -14,7 +14,6 @@
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
     "@mollie/api-client": "^4.4.0",
-    "@supabase/supabase-js": "^2.99.2",
     "argon2": "^0.44.0",
     "drizzle-orm": "^0.45.2",
     "jose": "^6.2.2",
