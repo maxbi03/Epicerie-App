@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
 import { PAYMENT_GATEWAY } from '../../lib/config';
 import { getSession } from '../../lib/auth';
-import { getSupabaseAdmin } from '../../lib/supabaseServer';
+import { db } from '../../lib/db';
+import { users } from '../../lib/db/schema';
+import { eq } from 'drizzle-orm';
 import { loadCartPricing } from '../../lib/checkout';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://localhost:3000';
@@ -26,11 +28,11 @@ export async function POST(request) {
     }
 
     // Identité dérivée de la session, jamais du body.
-    const { data: user } = await getSupabaseAdmin()
-      .from('users')
-      .select('name')
-      .eq('id', session.userId)
-      .maybeSingle();
+    const [user] = await db
+      .select({ name: users.name })
+      .from(users)
+      .where(eq(users.id, session.userId))
+      .limit(1);
 
     const orderRef = randomUUID();
     const totalChf = (totalCents / 100).toFixed(2);

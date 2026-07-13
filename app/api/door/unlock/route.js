@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getSupabaseAdmin } from '../../../lib/supabaseServer';
+import { db } from '../../../lib/db';
+import { users, traffic } from '../../../lib/db/schema';
+import { eq } from 'drizzle-orm';
 import { getSession } from '../../../lib/auth';
 import { STORE_LAT, STORE_LNG, DOOR_UNLOCK_RADIUS_M } from '../../../lib/config';
 import mqtt from 'mqtt';
@@ -12,10 +14,7 @@ const DOOR_CONFIRM_TIMEOUT = 10000; // 10s max pour attendre la confirmation ESP
 
 async function logTraffic(user, name, success) {
   try {
-    const { error } = await getSupabaseAdmin()
-      .from('traffic')
-      .insert({ user_id: user, user_name: name, success });
-    if (error) console.error('Failed to log traffic:', error);
+    await db.insert(traffic).values({ user_id: user, user_name: name, success });
   } catch (err) {
     console.error('Failed to log traffic:', err);
   }
@@ -118,15 +117,15 @@ export async function POST(request) {
     }
 
     // 2. Vérifier phone_verified et récupérer le nom
-    const { data: profile, error: profileError } = await getSupabaseAdmin()
-      .from('users')
-      .select('phone_verified, name')
-      .eq('id', session.userId)
-      .single();
+    const [profile] = await db
+      .select({ phone_verified: users.phone_verified, name: users.name })
+      .from(users)
+      .where(eq(users.id, session.userId))
+      .limit(1);
 
     const userName = profile?.name || session.email;
 
-    if (profileError || !profile?.phone_verified) {
+    if (!profile?.phone_verified) {
       await logTraffic(session.userId, userName, false);
       return NextResponse.json({ error: 'Numéro de téléphone non vérifié' }, { status: 403 });
     }
