@@ -14,6 +14,9 @@ node_modules/
 # Uploads utilisateur (avatars) — données, pas du code
 /uploads/
 
+# Backups DB — données sensibles (password_hash, emails), à copier hors du repo
+/backups/
+
 # OS
 .DS_Store
 Thumbs.db

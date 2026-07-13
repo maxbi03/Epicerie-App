@@ -166,7 +166,12 @@ Ce fichier se met à jour au fil des conversations. Il capture ce qui a été ap
   - `app/api/uploads/avatars/[filename]/route.js` : sert les fichiers avec anti path-traversal (rejette `/` et `..` dans le nom) et content-type dérivé de l'extension.
   - ⚠️ **Piège** : cette route doit être dans la whitelist du `proxy.js` (`/api/uploads/avatars`) sinon le garde-fou du lot 01 la bloque en 401 — les avatars sont des assets publics, comme les images produits.
   - `scripts/migrate-avatars.mjs` : télécharge les avatars encore sur Supabase (URL `http%`) et met à jour `avatar_url` en local. Vérifié en runtime (build + serveur réel) : upload/lecture/traversal/404 tous corrects.
-- **Reste à faire** : sauvegardes `pg_dump` (étape D), bascule + smoke-test complet (étape E).
+- **Étape D (sauvegardes) ✅ terminée** :
+  - `scripts/backup-db.sh [conteneur] [rétention_jours]` : `docker exec ... pg_dump -F c` + `docker cp` vers `backups/epico_<timestamp>.dump` (dossier gitignoré — contient `password_hash`, emails). Rétention par défaut 14 jours (supprime les dumps plus vieux). Ne dépend d'aucun `pg_dump` installé sur l'hôte (tout passe par le conteneur) → même script sur Mac/Windows(Docker Desktop)/VPS Linux.
+  - `scripts/restore-db.sh <fichier.dump> [conteneur] [base]` : restauration destructive avec confirmation manuelle (`taper 'oui'`). Cible une base au choix (utile pour tester sans toucher la base de travail).
+  - **Vérifié en conditions réelles** : backup réel → restauré dans une base jetable (`epico_restore_test`, créée puis supprimée) → comptages des 13 tables identiques à l'original, et les 3 fonctions RPC (`increment_total_spent`, `record_login_failure`, `clear_login_attempts`) survivent au cycle (essentiel : sans elles, paiement et login cassent après restauration).
+  - ⚠️ **Rappel donné par le script à chaque backup** : les dumps restent sur la machine locale. Copier régulièrement `backups/` vers un emplacement externe (disque externe, cloud) — un seul laptop = un seul point de défaillance. Pas encore automatisé (cron/Task Scheduler) — à faire au moment du déploiement réel sur le laptop.
+- **Reste à faire** : bascule + smoke-test complet (étape E).
 - 🐛 À corriger séparément : `users.total_spent` en numeric(10,2) mais incrémenté en centimes → affichage ×100 (bug pré-existant).
 
 ## Divers
