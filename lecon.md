@@ -160,7 +160,13 @@ Ce fichier se met à jour au fil des conversations. Il capture ce qui a été ap
   - Connexion **directe** Supabase (`db.<ref>.supabase.co:5432`) OK ici ; sinon utiliser le pooler.
   - `maxValue: 9223372036854775807` généré par l'introspection dépasse la précision JS → simplifier `sales.id` en `.generatedByDefaultAsIdentity()` sans options.
 - **Données migrées ✅** : `scripts/migrate-data.mjs` (source → local, renommages + cast texte→numérique, re-jouable) + `scripts/verify-migration.mjs` (parité comptages + agrégats). Vérifié : 13 tables OK, price_chf converti sans perte.
-- **Reste à faire** : réécriture de l'accès données (Supabase JS → Drizzle, ~117 requêtes / ~39 fichiers), remplacement du Storage avatars (fichiers locaux), sauvegardes `pg_dump`, bascule + smoke-test.
+- **Étape B (accès données) ✅ terminée** : les ~39 fichiers / ~117 requêtes sont converties de Supabase JS vers Drizzle (lots B1→B6 : lib partagées, auth, checkout/porte, routes user-facing, admin, producer). Patron stable : `db.select({...}).from(table).where(eq(...))`, `.returning()` pour insert/update, joins via `leftJoin` + reshape manuel en objet imbriqué (pas de config `relations` Drizzle), `db.execute(sql\`...\`)` pour appeler les RPC SQL.
+- **Étape C (Storage avatars) ✅ terminée** : Supabase Storage remplacé par du stockage fichier local.
+  - `app/lib/storage.js` : `saveAvatar`/`deleteAvatarByUrl`, fichiers dans `uploads/avatars/` (racine projet, **hors** `public/` — pas mélangé aux assets du build, `predev`/`prebuild` ne touchent que `public/502.html`). Dossier gitignoré (`/uploads/`).
+  - `app/api/uploads/avatars/[filename]/route.js` : sert les fichiers avec anti path-traversal (rejette `/` et `..` dans le nom) et content-type dérivé de l'extension.
+  - ⚠️ **Piège** : cette route doit être dans la whitelist du `proxy.js` (`/api/uploads/avatars`) sinon le garde-fou du lot 01 la bloque en 401 — les avatars sont des assets publics, comme les images produits.
+  - `scripts/migrate-avatars.mjs` : télécharge les avatars encore sur Supabase (URL `http%`) et met à jour `avatar_url` en local. Vérifié en runtime (build + serveur réel) : upload/lecture/traversal/404 tous corrects.
+- **Reste à faire** : sauvegardes `pg_dump` (étape D), bascule + smoke-test complet (étape E).
 - 🐛 À corriger séparément : `users.total_spent` en numeric(10,2) mais incrémenté en centimes → affichage ×100 (bug pré-existant).
 
 ## Divers

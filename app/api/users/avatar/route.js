@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getSession } from '../../../lib/auth';
-import { getSupabaseAdmin } from '../../../lib/supabaseServer';
+import { db } from '../../../lib/db';
+import { users } from '../../../lib/db/schema';
+import { eq } from 'drizzle-orm';
+import { saveAvatar, deleteAvatarByUrl, extFromContentType } from '../../../lib/storage';
 
 export async function POST(request) {
   try {
@@ -25,57 +28,22 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Image trop grande (max 2 Mo)' }, { status: 400 });
     }
 
-    const supabase = getSupabaseAdmin();
-
     // Supprimer l'ancienne photo si elle existe
-    const { data: existing } = await supabase
-      .from('users')
-      .select('avatar_url')
-      .eq('id', session.userId)
-      .single();
-
+    const [existing] = await db.select({ avatar_url: users.avatar_url }).from(users).where(eq(users.id, session.userId)).limit(1);
     if (existing?.avatar_url) {
-      // Extraire le nom du fichier depuis l'URL
-      const oldPath = existing.avatar_url.split('/avatars/')[1];
-      if (oldPath) {
-        await supabase.storage.from('avatars').remove([oldPath]);
-      }
+      await deleteAvatarByUrl(existing.avatar_url);
     }
 
-    // Uploader la nouvelle photo
-    const ext = file.type.split('/')[1].replace('jpeg', 'jpg');
-    const filePath = `${session.userId}.${ext}`;
+    // Enregistrer la nouvelle photo sur disque
+    const ext = extFromContentType(file.type);
     const arrayBuffer = await file.arrayBuffer();
-    const buffer = new Uint8Array(arrayBuffer);
-
-    const { error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(filePath, buffer, {
-        contentType: file.type,
-        upsert: true, // remplace si existe déjà
-      });
-
-    if (uploadError) {
-      console.error('[avatar] upload error:', uploadError);
-      return NextResponse.json({ error: uploadError.message }, { status: 500 });
-    }
-
-    // Récupérer l'URL publique
-    const { data: { publicUrl } } = supabase.storage
-      .from('avatars')
-      .getPublicUrl(filePath);
+    const buffer = Buffer.from(arrayBuffer);
+    const avatarUrl = await saveAvatar(session.userId, ext, buffer);
 
     // Mettre à jour avatar_url dans la table users
-    const { error: dbError } = await supabase
-      .from('users')
-      .update({ avatar_url: publicUrl })
-      .eq('id', session.userId);
+    await db.update(users).set({ avatar_url: avatarUrl }).where(eq(users.id, session.userId));
 
-    if (dbError) {
-      return NextResponse.json({ error: dbError.message }, { status: 500 });
-    }
-
-    return NextResponse.json({ avatar_url: publicUrl });
+    return NextResponse.json({ avatar_url: avatarUrl });
   } catch (err) {
     console.error('[avatar]', err);
     return NextResponse.json({ error: err.message ?? 'Erreur serveur' }, { status: 500 });
@@ -89,25 +57,13 @@ export async function DELETE() {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
     }
 
-    const supabase = getSupabaseAdmin();
-
-    const { data: user } = await supabase
-      .from('users')
-      .select('avatar_url')
-      .eq('id', session.userId)
-      .single();
+    const [user] = await db.select({ avatar_url: users.avatar_url }).from(users).where(eq(users.id, session.userId)).limit(1);
 
     if (user?.avatar_url) {
-      const oldPath = user.avatar_url.split('/avatars/')[1];
-      if (oldPath) {
-        await supabase.storage.from('avatars').remove([oldPath]);
-      }
+      await deleteAvatarByUrl(user.avatar_url);
     }
 
-    await supabase
-      .from('users')
-      .update({ avatar_url: null })
-      .eq('id', session.userId);
+    await db.update(users).set({ avatar_url: null }).where(eq(users.id, session.userId));
 
     return NextResponse.json({ ok: true });
   } catch (err) {

@@ -11,6 +11,9 @@
 # Node
 node_modules/
 
+# Uploads utilisateur (avatars) — données, pas du code
+/uploads/
+
 # OS
 .DS_Store
 Thumbs.db

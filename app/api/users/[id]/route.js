@@ -1,9 +1,9 @@
-import { getSupabaseAdmin } from '../../../lib/supabaseServer'; // Storage avatars uniquement (étape C)
 import { getSession } from '../../../lib/auth';
 import { NextResponse } from 'next/server';
 import { db } from '../../../lib/db';
 import { users } from '../../../lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { deleteAvatarByUrl } from '../../../lib/storage';
 
 const PROFILE_COLUMNS = {
   id: users.id, name: users.name, email: users.email, phone: users.phone,
@@ -113,13 +113,10 @@ export async function DELETE(request, { params }) {
   const valid = await argon2.verify(user.password_hash, password);
   if (!valid) return NextResponse.json({ error: 'Mot de passe incorrect' }, { status: 400 });
 
-  // Supprimer l'avatar du storage si existant (Supabase Storage — étape C remplacera)
+  // Supprimer l'avatar du disque si existant
   if (user.avatar_url) {
-    const oldPath = user.avatar_url.split('/avatars/')[1];
-    if (oldPath) {
-      try { await getSupabaseAdmin().storage.from('avatars').remove([oldPath]); }
-      catch (e) { console.error('avatar remove failed:', e.message); }
-    }
+    try { await deleteAvatarByUrl(user.avatar_url); }
+    catch (e) { console.error('avatar remove failed:', e.message); }
   }
 
   // Supprimer le compte
