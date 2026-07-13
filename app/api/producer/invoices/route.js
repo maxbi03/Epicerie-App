@@ -1,19 +1,23 @@
 import { NextResponse } from 'next/server';
 import { requireProducer } from '../../../lib/producerAuth';
-import { getSupabaseAdmin } from '../../../lib/supabaseServer';
+import { db } from '../../../lib/db';
+import { producer_invoices } from '../../../lib/db/schema';
+import { and, eq, desc, sql } from 'drizzle-orm';
 
 export async function GET() {
   const { authorized, session } = await requireProducer();
   if (!authorized) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
-  const { data, error } = await getSupabaseAdmin()
-    .from('producer_invoices')
-    .select('*')
-    .eq('producer_id', session.producerId)
-    .order('created_at', { ascending: false });
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data ?? []);
+  try {
+    const data = await db
+      .select()
+      .from(producer_invoices)
+      .where(eq(producer_invoices.producer_id, session.producerId))
+      .orderBy(desc(producer_invoices.created_at));
+    return NextResponse.json(data);
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }
 
 export async function POST(request) {
@@ -30,33 +34,32 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Montant invalide' }, { status: 400 });
   }
 
-  const sb = getSupabaseAdmin();
-
   // Générer un numéro de facture séquentiel simple
   const year = new Date().getFullYear();
-  const { count } = await sb
-    .from('producer_invoices')
-    .select('*', { count: 'exact', head: true })
-    .eq('producer_id', session.producerId);
+  const [{ count }] = await db
+    .select({ count: sql`count(*)::int` })
+    .from(producer_invoices)
+    .where(eq(producer_invoices.producer_id, session.producerId));
 
   const invoice_number = `FAC-${year}-${String((count ?? 0) + 1).padStart(4, '0')}`;
 
-  const { data, error } = await sb
-    .from('producer_invoices')
-    .insert({
-      producer_id: session.producerId,
-      delivery_id: delivery_id || null,
-      items,
-      amount_chf,
-      notes: notes || null,
-      invoice_number,
-      status: 'draft',
-    })
-    .select()
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data, { status: 201 });
+  try {
+    const [data] = await db
+      .insert(producer_invoices)
+      .values({
+        producer_id: session.producerId,
+        delivery_id: delivery_id || null,
+        items,
+        amount_chf,
+        notes: notes || null,
+        invoice_number,
+        status: 'draft',
+      })
+      .returning();
+    return NextResponse.json(data, { status: 201 });
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }
 
 export async function PATCH(request) {
@@ -72,14 +75,14 @@ export async function PATCH(request) {
   const updates = { status };
   if (status === 'sent') updates.sent_at = new Date().toISOString();
 
-  const { data, error } = await getSupabaseAdmin()
-    .from('producer_invoices')
-    .update(updates)
-    .eq('id', id)
-    .eq('producer_id', session.producerId)
-    .select()
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+  try {
+    const [data] = await db
+      .update(producer_invoices)
+      .set(updates)
+      .where(and(eq(producer_invoices.id, id), eq(producer_invoices.producer_id, session.producerId)))
+      .returning();
+    return NextResponse.json(data);
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }

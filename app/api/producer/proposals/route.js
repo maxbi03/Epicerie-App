@@ -1,19 +1,23 @@
 import { NextResponse } from 'next/server';
 import { requireProducer } from '../../../lib/producerAuth';
-import { getSupabaseAdmin } from '../../../lib/supabaseServer';
+import { db } from '../../../lib/db';
+import { producer_proposals } from '../../../lib/db/schema';
+import { eq, desc } from 'drizzle-orm';
 
 export async function GET() {
   const { authorized, session } = await requireProducer();
   if (!authorized) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
-  const { data, error } = await getSupabaseAdmin()
-    .from('producer_proposals')
-    .select('*')
-    .eq('producer_id', session.producerId)
-    .order('created_at', { ascending: false });
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data ?? []);
+  try {
+    const data = await db
+      .select()
+      .from(producer_proposals)
+      .where(eq(producer_proposals.producer_id, session.producerId))
+      .orderBy(desc(producer_proposals.created_at));
+    return NextResponse.json(data);
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }
 
 export async function POST(request) {
@@ -29,18 +33,19 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Données requises' }, { status: 400 });
   }
 
-  const { data, error } = await getSupabaseAdmin()
-    .from('producer_proposals')
-    .insert({
-      producer_id: session.producerId,
-      type,
-      product_id: product_id || null,
-      data: proposalData,
-      status: 'pending',
-    })
-    .select()
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data, { status: 201 });
+  try {
+    const [data] = await db
+      .insert(producer_proposals)
+      .values({
+        producer_id: session.producerId,
+        type,
+        product_id: product_id || null,
+        data: proposalData,
+        status: 'pending',
+      })
+      .returning();
+    return NextResponse.json(data, { status: 201 });
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }

@@ -1,39 +1,36 @@
 import { NextResponse } from 'next/server';
 import { requireProducer } from '../../../lib/producerAuth';
-import { getSupabaseAdmin } from '../../../lib/supabaseServer';
-import { PRODUCTS_TABLE, SALES_TABLE } from '../../../lib/config';
+import { db } from '../../../lib/db';
+import { producers, product_list, sales as salesTable } from '../../../lib/db/schema';
+import { eq, desc } from 'drizzle-orm';
 
 export async function GET() {
   const { authorized, session } = await requireProducer();
   if (!authorized) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
-  const sb = getSupabaseAdmin();
-
   // Récupérer les noms des produits du producteur
-  const { data: producer } = await sb
-    .from('producers')
-    .select('name')
-    .eq('id', session.producerId)
-    .single();
+  const [producer] = await db
+    .select({ name: producers.name })
+    .from(producers)
+    .where(eq(producers.id, session.producerId))
+    .limit(1);
 
   if (!producer) return NextResponse.json({ error: 'Producteur introuvable' }, { status: 404 });
 
-  const { data: products } = await sb
-    .from(PRODUCTS_TABLE)
-    .select('id, name, price_chf')
-    .eq('producer', producer.name);
+  const products = await db
+    .select({ id: product_list.id, name: product_list.name, price_chf: product_list.price_chf })
+    .from(product_list)
+    .where(eq(product_list.producer, producer.name));
 
-  if (!products || products.length === 0) return NextResponse.json([]);
+  if (products.length === 0) return NextResponse.json([]);
 
   const productNames = products.map(p => p.name);
 
   // Récupérer toutes les ventes et filtrer celles qui contiennent au moins un produit du producteur
-  const { data: sales } = await sb
-    .from(SALES_TABLE)
-    .select('id, price, receipt, created_at')
-    .order('created_at', { ascending: false });
-
-  if (!sales) return NextResponse.json([]);
+  const sales = await db
+    .select({ id: salesTable.id, price: salesTable.price, receipt: salesTable.receipt, created_at: salesTable.created_at })
+    .from(salesTable)
+    .orderBy(desc(salesTable.created_at));
 
   // Parser le receipt (texte "Produit A, Produit B x2, Produit C")
   const producerSales = sales
