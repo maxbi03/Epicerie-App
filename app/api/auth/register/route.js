@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
-import { getSupabaseAdmin } from '../../../lib/supabaseServer';
+import { db } from '../../../lib/db';
+import { users } from '../../../lib/db/schema';
+import { eq } from 'drizzle-orm';
 import { signPendingRegToken, PENDING_REG_COOKIE } from '../../../lib/auth';
 import { validatePassword } from '../../../lib/password';
 import { normalizePhone, validatePhone } from '../../../lib/phone';
@@ -39,11 +41,11 @@ export async function POST(request) {
     const argon2 = (await import('argon2')).default ?? (await import('argon2'));
 
     // Vérifier si l'email existe déjà
-    const { data: existing } = await getSupabaseAdmin()
-      .from('users')
-      .select('id')
-      .eq('email', email.toLowerCase())
-      .maybeSingle();
+    const [existing] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, email.toLowerCase()))
+      .limit(1);
 
     if (existing) {
       return NextResponse.json({ error: 'Un compte existe déjà avec cet email.' }, { status: 409 });
@@ -51,11 +53,11 @@ export async function POST(request) {
 
     // Vérifier l'unicité du téléphone avant d'envoyer un SMS (contrainte unique en DB)
     const normalizedPhone = normalizePhone(phone);
-    const { data: existingPhone } = await getSupabaseAdmin()
-      .from('users')
-      .select('id')
-      .eq('phone', normalizedPhone)
-      .maybeSingle();
+    const [existingPhone] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.phone, normalizedPhone))
+      .limit(1);
 
     if (existingPhone) {
       return NextResponse.json({ error: 'Ce numéro de téléphone est déjà utilisé.' }, { status: 409 });

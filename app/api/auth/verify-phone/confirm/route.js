@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getSession, verifyToken, signToken, signOtpToken, OTP_COOKIE, AUTH_COOKIE, PENDING_REG_COOKIE } from '../../../../lib/auth';
-import { getSupabaseAdmin } from '../../../../lib/supabaseServer';
+import { db } from '../../../../lib/db';
+import { users } from '../../../../lib/db/schema';
+import { eq } from 'drizzle-orm';
 import { verifyOtp } from '../../../../lib/otp';
 import { cookies } from 'next/headers';
 
@@ -83,11 +85,11 @@ export async function POST(request) {
       }
 
       // Vérifier une dernière fois que l'email et le téléphone ne sont pas pris
-      const { data: existing } = await getSupabaseAdmin()
-        .from('users')
-        .select('id')
-        .eq('email', pending.email)
-        .maybeSingle();
+      const [existing] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.email, pending.email))
+        .limit(1);
 
       if (existing) {
         return NextResponse.json(
@@ -96,11 +98,11 @@ export async function POST(request) {
         );
       }
 
-      const { data: existingPhone } = await getSupabaseAdmin()
-        .from('users')
-        .select('id')
-        .eq('phone', pending.phone)
-        .maybeSingle();
+      const [existingPhone] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.phone, pending.phone))
+        .limit(1);
 
       if (existingPhone) {
         return NextResponse.json(
@@ -110,26 +112,26 @@ export async function POST(request) {
       }
 
       // Créer le compte
-      const { data, error } = await getSupabaseAdmin()
-        .from('users')
-        .insert({
-          id:               pending.id,
-          name:             pending.name,
-          email:            pending.email,
-          phone:            pending.phone,
-          address:          pending.address,
-          postal_code:      pending.postal_code,
-          city:             pending.city,
-          country:          pending.country ?? 'CH',
-          password_hash:    pending.password_hash,
-          address_verified: pending.address_verified ?? 0,
-          phone_verified:   true,
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('[verify-phone/confirm] insert error:', error.code, error.message);
+      let data;
+      try {
+        [data] = await db
+          .insert(users)
+          .values({
+            id:               pending.id,
+            name:             pending.name,
+            email:            pending.email,
+            phone:            pending.phone,
+            address:          pending.address,
+            postal_code:      pending.postal_code,
+            city:             pending.city,
+            country:          pending.country ?? 'CH',
+            password_hash:    pending.password_hash,
+            address_verified: pending.address_verified ?? 0,
+            phone_verified:   true,
+          })
+          .returning();
+      } catch (e) {
+        console.error('[verify-phone/confirm] insert error:', e.message);
         return NextResponse.json({ error: 'Erreur lors de la création du compte.' }, { status: 500 });
       }
 
@@ -166,13 +168,10 @@ export async function POST(request) {
       ? { phone: otpPayload.newPhone, phone_verified: true }
       : { phone_verified: true };
 
-    const { error } = await getSupabaseAdmin()
-      .from('users')
-      .update(updatePayload)
-      .eq('id', session.userId);
-
-    if (error) {
-      console.error('[verify-phone/confirm] update error:', error.code, error.message);
+    try {
+      await db.update(users).set(updatePayload).where(eq(users.id, session.userId));
+    } catch (e) {
+      console.error('[verify-phone/confirm] update error:', e.message);
       return NextResponse.json({ error: 'Erreur lors de la mise à jour.' }, { status: 500 });
     }
 

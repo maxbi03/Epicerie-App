@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getSession } from '../../../lib/auth';
-import { getSupabaseAdmin } from '../../../lib/supabaseServer';
+import { db } from '../../../lib/db';
+import { users } from '../../../lib/db/schema';
+import { eq } from 'drizzle-orm';
 import { validatePassword } from '../../../lib/password';
 
 export async function POST(request) {
@@ -23,13 +25,13 @@ export async function POST(request) {
     const argon2 = (await import('argon2')).default ?? (await import('argon2'));
 
     // Récupérer le hash actuel
-    const { data: user, error } = await getSupabaseAdmin()
-      .from('users')
-      .select('password_hash')
-      .eq('id', session.userId)
-      .single();
+    const [user] = await db
+      .select({ password_hash: users.password_hash })
+      .from(users)
+      .where(eq(users.id, session.userId))
+      .limit(1);
 
-    if (error || !user) {
+    if (!user) {
       return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 });
     }
 
@@ -41,14 +43,7 @@ export async function POST(request) {
 
     // Hasher et sauvegarder le nouveau
     const newHash = await argon2.hash(newPassword);
-    const { error: updateError } = await getSupabaseAdmin()
-      .from('users')
-      .update({ password_hash: newHash })
-      .eq('id', session.userId);
-
-    if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
-    }
+    await db.update(users).set({ password_hash: newHash }).where(eq(users.id, session.userId));
 
     return NextResponse.json({ ok: true });
   } catch (err) {

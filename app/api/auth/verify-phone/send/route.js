@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getSession, signOtpToken, verifyToken, OTP_COOKIE, PENDING_REG_COOKIE } from '../../../../lib/auth';
-import { getSupabaseAdmin } from '../../../../lib/supabaseServer';
+import { db } from '../../../../lib/db';
+import { users } from '../../../../lib/db/schema';
+import { eq } from 'drizzle-orm';
 import { normalizePhone, validatePhone } from '../../../../lib/phone';
 import { hashOtp } from '../../../../lib/otp';
 import { cookies } from 'next/headers';
@@ -111,11 +113,11 @@ export async function POST(request) {
       }
 
       // Vérifier si ce numéro est déjà utilisé
-      const { data: existing } = await getSupabaseAdmin()
-        .from('users')
-        .select('id')
-        .eq('phone', phone)
-        .maybeSingle();
+      const [existing] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.phone, phone))
+        .limit(1);
 
       if (existing && existing.id === session.userId) {
         return NextResponse.json(
@@ -151,13 +153,13 @@ export async function POST(request) {
       return NextResponse.json({ error: cooldownError }, { status: 429 });
     }
 
-    const { data: user, error } = await getSupabaseAdmin()
-      .from('users')
-      .select('phone, phone_verified')
-      .eq('id', session.userId)
-      .single();
+    const [user] = await db
+      .select({ phone: users.phone, phone_verified: users.phone_verified })
+      .from(users)
+      .where(eq(users.id, session.userId))
+      .limit(1);
 
-    if (error || !user) {
+    if (!user) {
       return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 });
     }
     if (!user.phone) {

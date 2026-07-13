@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getSupabaseAdmin } from '../../../lib/supabaseServer';
+import { db } from '../../../lib/db';
+import { users, login_attempts } from '../../../lib/db/schema';
+import { eq, sql } from 'drizzle-orm';
 import { signToken, AUTH_COOKIE } from '../../../lib/auth';
 
 const MAX_FAILED = 5;         // échecs avant verrouillage
@@ -19,14 +21,13 @@ export async function POST(request) {
     }
 
     const identifier = email.toLowerCase();
-    const sb = getSupabaseAdmin();
 
     // Verrou anti brute-force : si l'identifiant est verrouillé, on refuse tôt.
-    const { data: attempt } = await sb
-      .from('login_attempts')
-      .select('locked_until')
-      .eq('identifier', identifier)
-      .maybeSingle();
+    const [attempt] = await db
+      .select({ locked_until: login_attempts.locked_until })
+      .from(login_attempts)
+      .where(eq(login_attempts.identifier, identifier))
+      .limit(1);
 
     if (attempt?.locked_until && new Date(attempt.locked_until) > new Date()) {
       return NextResponse.json(
@@ -39,11 +40,11 @@ export async function POST(request) {
     const argon2 = (await import('argon2')).default ?? (await import('argon2'));
 
     // Récupérer l'utilisateur par email
-    const { data: user } = await sb
-      .from('users')
-      .select('id, name, email, password_hash')
-      .eq('email', identifier)
-      .maybeSingle();
+    const [user] = await db
+      .select({ id: users.id, name: users.name, email: users.email, password_hash: users.password_hash })
+      .from(users)
+      .where(eq(users.email, identifier))
+      .limit(1);
 
     if (!dummyHash) dummyHash = await argon2.hash('timing-equalizer');
     const hashToCheck = user?.password_hash || dummyHash;
@@ -52,17 +53,12 @@ export async function POST(request) {
 
     if (!valid) {
       // Message générique : ne révèle pas si l'email existe.
-      await sb.rpc('record_login_failure', {
-        p_identifier: identifier,
-        p_max: MAX_FAILED,
-        p_window_secs: WINDOW_SECS,
-        p_lockout_secs: LOCKOUT_SECS,
-      });
+      await db.execute(sql`select record_login_failure(${identifier}, ${MAX_FAILED}, ${WINDOW_SECS}, ${LOCKOUT_SECS})`);
       return NextResponse.json({ error: 'Identifiants incorrects.' }, { status: 401 });
     }
 
     // Succès : on réinitialise le compteur d'échecs.
-    await sb.rpc('clear_login_attempts', { p_identifier: identifier });
+    await db.execute(sql`select clear_login_attempts(${identifier})`);
 
     const token = await signToken({ userId: user.id, email: user.email });
 
