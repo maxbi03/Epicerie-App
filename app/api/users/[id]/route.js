@@ -1,6 +1,17 @@
-import { getSupabaseAdmin } from '../../../lib/supabaseServer';
+import { getSupabaseAdmin } from '../../../lib/supabaseServer'; // Storage avatars uniquement (étape C)
 import { getSession } from '../../../lib/auth';
 import { NextResponse } from 'next/server';
+import { db } from '../../../lib/db';
+import { users } from '../../../lib/db/schema';
+import { eq } from 'drizzle-orm';
+
+const PROFILE_COLUMNS = {
+  id: users.id, name: users.name, email: users.email, phone: users.phone,
+  phone_verified: users.phone_verified, email_verified: users.email_verified,
+  address: users.address, postal_code: users.postal_code, city: users.city,
+  country: users.country, address_verified: users.address_verified,
+  avatar_url: users.avatar_url, total_spent: users.total_spent,
+};
 
 export async function GET(request, { params }) {
   const { id } = await params;
@@ -11,14 +22,12 @@ export async function GET(request, { params }) {
   if (!session) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
   if (session.userId !== id) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
 
-  const { data, error } = await getSupabaseAdmin()
-    .from('users')
-    .select('id, name, email, phone, phone_verified, email_verified, address, postal_code, city, country, address_verified, avatar_url, total_spent')
-    .eq('id', id)
-    .maybeSingle();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+  try {
+    const [data] = await db.select(PROFILE_COLUMNS).from(users).where(eq(users.id, id)).limit(1);
+    return NextResponse.json(data ?? null);
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }
 
 export async function PATCH(request, { params }) {
@@ -54,38 +63,29 @@ export async function PATCH(request, { params }) {
     }
     safePatch.email = email;
 
-    const { data: taken } = await getSupabaseAdmin()
-      .from('users').select('id').eq('email', email).maybeSingle();
+    const [taken] = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
     if (taken && taken.id !== id) {
       return NextResponse.json({ error: 'Cet email est déjà utilisé.' }, { status: 409 });
     }
 
-    const { data: current } = await getSupabaseAdmin()
-      .from('users').select('email').eq('id', id).single();
+    const [current] = await db.select({ email: users.email }).from(users).where(eq(users.id, id)).limit(1);
     if (current && current.email !== email) safePatch.email_verified = false;
   }
 
   // Si le téléphone change, remettre phone_verified à false
   if (safePatch.phone !== undefined) {
-    const { data: current } = await getSupabaseAdmin()
-      .from('users')
-      .select('phone')
-      .eq('id', id)
-      .single();
+    const [current] = await db.select({ phone: users.phone }).from(users).where(eq(users.id, id)).limit(1);
     if (current && current.phone !== safePatch.phone) {
       safePatch.phone_verified = false;
     }
   }
 
-  const { data, error } = await getSupabaseAdmin()
-    .from('users')
-    .update(safePatch)
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+  try {
+    const [data] = await db.update(users).set(safePatch).where(eq(users.id, id)).returning(PROFILE_COLUMNS);
+    return NextResponse.json(data);
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }
 
 export async function DELETE(request, { params }) {
@@ -102,32 +102,31 @@ export async function DELETE(request, { params }) {
   const argon2 = (await import('argon2')).default ?? (await import('argon2'));
 
   // Vérifier le mot de passe avant suppression
-  const { data: user } = await getSupabaseAdmin()
-    .from('users')
-    .select('password_hash, avatar_url')
-    .eq('id', id)
-    .single();
+  const [user] = await db
+    .select({ password_hash: users.password_hash, avatar_url: users.avatar_url })
+    .from(users)
+    .where(eq(users.id, id))
+    .limit(1);
 
   if (!user) return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 });
 
   const valid = await argon2.verify(user.password_hash, password);
   if (!valid) return NextResponse.json({ error: 'Mot de passe incorrect' }, { status: 400 });
 
-  // Supprimer l'avatar du storage si existant
+  // Supprimer l'avatar du storage si existant (Supabase Storage — étape C remplacera)
   if (user.avatar_url) {
     const oldPath = user.avatar_url.split('/avatars/')[1];
     if (oldPath) {
-      await getSupabaseAdmin().storage.from('avatars').remove([oldPath]);
+      try { await getSupabaseAdmin().storage.from('avatars').remove([oldPath]); }
+      catch (e) { console.error('avatar remove failed:', e.message); }
     }
   }
 
   // Supprimer le compte
-  const { error } = await getSupabaseAdmin()
-    .from('users')
-    .delete()
-    .eq('id', id);
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  return NextResponse.json({ ok: true });
+  try {
+    await db.delete(users).where(eq(users.id, id));
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }

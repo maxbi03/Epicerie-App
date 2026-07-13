@@ -1,17 +1,17 @@
-import { getSupabaseAdmin } from '../../lib/supabaseServer';
 import { NextResponse } from 'next/server';
-import { NEWS_TABLE } from '../../lib/config';
+import { db } from '../../lib/db';
+import { news } from '../../lib/db/schema';
+import { eq, desc } from 'drizzle-orm';
 
 export async function GET() {
-  const { data, error } = await getSupabaseAdmin()
-    .from(NEWS_TABLE)
-    .select('*')
-    .eq('is_published', true)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    const data = await db
+      .select()
+      .from(news)
+      .where(eq(news.is_published, true))
+      .orderBy(desc(news.created_at));
+    return NextResponse.json(data);
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
-
-  return NextResponse.json(data || []);
 }

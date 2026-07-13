@@ -1,6 +1,8 @@
-import { getSupabaseAdmin } from '../../lib/supabaseServer';
 import { getSession } from '../../lib/auth';
 import { NextResponse } from 'next/server';
+import { db } from '../../lib/db';
+import { saved_lists } from '../../lib/db/schema';
+import { and, eq, desc, sql } from 'drizzle-orm';
 
 async function auth() {
   const session = await getSession();
@@ -12,14 +14,16 @@ export async function GET() {
   const { userId, error } = await auth();
   if (error) return error;
 
-  const { data, err } = await getSupabaseAdmin()
-    .from('saved_lists')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
-
-  if (err) return NextResponse.json({ error: err.message }, { status: 500 });
-  return NextResponse.json(data || []);
+  try {
+    const data = await db
+      .select()
+      .from(saved_lists)
+      .where(eq(saved_lists.user_id, userId))
+      .orderBy(desc(saved_lists.created_at));
+    return NextResponse.json(data);
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }
 
 export async function POST(request) {
@@ -31,20 +35,21 @@ export async function POST(request) {
   if (!Array.isArray(items) || items.length === 0) return NextResponse.json({ error: 'Liste vide' }, { status: 400 });
 
   // Enforce 5-list maximum
-  const { count } = await getSupabaseAdmin()
-    .from('saved_lists')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId);
+  const [{ count }] = await db
+    .select({ count: sql`count(*)::int` })
+    .from(saved_lists)
+    .where(eq(saved_lists.user_id, userId));
   if (count >= 5) return NextResponse.json({ error: 'Maximum 5 listes atteint. Supprimez-en une pour continuer.' }, { status: 409 });
 
-  const { data, error: dbError } = await getSupabaseAdmin()
-    .from('saved_lists')
-    .insert({ user_id: userId, name: name.trim(), items })
-    .select()
-    .single();
-
-  if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
-  return NextResponse.json(data, { status: 201 });
+  try {
+    const [data] = await db
+      .insert(saved_lists)
+      .values({ user_id: userId, name: name.trim(), items })
+      .returning();
+    return NextResponse.json(data, { status: 201 });
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }
 
 export async function DELETE(request) {
@@ -54,12 +59,10 @@ export async function DELETE(request) {
   const { id } = await request.json();
   if (!id) return NextResponse.json({ error: 'ID requis' }, { status: 400 });
 
-  const { error: dbError } = await getSupabaseAdmin()
-    .from('saved_lists')
-    .delete()
-    .eq('id', id)
-    .eq('user_id', userId);
-
-  if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
-  return NextResponse.json({ success: true });
+  try {
+    await db.delete(saved_lists).where(and(eq(saved_lists.id, id), eq(saved_lists.user_id, userId)));
+    return NextResponse.json({ success: true });
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }
