@@ -217,7 +217,19 @@ Ce fichier se met à jour au fil des conversations. Il capture ce qui a été ap
   - `app/lib/checkout.js` — passe désormais `priceCents / 100` (CHF) à la fonction, pas les centimes bruts.
   - Donnée corrompue corrigée manuellement pour `test@gmail.com` (seul cas confirmé ×100) : `total_spent / 100`.
   - Vérifié en transaction (rollback) : `18.75 + increment_total_spent(3.75) = 22.50`, correct.
-- ⚠️ **Distinct** : `mgbg-group@proton.me` et `max03.bi@pm.me` ont des ventes historiques (mai 2026, avant migration) mais `total_spent = 0.00` — pas le même bug (pas d'inflation ×100, jamais crédité du tout, probablement code Supabase pré-lot-02 ou reset admin). Pas corrigé, à décider si backfill souhaité.
+- ⚠️ **Distinct** : `mgbg-group@proton.me` et `max03.bi@pm.me` ont des ventes historiques (mai 2026, avant migration) mais `total_spent = 0.00` — pas le même bug (pas d'inflation ×100, jamais crédité du tout, probablement code Supabase pré-lot-02 ou reset admin). Laissé tel quel (données de dev, sans conséquence).
+
+## Images produits — stockage local (comme les avatars)
+
+- Généralisation de `app/lib/storage.js` en modèle "bucket" (`saveFile(bucket, filename, buffer)` / `deleteFileByUrl(bucket, url)`), utilisé par `avatars` (wrappers `saveAvatar`/`deleteAvatarByUrl` conservés pour compat) et par le nouveau bucket `products`.
+- Route de service généralisée : `app/api/uploads/avatars/[filename]` → `app/api/uploads/[bucket]/[filename]` (allowlist `avatars`/`products`). Forme d'URL identique (`/api/uploads/{bucket}/{filename}`), donc **aucune migration nécessaire** pour les avatars déjà stockés — ils continuent de fonctionner tels quels.
+- `proxy.js` : whitelist élargie de `/api/uploads/avatars` à `/api/uploads` (couvre les deux buckets, images publiques comme les produits eux-mêmes).
+- `app/lib/productImages.js` : `downloadAndStoreProductImage(url)` (télécharge une URL externe, valide, stocke, retourne l'URL locale) et `storeUploadedProductImage(file)` (upload direct multipart). Nom de fichier = UUID aléatoire (pas l'id produit, car un nouveau produit n'a pas encore d'id au moment de l'upload).
+  - ⚠️ **Piège rencontré** : certains serveurs distants renvoient un `Content-Type` mal formé (`image` au lieu de `image/jpeg`) → rejeté par une validation stricte du header alors que l'image est parfaitement valide. Fix : `sniffImageType(buffer)` détecte le vrai type via les **octets magiques** (JPEG `FFD8FF`, PNG `89504E47`, GIF `474946 38`, WebP `RIFF...WEBP`), utilisé en repli si le header est absent/non reconnu.
+- **Auto-téléchargement à la sauvegarde** : `app/api/admin/products/route.js` (POST + PATCH) télécharge automatiquement toute URL externe collée dans `image_url` et la remplace par le chemin local avant d'écrire en DB. En PATCH, l'ancien fichier local est supprimé après la mise à jour réussie si l'image a changé. Si le téléchargement échoue (lien mort, type non supporté), la sauvegarde du produit est refusée avec un message clair (400) plutôt que d'enregistrer un lien cassé.
+- **Upload direct** : nouvelle route `app/api/admin/products/image/route.js` (POST multipart, admin uniquement) + bouton "Fichier" dans `app/admin/produits/page.js` à côté du champ URL — les deux options coexistent (coller un lien externe = téléchargé auto, ou choisir un fichier local = uploadé direct).
+- **Migration des 120 produits existants** : `scripts/migrate-product-images.mjs` (même patron self-contained que `migrate-avatars.mjs`, pas d'import cross `app/lib/` — Node standalone ne résout pas les imports sans extension comme le fait le bundler Next). Résultat : 55/60 images externes migrées avec succès, 5 échecs = liens déjà morts en 404 côté fournisseur (aligro.ch/cadar), non récupérables, laissés en l'état (aucune régression, ils ne s'affichaient déjà pas). Script re-jouable : ne retente que les `image_url like 'http%'` restantes.
+- Vérifié en conditions réelles : route de service testée via le serveur de dev (200, bon content-type), URL à content-type malformé migrée avec succès grâce au sniffing par octets magiques.
 
 ## Divers
 

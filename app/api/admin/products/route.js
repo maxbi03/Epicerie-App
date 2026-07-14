@@ -3,6 +3,7 @@ import { product_list } from '../../../lib/db/schema';
 import { eq, ne, ilike, asc, sql, and } from 'drizzle-orm';
 import { requireAdmin } from '../../../lib/adminUtils';
 import { NextResponse } from 'next/server';
+import { downloadAndStoreProductImage, deleteProductImageByUrl, isLocalProductImage } from '../../../lib/productImages';
 
 const REQUIRED_FIELDS = ['name', 'barcode', 'price_chf', 'quantity', 'category', 'image_url', 'producer'];
 
@@ -78,12 +79,23 @@ export async function POST(request) {
     if (count > 0) return NextResponse.json({ error: 'Un produit avec ce code-barres existe déjà' }, { status: 409 });
   }
 
+  // Une URL externe est téléchargée et stockée localement ; un chemin déjà
+  // local (uploadé via /api/admin/products/image) est gardé tel quel.
+  let localImageUrl = image_url || '';
+  if (image_url && !isLocalProductImage(image_url)) {
+    try {
+      localImageUrl = await downloadAndStoreProductImage(image_url);
+    } catch (e) {
+      return NextResponse.json({ error: e.message }, { status: 400 });
+    }
+  }
+
   const product = {
     name: cleanName,
     barcode: cleanBarcode,
     price_chf: Number(price_chf || 0),
     category: category || 'Divers',
-    image_url: image_url || '',
+    image_url: localImageUrl,
     producer: producer || '',
     description: description || '',
     badge: badge || '',
@@ -143,6 +155,17 @@ export async function PATCH(request) {
   // Fetch current product to merge and recalculate is_active
   const [current] = await db.select().from(product_list).where(eq(product_list.id, id)).limit(1);
 
+  // Une nouvelle URL externe est téléchargée et stockée localement ; l'ancien
+  // fichier local (s'il y en avait un) est supprimé après la mise à jour.
+  const previousImageUrl = current?.image_url;
+  if (fields.image_url !== undefined && fields.image_url && !isLocalProductImage(fields.image_url)) {
+    try {
+      fields.image_url = await downloadAndStoreProductImage(fields.image_url);
+    } catch (e) {
+      return NextResponse.json({ error: e.message }, { status: 400 });
+    }
+  }
+
   if (current && !_manual_toggle) {
     const merged = { ...current, ...fields };
     fields.is_active = isComplete(merged);
@@ -150,6 +173,9 @@ export async function PATCH(request) {
 
   try {
     const [data] = await db.update(product_list).set(fields).where(eq(product_list.id, id)).returning();
+    if (fields.image_url !== undefined && previousImageUrl && previousImageUrl !== fields.image_url) {
+      deleteProductImageByUrl(previousImageUrl).catch((e) => console.error('deleteProductImageByUrl:', e.message));
+    }
     return NextResponse.json(data);
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });

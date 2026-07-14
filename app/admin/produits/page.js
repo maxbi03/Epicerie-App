@@ -115,6 +115,8 @@ function CatalogueView() {
   const [stockFilter, setStockFilter] = useState('all');
   const [error, setError] = useState('');
   const [printLabel, setPrintLabel] = useState(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageError, setImageError] = useState('');
 
   async function loadProducts() {
     try {
@@ -134,6 +136,7 @@ function CatalogueView() {
     setForm(EMPTY_FORM);
     setShowForm(true);
     setError('');
+    setImageError('');
   }
 
   function openEdit(product) {
@@ -156,6 +159,7 @@ function CatalogueView() {
     });
     setShowForm(true);
     setError('');
+    setImageError('');
   }
 
   async function handleSubmit(e) {
@@ -214,6 +218,26 @@ function CatalogueView() {
 
   function updateField(field, value) {
     setForm(prev => ({ ...prev, [field]: value }));
+  }
+
+  async function handleImageFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageError('');
+    setImageUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('image', file);
+      const res = await fetch('/api/admin/products/image', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      updateField('image_url', data.image_url);
+    } catch (err) {
+      setImageError(err.message);
+    } finally {
+      setImageUploading(false);
+      e.target.value = '';
+    }
   }
 
   const filtered = products.filter(p => {
@@ -456,9 +480,16 @@ function CatalogueView() {
                   className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm resize-none" />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">URL image</label>
-                <input type="text" placeholder="https://..." value={form.image_url} onChange={e => updateField('image_url', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
+                <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 block">Image</label>
+                <div className="flex gap-2">
+                  <input type="text" placeholder="https://... (téléchargée automatiquement en local)" value={form.image_url} onChange={e => updateField('image_url', e.target.value)}
+                    className="flex-1 px-4 py-3 rounded-xl border border-border dark:border-white/10 dark:bg-white/5 dark:text-white text-sm" />
+                  <label className={`shrink-0 px-4 py-3 rounded-xl border border-border dark:border-white/10 text-xs font-bold uppercase tracking-widest cursor-pointer flex items-center ${imageUploading ? 'opacity-50 pointer-events-none' : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}>
+                    {imageUploading ? '...' : 'Fichier'}
+                    <input type="file" accept="image/*" className="hidden" onChange={handleImageFile} disabled={imageUploading} />
+                  </label>
+                </div>
+                {imageError && <p className="text-xs text-red-500 mt-1">{imageError}</p>}
               </div>
               {form.image_url && (
                 <div className="w-full h-36 rounded-xl overflow-hidden bg-white border border-gray-200 dark:border-white/10">

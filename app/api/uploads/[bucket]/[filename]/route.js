@@ -1,16 +1,20 @@
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { NextResponse } from 'next/server';
-import { AVATARS_DIR } from '../../../../lib/storage';
+import { bucketPath } from '../../../../lib/storage';
 
+const ALLOWED_BUCKETS = new Set(['avatars', 'products']);
 const CONTENT_TYPES = {
-  jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif',
+  jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif',
 };
 
 export async function GET(request, { params }) {
-  const { filename } = await params;
+  const { bucket, filename } = await params;
 
-  // Anti path-traversal : uniquement des noms de fichier simples (userId.ext)
+  if (!ALLOWED_BUCKETS.has(bucket)) {
+    return NextResponse.json({ error: 'Bucket invalide' }, { status: 400 });
+  }
+  // Anti path-traversal : uniquement des noms de fichier simples
   if (!filename || filename.includes('/') || filename.includes('..')) {
     return NextResponse.json({ error: 'Nom de fichier invalide' }, { status: 400 });
   }
@@ -22,7 +26,7 @@ export async function GET(request, { params }) {
   }
 
   try {
-    const buffer = await readFile(path.join(AVATARS_DIR, filename));
+    const buffer = await readFile(path.join(bucketPath(bucket), filename));
     return new NextResponse(buffer, {
       headers: {
         'Content-Type': contentType,

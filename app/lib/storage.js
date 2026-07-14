@@ -1,34 +1,41 @@
-import { mkdir, unlink } from 'fs/promises';
+import { mkdir, unlink, writeFile } from 'fs/promises';
 import path from 'path';
 
-// Stockage fichier local (remplace Supabase Storage). Hors de public/ pour ne
-// pas mélanger les uploads utilisateur avec les assets statiques du build.
-const AVATARS_DIR = path.join(process.cwd(), 'uploads', 'avatars');
-const URL_PREFIX = '/api/uploads/avatars/';
+// Stockage fichier local par "bucket" (avatars, products...). Hors de public/
+// pour ne pas mélanger les uploads utilisateur avec les assets statiques du build.
+const UPLOADS_ROOT = path.join(process.cwd(), 'uploads');
+const URL_PREFIX = '/api/uploads';
 
 export function extFromContentType(contentType) {
-  return contentType.split('/')[1].replace('jpeg', 'jpg');
+  return contentType.split('/')[1]?.replace('jpeg', 'jpg') || 'jpg';
 }
 
-/** Enregistre un avatar sur disque et retourne son URL publique. */
-export async function saveAvatar(userId, ext, buffer) {
-  await mkdir(AVATARS_DIR, { recursive: true });
-  const filename = `${userId}.${ext}`;
-  const { writeFile } = await import('fs/promises');
-  await writeFile(path.join(AVATARS_DIR, filename), buffer);
-  return `${URL_PREFIX}${filename}`;
+export function bucketPath(bucket) {
+  return path.join(UPLOADS_ROOT, bucket);
 }
 
-/** Supprime le fichier avatar correspondant à une URL (silencieux si absent). */
-export async function deleteAvatarByUrl(url) {
-  if (!url || !url.startsWith(URL_PREFIX)) return;
-  const filename = url.slice(URL_PREFIX.length);
+/** Enregistre un fichier dans un bucket et retourne son URL publique. */
+export async function saveFile(bucket, filename, buffer) {
+  const dir = bucketPath(bucket);
+  await mkdir(dir, { recursive: true });
+  await writeFile(path.join(dir, filename), buffer);
+  return `${URL_PREFIX}/${bucket}/${filename}`;
+}
+
+/** Supprime le fichier correspondant à une URL locale (silencieux si absent ou externe). */
+export async function deleteFileByUrl(bucket, url) {
+  const prefix = `${URL_PREFIX}/${bucket}/`;
+  if (!url || !url.startsWith(prefix)) return;
+  const filename = url.slice(prefix.length);
   if (!filename || filename.includes('/') || filename.includes('..')) return;
   try {
-    await unlink(path.join(AVATARS_DIR, filename));
+    await unlink(path.join(bucketPath(bucket), filename));
   } catch (e) {
     if (e.code !== 'ENOENT') throw e;
   }
 }
 
-export { AVATARS_DIR };
+// ─── Avatars (compat des appelants existants) ───
+export const AVATARS_DIR = bucketPath('avatars');
+export const saveAvatar = (userId, ext, buffer) => saveFile('avatars', `${userId}.${ext}`, buffer);
+export const deleteAvatarByUrl = (url) => deleteFileByUrl('avatars', url);

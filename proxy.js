@@ -18,7 +18,7 @@ const PUBLIC_API = [
   '/api/news',                    // actualités publiques
   '/api/address-search',          // utilisé pendant l'inscription (avant login)
   '/api/reports',                 // signalement autorisé aux visiteurs
-  '/api/uploads/avatars',         // avatars publics (comme les images produits)
+  '/api/uploads',                 // fichiers publics (avatars, images produits)
 ];
 
 function isPublicApi(pathname) {
