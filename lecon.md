@@ -209,6 +209,16 @@ Ce fichier se met à jour au fil des conversations. Il capture ce qui a été ap
 - **Correctif** : `app/lib/pricing.js` — `effectivePriceCents(price, discountPercent)`, module partagé client/serveur (aucun import Node, comme `password.js`/`phone.js`). Utilisé désormais dans `app/lib/checkout.js` (serveur), `app/panier/page.js` et `app/components/ProductModal.jsx` (client) : toujours arrondir par unité en centimes AVANT de multiplier par la quantité/sommer, jamais sommer des CHF flottants puis arrondir une fois à la fin.
 - Règle à retenir pour tout futur calcul de montant : arrondir au plus petit grain (le centime, par unité), jamais à la fin d'une somme.
 
+## Bug total_spent ×100 (corrigé)
+
+- **Bug** : `finalizePaidOrder` (checkout.js) appelait `increment_total_spent(userId, priceCents)` — passait des **centimes** à une fonction/colonne qui attend des **CHF**. Résultat : `total_spent` gonflé ×100 (18.75 CHF de ventes → 1875.00 affiché). Confirmé en base : `test@gmail.com` avait `total_spent=1875.00` pour `1875` centimes de ventes réelles.
+- **Correctif** :
+  - `app/lib/db/functions.sql` — `increment_total_spent(p_user_id uuid, p_amount numeric)` (était `integer`, ne pouvait même pas accepter un montant décimal en CHF). `drop function` de l'ancienne signature avant de recréer (Postgres traite un changement de type de paramètre comme une nouvelle fonction surchargée sinon).
+  - `app/lib/checkout.js` — passe désormais `priceCents / 100` (CHF) à la fonction, pas les centimes bruts.
+  - Donnée corrompue corrigée manuellement pour `test@gmail.com` (seul cas confirmé ×100) : `total_spent / 100`.
+  - Vérifié en transaction (rollback) : `18.75 + increment_total_spent(3.75) = 22.50`, correct.
+- ⚠️ **Distinct** : `mgbg-group@proton.me` et `max03.bi@pm.me` ont des ventes historiques (mai 2026, avant migration) mais `total_spent = 0.00` — pas le même bug (pas d'inflation ×100, jamais crédité du tout, probablement code Supabase pré-lot-02 ou reset admin). Pas corrigé, à décider si backfill souhaité.
+
 ## Divers
 
 - Commentaires JS : uniquement quand le POURQUOI n'est pas évident dans le code

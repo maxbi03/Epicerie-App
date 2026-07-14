@@ -98,7 +98,8 @@ export async function finalizePaidOrder({ orderRef, items, clientName, userId, p
 
   if (userId) {
     try {
-      await db.execute(sql`select increment_total_spent(${userId}::uuid, ${priceCents})`);
+      // total_spent est en CHF (numeric), priceCents est en centimes : convertir.
+      await db.execute(sql`select increment_total_spent(${userId}::uuid, ${priceCents / 100})`);
     } catch (e) {
       console.error('increment_total_spent failed:', e.message);
     }

@@ -2,7 +2,10 @@
 -- À appliquer après la création des tables, sur chaque base (dev / laptop / VPS).
 
 -- Incrément atomique de total_spent (lot 02)
-create or replace function public.increment_total_spent(p_user_id uuid, p_amount integer)
+-- p_amount est en CHF (comme la colonne users.total_spent), PAS en centimes —
+-- voir app/lib/checkout.js : priceCents / 100 avant l'appel.
+drop function if exists public.increment_total_spent(uuid, integer);
+create or replace function public.increment_total_spent(p_user_id uuid, p_amount numeric)
 returns void language sql as $$
   update public.users set total_spent = coalesce(total_spent, 0) + p_amount where id = p_user_id;
 $$;
