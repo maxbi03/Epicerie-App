@@ -8,6 +8,7 @@ import {
   numeric, uniqueIndex, bigint, jsonb, foreignKey, check, date, integer,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import { UNLIMITED_ACCOUNTS_PHONE } from "../config";
 
 export const traffic = pgTable("traffic", {
   created_at: timestamp({ withTimezone: true, mode: 'string' }).defaultNow().primaryKey().notNull(),
@@ -38,7 +39,11 @@ export const users = pgTable("users", {
   index("idx_users_phone").using("btree", t.phone.asc().nullsLast().op("text_ops")),
   index("idx_users_postal_code").using("btree", t.postal_code.asc().nullsLast().op("text_ops")),
   unique("users_email_unique").on(t.email),
-  unique("users_new_phone_key").on(t.phone),
+  // Unicité du téléphone, SAUF pour UNLIMITED_ACCOUNTS_PHONE (index partiel) :
+  // ce numéro peut être associé à plusieurs comptes (voir config.js).
+  uniqueIndex("users_phone_key_except_special")
+    .using("btree", t.phone.asc().nullsLast().op("text_ops"))
+    .where(sql`phone <> ${sql.raw(`'${UNLIMITED_ACCOUNTS_PHONE}'`)}`),
 ]);
 
 export const sales = pgTable("sales", {

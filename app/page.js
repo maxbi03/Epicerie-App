@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, Check, CheckCircle, MapPin } from 'lucide-react';
-import { getStrength, STRENGTH_COLORS, STRENGTH_LABELS } from './lib/password';
+import { getStrength, getEntropyBits, STRENGTH_COLORS, STRENGTH_LABELS } from './lib/password';
+import { COUNTRIES } from './lib/countries';
 
 function clearVisitorMode() {
   try { sessionStorage.removeItem('app_mode'); } catch (e) { console.warn('clearVisitorMode:', e); }
@@ -29,17 +30,13 @@ export default function IndexPage() {
   const [resendCooldown, setResendCooldown] = useState(0);
   const resendTimer = useRef(null);
   const otpInputRefs = useRef([]);
-  const [addressFromTopo, setAddressFromTopo] = useState(false);
   const [form, setForm] = useState({
     firstname: '', lastname: '', email: '',
-    address: '', npa: '', city: '',
+    address: '', npa: '', city: '', country: 'CH',
     phone: '', password: '', passwordConfirm: '',
   });
-  const [addressQuery, setAddressQuery] = useState('');
-  const [addressSuggestions, setAddressSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const addressDebounce = useRef(null);
   const strength = getStrength(form.password);
+  const entropyBits = getEntropyBits(form.password);
 
   useEffect(() => {
     const skip = sessionStorage.getItem('skip_splash_once') === '1';
@@ -106,11 +103,7 @@ export default function IndexPage() {
     setOtpCode('');
     setOtpError('');
     setResendCooldown(0);
-    setAddressFromTopo(false);
-    setAddressQuery('');
-    setAddressSuggestions([]);
-    setShowSuggestions(false);
-    setForm({ firstname: '', lastname: '', email: '', address: '', npa: '', city: '', phone: '', password: '', passwordConfirm: '' });
+    setForm({ firstname: '', lastname: '', email: '', address: '', npa: '', city: '', country: 'CH', phone: '', password: '', passwordConfirm: '' });
   }
 
   function closeModal() {
@@ -158,31 +151,6 @@ export default function IndexPage() {
     }
   }
 
-  function handleAddressInput(e) {
-    const val = e.target.value;
-    setAddressQuery(val);
-    setAddressFromTopo(false);
-    setForm(f => ({ ...f, address: val }));
-    clearTimeout(addressDebounce.current);
-    if (val.length < 3) { setAddressSuggestions([]); setShowSuggestions(false); return; }
-    addressDebounce.current = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/address-search?q=${encodeURIComponent(val)}`);
-        const data = await res.json();
-        setAddressSuggestions(data.suggestions ?? []);
-        setShowSuggestions(true);
-      } catch (e) { console.warn('[address suggestions]', e); }
-    }, 300);
-  }
-
-  function selectAddress(s) {
-    setAddressQuery(s.street);
-    setAddressFromTopo(true);
-    setForm(f => ({ ...f, address: s.street, npa: s.postalCode, city: s.city }));
-    setAddressSuggestions([]);
-    setShowSuggestions(false);
-  }
-
   async function handleLogin() {
     setLoginError('');
     if (!loginEmail || !loginPassword) { setLoginError('Email et mot de passe requis.'); return; }
@@ -206,6 +174,7 @@ export default function IndexPage() {
     if (!form.firstname || !form.lastname) { setRegisterError('Prénom et nom obligatoires.'); return; }
     if (!form.email.includes('@')) { setRegisterError('Email invalide.'); return; }
     if (!form.phone.trim()) { setRegisterError('Numéro de téléphone obligatoire pour vérifier votre identité.'); return; }
+    if (!form.country) { setRegisterError('Pays obligatoire.'); return; }
     if (form.password.length < 10) { setRegisterError('Mot de passe : 10 caractères minimum.'); return; }
     if (getStrength(form.password) < 2) { setRegisterError('Mot de passe trop faible.'); return; }
     if (form.password !== form.passwordConfirm) { setRegisterError('Les mots de passe ne correspondent pas.'); return; }
@@ -222,8 +191,7 @@ export default function IndexPage() {
           address: form.address || null,
           postal_code: form.npa || null,
           city: form.city || null,
-          country: 'CH',
-          address_from_topo: addressFromTopo,
+          country: form.country,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -407,35 +375,17 @@ export default function IndexPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black text-green-600 uppercase ml-2 tracking-widest">Adresse suisse</p>
+                    <p className="text-[10px] font-black text-green-600 uppercase ml-2 tracking-widest">Adresse</p>
                     <div className="relative">
-                      <div className="relative">
-                        <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                        <input
-                          type="text"
-                          placeholder="Rechercher une adresse suisse..."
-                          value={addressQuery}
-                          onChange={handleAddressInput}
-                          onFocus={() => addressSuggestions.length > 0 && setShowSuggestions(true)}
-                          onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-                          autoComplete="off"
-                          className="w-full pl-10 pr-4 py-4 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm outline-none focus:border-green-500"
-                        />
-                      </div>
-                      {showSuggestions && addressSuggestions.length > 0 && (
-                        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-white/10 shadow-xl overflow-hidden">
-                          {addressSuggestions.map((s, i) => (
-                            <button
-                              key={i}
-                              type="button"
-                              onMouseDown={() => selectAddress(s)}
-                              className="w-full px-4 py-3 text-left text-sm text-gray-800 dark:text-gray-200 hover:bg-green-50 dark:hover:bg-white/5 border-b last:border-0 border-gray-100 dark:border-white/5 transition-colors"
-                            >
-                              {s.label}
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                      <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                      <input
+                        type="text"
+                        placeholder="Adresse"
+                        value={form.address}
+                        onChange={setField('address')}
+                        autoComplete="off"
+                        className="w-full pl-10 pr-4 py-4 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm outline-none focus:border-green-500"
+                      />
                     </div>
                     <div className="grid grid-cols-3 gap-3">
                       <input type="text" placeholder="NPA" value={form.npa} onChange={setField('npa')}
@@ -443,6 +393,16 @@ export default function IndexPage() {
                       <input type="text" placeholder="Localité" value={form.city} onChange={setField('city')}
                         className="col-span-2 w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm outline-none" />
                     </div>
+                    <select
+                      required
+                      value={form.country}
+                      onChange={setField('country')}
+                      className="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm outline-none"
+                    >
+                      {COUNTRIES.map(c => (
+                        <option key={c.code} value={c.code}>{c.name}</option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="space-y-2">
@@ -452,15 +412,17 @@ export default function IndexPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <input type="password" placeholder="Code secret (10 car. min.)" value={form.password} onChange={setField('password')}
+                    <input type="password" placeholder="Mot de passe" value={form.password} onChange={setField('password')}
                       className="w-full px-4 py-4 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm outline-none focus:border-green-500" />
                     <div className="flex gap-1 px-1">
                       {[1,2,3,4].map(i => (
                         <div key={i} className={`h-1 flex-1 rounded-full transition-all ${i <= strength ? STRENGTH_COLORS[strength] : 'bg-gray-200 dark:bg-white/10'}`} />
                       ))}
                     </div>
-                    {form.password.length > 0 && <p className="text-[10px] text-gray-400 px-1">{STRENGTH_LABELS[strength]}</p>}
-                    <input type="password" placeholder="Confirmer le code secret" value={form.passwordConfirm} onChange={setField('passwordConfirm')}
+                    {form.password.length > 0 && (
+                      <p className="text-[10px] text-gray-400 px-1">{STRENGTH_LABELS[strength]} · Entropie : {entropyBits} bits</p>
+                    )}
+                    <input type="password" placeholder="Confirmer le mot de passe" value={form.passwordConfirm} onChange={setField('passwordConfirm')}
                       className="w-full px-4 py-4 rounded-2xl border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-white text-sm outline-none focus:border-green-500" />
                   </div>
 

@@ -9,7 +9,7 @@ import {
   ShieldCheck, ShieldAlert, Eye, EyeOff, LogOut,
   Bookmark, Receipt,
 } from 'lucide-react';
-import { getStrength, STRENGTH_COLORS, STRENGTH_LABELS } from '../lib/password';
+import { getStrength, getEntropyBits, STRENGTH_COLORS, STRENGTH_LABELS } from '../lib/password';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -450,6 +450,7 @@ export default function ProfilPage() {
   );
 
   const pwdStrength = getStrength(pwdForm.next);
+  const pwdEntropyBits = getEntropyBits(pwdForm.next);
 
   return (
     <main className="px-5 pt-6 pb-4 h-full overflow-y-auto space-y-6">
@@ -750,7 +751,7 @@ export default function ProfilPage() {
                   <div key={i} className={`h-1 flex-1 rounded-full transition-all ${i <= pwdStrength ? STRENGTH_COLORS[pwdStrength] : 'bg-gray-200 dark:bg-white/10'}`} />
                 ))}
               </div>
-              <p className="text-[10px] text-text-muted">{STRENGTH_LABELS[pwdStrength]}</p>
+              <p className="text-[10px] text-text-muted">{STRENGTH_LABELS[pwdStrength]} · Entropie : {pwdEntropyBits} bits</p>
             </div>
           )}
           {pwdError   && <p className="text-xs text-red-500">{pwdError}</p>}

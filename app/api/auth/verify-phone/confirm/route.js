@@ -4,6 +4,7 @@ import { db } from '../../../../lib/db';
 import { users } from '../../../../lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { verifyOtp } from '../../../../lib/otp';
+import { UNLIMITED_ACCOUNTS_PHONE } from '../../../../lib/config';
 import { cookies } from 'next/headers';
 
 const MAX_ATTEMPTS = 5; // tentatives max avant invalidation du code
@@ -98,17 +99,19 @@ export async function POST(request) {
         );
       }
 
-      const [existingPhone] = await db
-        .select({ id: users.id })
-        .from(users)
-        .where(eq(users.phone, pending.phone))
-        .limit(1);
+      if (pending.phone !== UNLIMITED_ACCOUNTS_PHONE) {
+        const [existingPhone] = await db
+          .select({ id: users.id })
+          .from(users)
+          .where(eq(users.phone, pending.phone))
+          .limit(1);
 
-      if (existingPhone) {
-        return NextResponse.json(
-          { error: 'Ce numéro de téléphone est déjà utilisé par un autre compte.' },
-          { status: 409 }
-        );
+        if (existingPhone) {
+          return NextResponse.json(
+            { error: 'Ce numéro de téléphone est déjà utilisé par un autre compte.' },
+            { status: 409 }
+          );
+        }
       }
 
       // Créer le compte

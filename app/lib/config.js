@@ -27,3 +27,10 @@ export const PAYMENT_GATEWAY = 'mollie';
 export const STORE_LAT = 46.442282;
 export const STORE_LNG = 6.896169;
 export const DOOR_UNLOCK_RADIUS_M = 400; // en mètres
+
+// ─── Compte de test/démo ───
+// Ce numéro peut être associé à plusieurs comptes (contourne l'unicité du
+// téléphone, en base ET dans les vérifications applicatives) — usage
+// volontaire pour les tests/démos du porteur du projet, décision assumée
+// même en production.
+export const UNLIMITED_ACCOUNTS_PHONE = '+41787215223';

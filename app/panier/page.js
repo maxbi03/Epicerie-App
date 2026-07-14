@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ShoppingCart, Minus, Plus, Lock, Bookmark, Check, X } from 'lucide-react';
 import { getBasket, saveBasket } from '../lib/basket';
+import { effectivePriceCents } from '../lib/pricing';
 
 export default function PanierPage() {
   const [basket, setBasket] = useState([]);
@@ -76,9 +77,11 @@ export default function PanierPage() {
   }, {});
 
   const groupedList = Object.values(grouped);
-  // Prix unitaire remise appliquée (doit correspondre au recalcul serveur)
-  const unitPrice = (p) => (p.discount_percent > 0 ? p.price * (1 - p.discount_percent / 100) : p.price);
-  const total = groupedList.reduce((sum, p) => sum + unitPrice(p) * p.quantity, 0);
+  // Arrondi en centimes PAR UNITÉ (comme le serveur) : sommer des CHF en
+  // virgule flottante peut diverger d'un centime du total réellement facturé.
+  const unitPriceCents = (p) => effectivePriceCents(p.price, p.discount_percent);
+  const totalCents = groupedList.reduce((sum, p) => sum + unitPriceCents(p) * p.quantity, 0);
+  const total = totalCents / 100;
 
   async function handleCheckout() {
     setIsLoading(true);
@@ -160,7 +163,7 @@ export default function PanierPage() {
                       </span>
                     )}
                     <span className={`text-sm font-black ${product.discount_percent > 0 ? 'text-red-600' : 'text-green-900 dark:text-white'}`}>
-                      {(unitPrice(product) * product.quantity).toFixed(2)} CHF
+                      {((unitPriceCents(product) * product.quantity) / 100).toFixed(2)} CHF
                     </span>
                   </div>
                 </div>

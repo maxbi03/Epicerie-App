@@ -5,6 +5,7 @@ import { users } from '../../../../lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { normalizePhone, validatePhone } from '../../../../lib/phone';
 import { hashOtp } from '../../../../lib/otp';
+import { UNLIMITED_ACCOUNTS_PHONE } from '../../../../lib/config';
 import { cookies } from 'next/headers';
 
 /** Génère un code OTP à 6 chiffres cryptographiquement sûr */
@@ -112,24 +113,26 @@ export async function POST(request) {
         return NextResponse.json({ error: cooldownError }, { status: 429 });
       }
 
-      // Vérifier si ce numéro est déjà utilisé
-      const [existing] = await db
-        .select({ id: users.id })
-        .from(users)
-        .where(eq(users.phone, phone))
-        .limit(1);
+      // Vérifier si ce numéro est déjà utilisé (sauf UNLIMITED_ACCOUNTS_PHONE, réutilisable)
+      if (phone !== UNLIMITED_ACCOUNTS_PHONE) {
+        const [existing] = await db
+          .select({ id: users.id })
+          .from(users)
+          .where(eq(users.phone, phone))
+          .limit(1);
 
-      if (existing && existing.id === session.userId) {
-        return NextResponse.json(
-          { error: 'Ce numéro est déjà votre numéro actuel.' },
-          { status: 409 }
-        );
-      }
-      if (existing) {
-        return NextResponse.json(
-          { error: 'Ce numéro est déjà utilisé par un autre compte.' },
-          { status: 409 }
-        );
+        if (existing && existing.id === session.userId) {
+          return NextResponse.json(
+            { error: 'Ce numéro est déjà votre numéro actuel.' },
+            { status: 409 }
+          );
+        }
+        if (existing) {
+          return NextResponse.json(
+            { error: 'Ce numéro est déjà utilisé par un autre compte.' },
+            { status: 409 }
+          );
+        }
       }
 
       const code = generateOtp();

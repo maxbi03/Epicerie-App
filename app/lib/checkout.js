@@ -2,14 +2,7 @@ import { db } from './db';
 import { product_list, sales } from './db/schema';
 import { inArray, sql } from 'drizzle-orm';
 import { updateStockAfterPayment } from './updateStock';
-
-/** Prix unitaire effectif en centimes, remise appliquée si discount_percent > 0. */
-export function effectivePriceCents(row) {
-  const base = Number(row.price_chf ?? row.price ?? row.prix ?? 0);
-  const disc = Number(row.discount_percent ?? 0);
-  const unit = disc > 0 ? base * (1 - disc / 100) : base;
-  return Math.round(unit * 100);
-}
+import { effectivePriceCents } from './pricing';
 
 function shelfStock(row) {
   return Number(row.stock_shelf ?? 0);
@@ -58,7 +51,7 @@ export async function loadCartPricing(requested) {
       throw new Error(`Stock insuffisant pour ${productName(row)}`);
     }
 
-    const unitCents = effectivePriceCents(row);
+    const unitCents = effectivePriceCents(row.price_chf, row.discount_percent);
     totalCents += unitCents * qty;
     items.push({ id, name: productName(row), qty, price: unitCents / 100 });
   }

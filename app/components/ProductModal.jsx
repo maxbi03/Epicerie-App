@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X, Minus, Plus, Store, Weight, FileText, Info, ShoppingCart } from 'lucide-react';
 import { getBasket, saveBasket } from '../lib/basket';
+import { effectivePriceCents } from '../lib/pricing';
 import { BoxIcon } from 'lucide-react';
 import { Box } from 'lucide-react';
 
@@ -78,7 +79,7 @@ export default function ProductModal({ product, onClose, onAdd }) {
                 <>
                   <p className="text-sm text-gray-400 line-through">{product.price.toFixed(2)} CHF</p>
                   <p className="text-2xl font-black text-red-600">
-                    {(product.price * (1 - product.discount_percent / 100)).toFixed(2)} <span className="text-sm font-bold">CHF</span>
+                    {(effectivePriceCents(product.price, product.discount_percent) / 100).toFixed(2)} <span className="text-sm font-bold">CHF</span>
                   </p>
                   {product.discount_until && (
                     <p className="text-[10px] text-red-400 mt-1">jusqu'au {new Date(product.discount_until).toLocaleDateString('fr-CH', { day: '2-digit', month: '2-digit' })}</p>
@@ -182,9 +183,7 @@ export default function ProductModal({ product, onClose, onAdd }) {
                   <span className="flex items-baseline gap-1.5 whitespace-nowrap">
                     <span className="text-sm">Ajouter</span>
                     <span className="text-xs font-medium opacity-70">
-                      {((product.discount_percent > 0
-                        ? product.price * (1 - product.discount_percent / 100)
-                        : product.price) * quantity).toFixed(2)} CHF
+                      {((effectivePriceCents(product.price, product.discount_percent) * quantity) / 100).toFixed(2)} CHF
                     </span>
                   </span>
                 )}

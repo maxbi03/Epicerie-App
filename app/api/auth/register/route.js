@@ -6,6 +6,8 @@ import { eq } from 'drizzle-orm';
 import { signPendingRegToken, PENDING_REG_COOKIE } from '../../../lib/auth';
 import { validatePassword } from '../../../lib/password';
 import { normalizePhone, validatePhone } from '../../../lib/phone';
+import { COUNTRY_CODES } from '../../../lib/countries';
+import { UNLIMITED_ACCOUNTS_PHONE } from '../../../lib/config';
 
 /** Validation email côté serveur */
 function validateEmail(email) {
@@ -37,6 +39,10 @@ export async function POST(request) {
     const phoneError = validatePhone(phone);
     if (phoneError) return NextResponse.json({ error: phoneError }, { status: 400 });
 
+    if (!country || !COUNTRY_CODES.has(country)) {
+      return NextResponse.json({ error: 'Pays invalide.' }, { status: 400 });
+    }
+
     // Import dynamique argon2
     const argon2 = (await import('argon2')).default ?? (await import('argon2'));
 
@@ -51,16 +57,19 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Un compte existe déjà avec cet email.' }, { status: 409 });
     }
 
-    // Vérifier l'unicité du téléphone avant d'envoyer un SMS (contrainte unique en DB)
+    // Vérifier l'unicité du téléphone avant d'envoyer un SMS (contrainte unique en DB),
+    // sauf UNLIMITED_ACCOUNTS_PHONE qui peut être associé à plusieurs comptes.
     const normalizedPhone = normalizePhone(phone);
-    const [existingPhone] = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.phone, normalizedPhone))
-      .limit(1);
+    if (normalizedPhone !== UNLIMITED_ACCOUNTS_PHONE) {
+      const [existingPhone] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.phone, normalizedPhone))
+        .limit(1);
 
-    if (existingPhone) {
-      return NextResponse.json({ error: 'Ce numéro de téléphone est déjà utilisé.' }, { status: 409 });
+      if (existingPhone) {
+        return NextResponse.json({ error: 'Ce numéro de téléphone est déjà utilisé.' }, { status: 409 });
+      }
     }
 
     const password_hash = await argon2.hash(password);
@@ -73,7 +82,7 @@ export async function POST(request) {
       address:          address ?? null,
       postal_code:      postal_code ?? null,
       city:             city ?? null,
-      country:          country ?? 'CH',
+      country,
       password_hash,
       address_verified: address_from_topo ? 1 : 0,
     });

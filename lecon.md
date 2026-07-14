@@ -174,6 +174,41 @@ Ce fichier se met à jour au fil des conversations. Il capture ce qui a été ap
 - **Reste à faire** : bascule + smoke-test complet (étape E).
 - 🐛 À corriger séparément : `users.total_spent` en numeric(10,2) mais incrémenté en centimes → affichage ×100 (bug pré-existant).
 
+## Force du mot de passe — entropie (app/lib/password.js)
+
+- `getStrength`/`STRENGTH_COLORS`/`STRENGTH_LABELS` sont passés d'un score par comptage de règles (longueur/majuscule/chiffre/symbole) à un score basé sur l'entropie réelle. Deux approches naïves écartées et pourquoi :
+  - `longueur × log2(pool)` seule : note "aaaaaaaaaa" presque aussi bien qu'un mot de passe aléatoire de même longueur (répétition non pénalisée) → aurait cassé la validation serveur existante (mot de passe répétitif accepté).
+  - Entropie de Shannon pure (fréquence des caractères dans la chaîne) : plafonne à `log2(longueur)` et **sous-note** les mots de passe courts mais mélangeant les classes (ex. `Ab3fG7hK9!` ne notait que 33 bits au lieu de ~66).
+  - **Formule retenue** : `getEntropyBits(pwd) = (nb caractères distincts) × log2(taille du pool utilisé)`. Pénalise la répétition (peu de caractères distincts) tout en récompensant la diversité des classes (pool plus grand). `getStrength` en dérive un score 0-4 par seuils (28/40/60 bits).
+  - Compteur affiché ("Entropie : X bits") à côté de la barre 4 segments existante, dans `app/page.js` (inscription) et `app/profil/page.js` (changement de mot de passe) — même `getStrength` pilote toujours la barre, donc barre et compteur restent cohérents entre eux.
+  - Piège JSX : `d'entropie` en texte brut déclenche `react/no-unescaped-entities` → reformulé en "Entropie : X bits" pour éviter l'apostrophe (même piège que `d'email` rencontré précédemment).
+
+## Champ pays (inscription)
+
+- `app/lib/countries.js` : `COUNTRIES` (191 pays, code ISO 3166-1 alpha-2 + nom FR), ordre = Suisse, France, Allemagne, Italie, puis alphabétique. `COUNTRY_CODES` (Set) pour validation serveur.
+- `country` ajouté à `form` (défaut `'CH'`), `<select>` obligatoire dans la section adresse d'inscription (`app/page.js`), validé aussi bien côté client (`if (!form.country)`) que côté serveur (`register/route.js` : `COUNTRY_CODES.has(country)` → 400 sinon).
+- L'adresse reste **Suisse uniquement** dans son fonctionnement — le champ pays est indépendant, ne modifie pas la logique d'adresse. Si un jour l'entrée d'adresse doit varier selon le pays choisi, il faudra en tenir compte.
+
+## Adresse en inscription — champ libre (pas d'autocomplete)
+
+- Autocomplete swisstopo retiré du formulaire d'inscription (`app/page.js`) : le champ "Adresse" est une saisie texte libre (`setField('address')`), plus de suggestions/dropdown. État mort supprimé : `addressQuery`, `addressSuggestions`, `showSuggestions`, `addressDebounce`, `addressFromTopo` (et les fonctions `handleAddressInput`/`selectAddress`) — bien penser à les retirer de **tous** les endroits qui réinitialisent le form (ex. `openModal()`), sinon `ReferenceError` au runtime (piège rencontré).
+- Conséquence : `address_verified` reste toujours à `0` pour les nouvelles inscriptions (plus de vérification via sélection topo à ce stade). C'est un effet secondaire assumé de la suppression de l'autocomplete.
+- `/api/address-search` (swisstopo) n'est **pas** supprimée : encore utilisée par `app/profil/page.js` pour l'édition d'adresse — ne pas y toucher sans demande explicite.
+
+## Numéro de téléphone "compte illimité" (test/démo)
+
+- `UNLIMITED_ACCOUNTS_PHONE` dans `app/lib/config.js` (`+41787215223`) : ce numéro peut être associé à **plusieurs comptes**, contrairement à la règle générale (un numéro = un compte). Décision assumée **y compris en production** (demandé explicitement, pas limité au dev).
+- **DB** : contrainte unique remplacée par un index partiel dans `app/lib/db/schema.ts` — `uniqueIndex("users_phone_key_except_special").where(sql\`phone <> ...\`)`. Piège : interpoler la constante via `${UNLIMITED_ACCOUNTS_PHONE}` dans le template `sql` la traite comme un **paramètre lié** (`$1`), invalide dans un prédicat d'index (DDL) → erreur Postgres `42P02`. Il faut l'injecter en SQL brut : `sql.raw(\`'${UNLIMITED_ACCOUNTS_PHONE}'\`)`.
+- **Code applicatif** : 3 endroits contournent le check d'unicité pour ce numéro (skip du `SELECT` existant si `phone === UNLIMITED_ACCOUNTS_PHONE`) : `register/route.js`, `verify-phone/confirm/route.js` (CAS 1, création de compte), `verify-phone/send/route.js` (sous-cas changement de numéro, y compris le message "déjà ton numéro actuel").
+- Vérifié : au niveau DB (transaction de test avec rollback — le numéro spécial autorise les doublons, un numéro normal reste bloqué) et au niveau `register` (curl réel, deux inscriptions avec emails différents sur le même numéro spécial → toutes deux acceptées).
+- ⚠️ Non testé de bout en bout : le cycle OTP complet (SMS réel) n'a pas été rejoué deux fois avec ce numéro — `register` ne fait qu'un pré-check (aucune ligne `users` créée à ce stade), la création réelle du compte se fait dans `verify-phone/confirm`. À valider par l'utilisateur en conditions réelles.
+
+## Arrondi des prix remisés (bug d'écart panier ↔ facturé)
+
+- **Bug** : le panier calculait le prix remisé en virgule flottante (`price × (1 - discount/100)`) et n'arrondissait qu'à l'affichage final, en sommant les lignes. Le serveur (`app/lib/checkout.js`) a toujours arrondi **par unité, en centimes**, avant de multiplier par la quantité. Sur certains prix/quantités, les deux méthodes divergent d'un centime (reproduit : 2.99 CHF, remise 33 %, qté 3 → panier affichait 6.01, serveur facturait 6.00).
+- **Correctif** : `app/lib/pricing.js` — `effectivePriceCents(price, discountPercent)`, module partagé client/serveur (aucun import Node, comme `password.js`/`phone.js`). Utilisé désormais dans `app/lib/checkout.js` (serveur), `app/panier/page.js` et `app/components/ProductModal.jsx` (client) : toujours arrondir par unité en centimes AVANT de multiplier par la quantité/sommer, jamais sommer des CHF flottants puis arrondir une fois à la fin.
+- Règle à retenir pour tout futur calcul de montant : arrondir au plus petit grain (le centime, par unité), jamais à la fin d'une somme.
+
 ## Divers
 
 - Commentaires JS : uniquement quand le POURQUOI n'est pas évident dans le code
