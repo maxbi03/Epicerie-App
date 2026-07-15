@@ -102,6 +102,13 @@ Flux : `HomePage` → GPS haversine check → `POST /api/door/unlock` → publis
 
 `app/lib/config.js` regroupe les constantes critiques : noms des tables, coordonnées du magasin, rayon GPS, passerelle de paiement.
 
+### Déploiement (laptop / VPS)
+
+- `deploy/nginx.conf` — config prête à l'emploi (reverse-proxy + TLS + service statique de `/uploads/`), **pas encore branchée**. Le jour où on la met en place :
+  - Remplir les placeholders (domaine, chemins de certificats, chemin absolu du projet).
+  - Vérifier que les politiques de cache Nginx pour `/uploads/avatars/` (court, 1h) et `/uploads/products/` (long, immutable) restent cohérentes avec celles définies dans `app/api/uploads/[bucket]/[filename]/route.js` — si l'une change, penser à répercuter sur l'autre.
+  - `uploads/` doit être monté comme un **volume Docker séparé** du code de l'app (survit aux redéploiements) — ne jamais le mettre dans `public/`.
+
 ---
 
 ## UI / Design
