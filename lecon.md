@@ -231,6 +231,12 @@ Ce fichier se met à jour au fil des conversations. Il capture ce qui a été ap
 - **Migration des 120 produits existants** : `scripts/migrate-product-images.mjs` (même patron self-contained que `migrate-avatars.mjs`, pas d'import cross `app/lib/` — Node standalone ne résout pas les imports sans extension comme le fait le bundler Next). Résultat : 55/60 images externes migrées avec succès, 5 échecs = liens déjà morts en 404 côté fournisseur (aligro.ch/cadar), non récupérables, laissés en l'état (aucune régression, ils ne s'affichaient déjà pas). Script re-jouable : ne retente que les `image_url like 'http%'` restantes.
 - Vérifié en conditions réelles : route de service testée via le serveur de dev (200, bon content-type), URL à content-type malformé migrée avec succès grâce au sniffing par octets magiques.
 
+## Cache des images uploadées + Nginx (déploiement)
+
+- **Pourquoi pas `public/`** : les uploads (avatars, produits) restent volontairement **hors** de `public/` (arbre de build). En Docker (laptop/VPS), `uploads/` doit être un volume séparé qui survit aux redéploiements — le mélanger avec `public/` risquerait qu'un futur build/déploiement écrase les données utilisateur. La bonne façon d'accélérer le service de ces fichiers sans ce risque : Nginx en frontal qui sert `/uploads/` en statique, sans passer par Next.js/Node.
+- **Cache HTTP différencié par bucket** (`app/api/uploads/[bucket]/[filename]/route.js`) — piège à ne pas reproduire : les **avatars** ont un nom de fichier **stable** (`userId.ext`, réécrit à chaque changement de photo) → cache court (`max-age=3600`), jamais `immutable` sinon une photo périmée resterait affichée indéfiniment après un changement. Les **images produits** ont un nom de fichier = **UUID aléatoire par upload, jamais réécrit** → cache long + `immutable` (`max-age=31536000`) sans risque. Vérifié en conditions réelles (curl sur les deux buckets, en-têtes différents confirmés).
+- `deploy/nginx.conf` : config prête à l'emploi pour le déploiement (laptop/VPS) — sert `/uploads/avatars/` et `/uploads/products/` en statique (mêmes politiques de cache que ci-dessus), proxifie le reste vers Next.js, gère TLS. Placeholders à remplir au moment du déploiement réel (domaine, chemins de certificats, chemin absolu du projet).
+
 ## Divers
 
 - Commentaires JS : uniquement quand le POURQUOI n'est pas évident dans le code
