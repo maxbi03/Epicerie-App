@@ -3,6 +3,8 @@ import { product_list } from '../../../../lib/db/schema';
 import { eq, inArray } from 'drizzle-orm';
 import { requireAdmin } from '../../../../lib/adminUtils';
 import { NextResponse } from 'next/server';
+import { adminProductStockAdjustSchema } from '../../../../lib/schemas';
+import { parseBody } from '../../../../lib/validation';
 
 /**
  * POST /api/admin/products/stock
@@ -17,18 +19,11 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
   }
 
-  const body = await request.json();
-  const { type, items } = body;
+  const { data: body, error: validationError } = await parseBody(request, adminProductStockAdjustSchema);
+  if (validationError) return validationError;
+  const { items } = body;
 
-  if (type !== 'delivery') {
-    return NextResponse.json({ error: 'Type inconnu' }, { status: 400 });
-  }
-
-  if (!Array.isArray(items) || items.length === 0) {
-    return NextResponse.json({ error: 'Aucun article fourni' }, { status: 400 });
-  }
-
-  // Validate items
+  // Validate items (filtrage fin conservé tel quel — zod ne valide que la forme)
   const validItems = items.filter(i => i.id && Number.isInteger(Number(i.qty)) && Number(i.qty) > 0);
   if (validItems.length === 0) {
     return NextResponse.json({ error: 'Aucune quantité valide saisie' }, { status: 400 });

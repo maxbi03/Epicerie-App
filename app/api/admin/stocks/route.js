@@ -3,6 +3,8 @@ import { product_list } from '../../../lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { requireAdmin } from '../../../lib/adminUtils';
 import { NextResponse } from 'next/server';
+import { adminStocksBulkUpdateSchema } from '../../../lib/schemas';
+import { parseBody } from '../../../lib/validation';
 
 export async function PATCH(request) {
   const { authorized } = await requireAdmin(request);
@@ -10,11 +12,9 @@ export async function PATCH(request) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
   }
 
-  const { updates } = await request.json();
-
-  if (!Array.isArray(updates) || updates.length === 0) {
-    return NextResponse.json({ error: 'Liste de mises à jour requise' }, { status: 400 });
-  }
+  const { data, error: validationError } = await parseBody(request, adminStocksBulkUpdateSchema);
+  if (validationError) return validationError;
+  const { updates } = data;
 
   const errors = [];
 

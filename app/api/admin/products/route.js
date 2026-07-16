@@ -4,6 +4,8 @@ import { eq, ne, ilike, asc, sql, and } from 'drizzle-orm';
 import { requireAdmin } from '../../../lib/adminUtils';
 import { NextResponse } from 'next/server';
 import { downloadAndStoreProductImage, deleteProductImageByUrl, isLocalProductImage } from '../../../lib/productImages';
+import { adminProductCreateSchema, adminProductUpdateSchema, adminProductDeleteSchema } from '../../../lib/schemas';
+import { parseBody } from '../../../lib/validation';
 
 const REQUIRED_FIELDS = ['name', 'barcode', 'price_chf', 'quantity', 'category', 'image_url', 'producer'];
 
@@ -63,7 +65,8 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
   }
 
-  const body = await request.json();
+  const { data: body, error: validationError } = await parseBody(request, adminProductCreateSchema);
+  if (validationError) return validationError;
   const { name, barcode, price_chf, quantity, category, image_url, producer, description, badge, stock_shelf, expiry_date, discount_percent, discount_until } = body;
 
   const cleanName = (name || '').trim();
@@ -121,12 +124,9 @@ export async function PATCH(request) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
   }
 
-  const body = await request.json();
+  const { data: body, error: validationError } = await parseBody(request, adminProductUpdateSchema);
+  if (validationError) return validationError;
   const { id, _manual_toggle, ...rawFields } = body;
-
-  if (!id) {
-    return NextResponse.json({ error: 'ID requis' }, { status: 400 });
-  }
 
   const ALLOWED = ['name', 'barcode', 'price_chf', 'quantity', 'category', 'image_url', 'producer', 'description', 'badge', 'stock_shelf', 'stock_back', 'is_active', 'expiry_date', 'discount_percent', 'discount_until'];
   const fields = {};
@@ -188,12 +188,9 @@ export async function DELETE(request) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
   }
 
-  const body = await request.json();
-  const { id } = body;
-
-  if (!id) {
-    return NextResponse.json({ error: 'ID requis' }, { status: 400 });
-  }
+  const { data, error: validationError } = await parseBody(request, adminProductDeleteSchema);
+  if (validationError) return validationError;
+  const { id } = data;
 
   try {
     await db.delete(product_list).where(eq(product_list.id, id));
