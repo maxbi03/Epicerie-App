@@ -1,17 +1,14 @@
 import { NextResponse } from 'next/server';
 import { db } from '../../lib/db';
 import { reports } from '../../lib/db/schema';
-
-const TYPES = ['product_missing', 'product_damaged', 'store_dirty', 'technical', 'other'];
+import { reportCreateSchema } from '../../lib/schemas';
+import { parseBody } from '../../lib/validation';
 
 export async function POST(request) {
   // Allow visitors (no auth required — anyone in the store can report)
-  const body = await request.json();
+  const { data: body, error: validationError } = await parseBody(request, reportCreateSchema);
+  if (validationError) return validationError;
   const { type, description, user_id } = body;
-
-  if (!type || !TYPES.includes(type)) {
-    return NextResponse.json({ error: 'Type de signalement invalide' }, { status: 400 });
-  }
 
   try {
     const [data] = await db

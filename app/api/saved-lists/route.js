@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { db } from '../../lib/db';
 import { saved_lists } from '../../lib/db/schema';
 import { and, eq, desc, sql } from 'drizzle-orm';
+import { savedListCreateSchema, savedListDeleteSchema } from '../../lib/schemas';
+import { parseBody } from '../../lib/validation';
 
 async function auth() {
   const session = await getSession();
@@ -30,9 +32,9 @@ export async function POST(request) {
   const { userId, error } = await auth();
   if (error) return error;
 
-  const { name, items } = await request.json();
-  if (!name?.trim()) return NextResponse.json({ error: 'Nom requis' }, { status: 400 });
-  if (!Array.isArray(items) || items.length === 0) return NextResponse.json({ error: 'Liste vide' }, { status: 400 });
+  const { data: parsed, error: validationError } = await parseBody(request, savedListCreateSchema);
+  if (validationError) return validationError;
+  const { name, items } = parsed;
 
   // Enforce 5-list maximum
   const [{ count }] = await db
@@ -56,11 +58,11 @@ export async function DELETE(request) {
   const { userId, error } = await auth();
   if (error) return error;
 
-  const { id } = await request.json();
-  if (!id) return NextResponse.json({ error: 'ID requis' }, { status: 400 });
+  const { data, error: validationError } = await parseBody(request, savedListDeleteSchema);
+  if (validationError) return validationError;
 
   try {
-    await db.delete(saved_lists).where(and(eq(saved_lists.id, id), eq(saved_lists.user_id, userId)));
+    await db.delete(saved_lists).where(and(eq(saved_lists.id, data.id), eq(saved_lists.user_id, userId)));
     return NextResponse.json({ success: true });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });

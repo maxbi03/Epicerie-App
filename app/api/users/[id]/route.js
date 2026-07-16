@@ -4,6 +4,8 @@ import { db } from '../../../lib/db';
 import { users } from '../../../lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { deleteAvatarByUrl } from '../../../lib/storage';
+import { userPatchSchema, deleteAccountSchema } from '../../../lib/schemas';
+import { parseBody } from '../../../lib/validation';
 
 const PROFILE_COLUMNS = {
   id: users.id, name: users.name, email: users.email, phone: users.phone,
@@ -38,7 +40,8 @@ export async function PATCH(request, { params }) {
   if (!session) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
   if (session.userId !== id) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
 
-  const patch = await request.json();
+  const { data: patch, error: validationError } = await parseBody(request, userPatchSchema);
+  if (validationError) return validationError;
 
   // Champs autorisés à modifier
   const ALLOWED = ['name', 'email', 'phone', 'address', 'postal_code', 'city', 'country', 'address_verified'];
@@ -96,8 +99,9 @@ export async function DELETE(request, { params }) {
   if (!session) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
   if (session.userId !== id) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
 
-  const { password } = await request.json();
-  if (!password) return NextResponse.json({ error: 'Mot de passe requis' }, { status: 400 });
+  const { data, error: validationError } = await parseBody(request, deleteAccountSchema);
+  if (validationError) return validationError;
+  const { password } = data;
 
   const argon2 = (await import('argon2')).default ?? (await import('argon2'));
 
