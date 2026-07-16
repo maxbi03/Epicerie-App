@@ -3,6 +3,8 @@ import { requireAdmin } from '../../../lib/adminUtils';
 import { db } from '../../../lib/db';
 import { producer_invoices, producer_proposals, producers } from '../../../lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
+import { adminProducerRequestUpdateSchema } from '../../../lib/schemas';
+import { parseBody } from '../../../lib/validation';
 
 function withNestedProducer(rows) {
   return rows.map(({ producer_name, producer_email, ...r }) => ({
@@ -61,8 +63,9 @@ export async function PATCH(request) {
   const { authorized } = await requireAdmin();
   if (!authorized) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
 
-  const { id, type, status, admin_note } = await request.json();
-  if (!id || !status) return NextResponse.json({ error: 'id et status requis' }, { status: 400 });
+  const { data: parsed, error: validationError } = await parseBody(request, adminProducerRequestUpdateSchema);
+  if (validationError) return validationError;
+  const { id, type, status, admin_note } = parsed;
 
   try {
     if (type === 'invoice') {

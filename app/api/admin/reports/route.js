@@ -3,6 +3,8 @@ import { reports, users } from '../../../lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { requireAdmin } from '../../../lib/adminUtils';
 import { NextResponse } from 'next/server';
+import { adminReportUpdateSchema, adminReportDeleteSchema } from '../../../lib/schemas';
+import { parseBody } from '../../../lib/validation';
 
 export async function GET(request) {
   const { authorized } = await requireAdmin(request);
@@ -41,10 +43,9 @@ export async function PATCH(request) {
   const { authorized } = await requireAdmin(request);
   if (!authorized) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
 
-  const { id, status } = await request.json();
-  if (!id || !['pending', 'resolved'].includes(status)) {
-    return NextResponse.json({ error: 'Paramètres invalides' }, { status: 400 });
-  }
+  const { data: parsed, error: validationError } = await parseBody(request, adminReportUpdateSchema);
+  if (validationError) return validationError;
+  const { id, status } = parsed;
 
   try {
     const [data] = await db
@@ -62,11 +63,11 @@ export async function DELETE(request) {
   const { authorized } = await requireAdmin(request);
   if (!authorized) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
 
-  const { id } = await request.json();
-  if (!id) return NextResponse.json({ error: 'ID requis' }, { status: 400 });
+  const { data, error: validationError } = await parseBody(request, adminReportDeleteSchema);
+  if (validationError) return validationError;
 
   try {
-    await db.delete(reports).where(eq(reports.id, id));
+    await db.delete(reports).where(eq(reports.id, data.id));
     return NextResponse.json({ success: true });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });

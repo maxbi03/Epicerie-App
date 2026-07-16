@@ -3,6 +3,8 @@ import { db } from '../../../lib/db';
 import { users } from '../../../lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { requireAdmin } from '../../../lib/adminUtils';
+import { adminUserActionSchema } from '../../../lib/schemas';
+import { parseBody } from '../../../lib/validation';
 
 const USER_COLUMNS = {
   id: users.id, name: users.name, email: users.email, phone: users.phone,
@@ -31,7 +33,9 @@ export async function PATCH(request) {
   const { authorized } = await requireAdmin();
   if (!authorized) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
 
-  const { action, userId } = await request.json();
+  const { data, error: validationError } = await parseBody(request, adminUserActionSchema);
+  if (validationError) return validationError;
+  const { action, userId } = data;
 
   if (action === 'reset_spent') {
     if (!userId) return NextResponse.json({ error: 'userId requis' }, { status: 400 });
