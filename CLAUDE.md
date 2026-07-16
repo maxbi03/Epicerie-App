@@ -21,7 +21,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Application mobile-first (PWA) pour **Épico** — une épicerie autonome sans personnel à Jongny, Suisse. Les clients s'inscrivent, scannent leurs produits en rayon, paient via mobile, et ouvrent la porte avec leur téléphone.
 
-**Stack :** Next.js 16 · React 19 · Supabase (auth + DB) · Tailwind CSS v4 · Mollie (paiement) · MQTT (porte IoT)
+**Stack :** Next.js 16 · React 19 · PostgreSQL local (Docker) + Drizzle ORM · Tailwind CSS v4 · Mollie (paiement) · MQTT (porte IoT)
 
 ---
 
@@ -35,20 +35,26 @@ npm run lint     # ESLint
 
 Le flag `--experimental-https` est inclus dans `dev` : l'app tourne sur `https://localhost:3000`. Nécessaire pour la géolocalisation et la caméra (contexte sécurisé).
 
+**Avant `npm run dev`**, la base Postgres locale doit tourner : `docker compose up -d` (voir section Base de données).
+
 ### Variables d'environnement requises (`.env.local`)
 
 ```
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
+DATABASE_URL=          # postgresql://epico:epico@localhost:5432/epico (Postgres local, Docker)
 JWT_SECRET=
+OTP_PEPPER=             # optionnel, sinon JWT_SECRET est réutilisé comme pepper (voir app/lib/otp.js)
 MOLLIE_API_KEY=
 NEXT_PUBLIC_BASE_URL=
-DOOR_SECRET=           # Doit correspondre à UNLOCK_SECRET dans Epico-door/src/config.h
-MQTT_BROKER=           # Ex: mqtt://broker.hivemq.com:1883
+DOOR_SECRET=           # Doit correspondre à UNLOCK_SECRET dans Epico-door/src/config.h — pas de fallback, requis
+MQTT_BROKER=           # Ex: mqtt://broker.hivemq.com:1883 (broker public, durcissement reporté — voir lecon.md)
 MQTT_TOPIC=            # Ex: epico/door/command
 MQTT_STATUS_TOPIC=     # Ex: epico/door/status
+ASPSMS_USERKEY=
+ASPSMS_PASSWORD=
+ASPSMS_ORIGINATOR=      # optionnel, défaut "Epicerie"
 ```
+
+`SUPABASE_DB_URL` (source, plus utilisée qu'exceptionnellement) subsiste dans `.env.local` uniquement pour rejouer un script de migration ponctuel si besoin (`scripts/migrate-*.mjs`) — l'app elle-même ne s'en sert plus.
 
 ---
 
@@ -56,12 +62,18 @@ MQTT_STATUS_TOPIC=     # Ex: epico/door/status
 
 ### Authentification
 
-L'app utilise **un JWT maison** (jose, HS256, 7 jours) stocké dans un cookie `auth_token`, **pas** Supabase Auth. Supabase est utilisé uniquement comme base de données.
+L'app utilise **un JWT maison** (jose, HS256, 7 jours) stocké dans un cookie `auth_token`. Le JWT ne contient QUE `{ userId, email }` — jamais de rôle (`session.role` est toujours `undefined`, ne jamais s'y fier). Le rôle admin se vérifie via `requireAdmin()` (lookup DB), le rôle producteur via `requireProducer()` (existence d'une ligne `producers` liée).
 
 - `app/lib/auth.js` — `signToken`, `verifyToken`, `getSession` (server-side via cookie)
 - `app/api/auth/` — login, register, logout, me, verify-phone
 - Inscription en 2 étapes : infos → vérification OTP SMS → création compte + cookie JWT
 - Mode visiteur : `sessionStorage.getItem('app_mode') === 'visitor'` — panier visible, paiement et porte bloqués
+- **`proxy.js`** (racine, garde-fou central) : toute route `/api/*` hors liste blanche exige un JWT valide (401 sinon) ; `/admin*` redirige vers `/home` sans JWT valide. Le contrôle du rôle reste dans les routes/layout (défense en profondeur). En Next 16, `middleware.js` est déprécié au profit de `proxy.js` (`export async function proxy(request)`).
+- Login protégé par rate limiting (verrou 15 min après 5 échecs, table `login_attempts`) ; OTP stocké haché (jamais en clair) dans le cookie.
+
+### Validation des entrées
+
+Toutes les routes API acceptant un body (sauf `checkout/webhook`, payload tiers) valident via **zod**, schémas centralisés dans `app/lib/schemas.js`, appelés via le helper `parseBody(request, schema)` de `app/lib/validation.js`. Piège à connaître avant d'ajouter un nouveau schéma : voir `lecon.md` section "Validation zod" (message custom qui disparaît si le champ est complètement absent, coercition silencieuse `null → 0`).
 
 ### Panier
 
@@ -74,7 +86,7 @@ Le panier est stocké dans `localStorage` ('user_basket') avec TTL de 1 heure gl
 
 ### Produits
 
-- Chargés via `GET /api/products` → table Supabase `product_list` (nom configurable dans `config.js`)
+- Chargés via `GET /api/products` → table Postgres `product_list` (nom configurable dans `config.js`)
 - Mis en cache dans `localStorage` ('products_cache')
 - Scanner EAN-13 : matching code-barres dans le cache local → `ProductModal`
 
@@ -93,10 +105,17 @@ Flux : `HomePage` → GPS haversine check → `POST /api/door/unlock` → publis
 - `POST /api/checkout/webhook` reçoit la confirmation → décrémente le stock via `updateStockAfterPayment()` → incrémente `total_spent` dans `users`
 - En local (localhost), le webhook n'est pas enregistré chez Mollie (lignes conditionnelles dans la route)
 
-### Supabase
+### Base de données
 
-- **Client** : `app/lib/supabaseClient.js` — instance publique (anon key) pour usage navigateur
-- **Serveur** : `app/lib/supabaseServer.js` — `getSupabaseAdmin()` avec service role key, singleton, pour toutes les routes API
+PostgreSQL local (conteneur Docker `epico-postgres`, volume `epico_pgdata` persistant), accédé via **Drizzle ORM**. Plus aucune dépendance runtime à Supabase (migration complète, voir `lecon.md`).
+
+- `docker-compose.yml` — service Postgres, à lancer avant `npm run dev` (`docker compose up -d`)
+- `app/lib/db/index.js` — client Drizzle (pool `pg` singleton)
+- `app/lib/db/schema.ts` — schéma (source de vérité), propriétés en snake_case pour que Drizzle renvoie la même forme que l'ancien SDK Supabase
+- `app/lib/db/functions.sql` — fonctions RPC (`increment_total_spent`, `record_login_failure`, `clear_login_attempts`), à réappliquer sur toute nouvelle base (`docker exec -i epico-postgres psql -U epico -d epico < app/lib/db/functions.sql`)
+- Migrations de schéma : `npx drizzle-kit push` (pas de dossier `drizzle/migrations` généré, on pousse directement le schéma)
+- Sauvegardes : `scripts/backup-db.sh` / `scripts/restore-db.sh` (testées, voir `lecon.md`)
+- Stockage fichiers (avatars, images produits) : `app/lib/storage.js`, système de fichiers local dans `uploads/` (**hors** `public/`, volume Docker séparé au déploiement) — jamais Supabase Storage
 
 ### Configuration centralisée
 
