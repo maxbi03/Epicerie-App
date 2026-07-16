@@ -3,6 +3,8 @@ import { db } from '../../../lib/db';
 import { users, login_attempts } from '../../../lib/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { signToken, AUTH_COOKIE } from '../../../lib/auth';
+import { loginSchema } from '../../../lib/schemas';
+import { parseBody } from '../../../lib/validation';
 
 const MAX_FAILED = 5;         // échecs avant verrouillage
 const WINDOW_SECS = 15 * 60;  // fenêtre glissante
@@ -14,11 +16,9 @@ let dummyHash = null;
 
 export async function POST(request) {
   try {
-    const { email, password } = await request.json();
-
-    if (!email || !password) {
-      return NextResponse.json({ error: 'Email et mot de passe requis.' }, { status: 400 });
-    }
+    const { data, error: validationError } = await parseBody(request, loginSchema);
+    if (validationError) return validationError;
+    const { email, password } = data;
 
     const identifier = email.toLowerCase();
 

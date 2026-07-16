@@ -6,6 +6,8 @@ import { eq } from 'drizzle-orm';
 import { normalizePhone, validatePhone } from '../../../../lib/phone';
 import { hashOtp } from '../../../../lib/otp';
 import { UNLIMITED_ACCOUNTS_PHONE } from '../../../../lib/config';
+import { verifyPhoneSendSchema } from '../../../../lib/schemas';
+import { parseBody } from '../../../../lib/validation';
 import { cookies } from 'next/headers';
 
 /** Génère un code OTP à 6 chiffres cryptographiquement sûr */
@@ -50,7 +52,8 @@ async function sendSms(phone, code) {
 export async function POST(request) {
   try {
     const cookieStore = await cookies();
-    const body = await request.json().catch(() => ({}));
+    const { data: body, error: validationError } = await parseBody(request, verifyPhoneSendSchema);
+    if (validationError) return validationError;
 
     // ── CAS 1 : nouvelle inscription (cookie pending_registration) ─────────
     const pendingToken = cookieStore.get(PENDING_REG_COOKIE)?.value;

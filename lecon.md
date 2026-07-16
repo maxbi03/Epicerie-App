@@ -4,6 +4,37 @@ Ce fichier se met à jour au fil des conversations. Il capture ce qui a été ap
 
 ---
 
+## Résumé de session — sécurisation, migration DB locale, nouvelles fonctionnalités
+
+Vue d'ensemble du travail réalisé (détails techniques dans les sections dédiées ci-dessous). Tout est sur la branche `dev`, poussé sur le remote ; `main` reste intacte jusqu'à validation finale.
+
+**Sécurité (lots 01→04, 08)**
+- Autorisation centralisée via `proxy.js` (garde-fou JWT sur `/api/*` et `/admin*`) + fermeture de routes admin qui étaient ouvertes sans contrôle.
+- Paiement : recalcul du prix côté serveur (jamais confiance au client), idempotence par `order_ref`, `total_spent` atomique.
+- Porte IoT : retrait du secret de repli codé en dur (le durcissement broker/anti-rejeu est reporté volontairement, voir section dédiée).
+- OTP stocké haché (jamais en clair) dans le cookie, rate limiting sur le login (verrou après 5 échecs).
+- Nettoyage de code mort (fichiers Supabase inutilisés, dépendance PWA en double).
+
+**Migration base de données — Supabase → Postgres local (lot 10, terminé A→E)**
+- Passage complet de Supabase à un Postgres local (Docker), accédé via Drizzle ORM.
+- Les ~39 fichiers / ~117 requêtes de l'app ont été réécrits de Supabase JS vers Drizzle.
+- Storage (avatars) remplacé par du stockage fichier local.
+- Sauvegardes (`backup-db.sh`/`restore-db.sh`) écrites et testées en conditions réelles (cycle complet backup → restauration → vérification).
+- Bascule finale : l'app tourne à 100 % sur le Postgres local, plus aucune dépendance runtime à Supabase.
+
+**Corrections issues du smoke-test manuel**
+- Bug d'arrondi panier/paiement (écart d'1 centime entre affichage et montant facturé).
+- Bug `total_spent` incrémenté en centimes au lieu de CHF (affichage ×100).
+- Redirection admin peu fiable, édition nom/email dans le profil, cohérence du badge remise.
+
+**Nouvelles fonctionnalités**
+- Compteur d'entropie du mot de passe, lié à la barre de force existante.
+- Champ pays obligatoire à l'inscription (191 pays), autocomplete d'adresse suisse retiré au profit d'un champ libre.
+- Numéro de téléphone "compte illimité" pour les tests/démos (exception assumée, y compris en production).
+- Images produits téléchargées et stockées en local (comme les avatars), avec upload direct en plus du collage d'URL, cache navigateur optimisé, et config Nginx préparée pour le déploiement.
+
+---
+
 ## Préférences UI / Style
 
 ### BottomNav

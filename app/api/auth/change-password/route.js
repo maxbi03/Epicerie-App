@@ -3,7 +3,8 @@ import { getSession } from '../../../lib/auth';
 import { db } from '../../../lib/db';
 import { users } from '../../../lib/db/schema';
 import { eq } from 'drizzle-orm';
-import { validatePassword } from '../../../lib/password';
+import { changePasswordSchema } from '../../../lib/schemas';
+import { parseBody } from '../../../lib/validation';
 
 export async function POST(request) {
   try {
@@ -12,15 +13,9 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
     }
 
-    const { currentPassword, newPassword } = await request.json();
-
-    if (!currentPassword || !newPassword) {
-      return NextResponse.json({ error: 'Champs requis manquants' }, { status: 400 });
-    }
-    const passwordError = validatePassword(newPassword);
-    if (passwordError) {
-      return NextResponse.json({ error: passwordError }, { status: 400 });
-    }
+    const { data, error } = await parseBody(request, changePasswordSchema);
+    if (error) return error;
+    const { currentPassword, newPassword } = data;
 
     const argon2 = (await import('argon2')).default ?? (await import('argon2'));
 

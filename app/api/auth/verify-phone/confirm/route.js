@@ -5,18 +5,17 @@ import { users } from '../../../../lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { verifyOtp } from '../../../../lib/otp';
 import { UNLIMITED_ACCOUNTS_PHONE } from '../../../../lib/config';
+import { verifyPhoneConfirmSchema } from '../../../../lib/schemas';
+import { parseBody } from '../../../../lib/validation';
 import { cookies } from 'next/headers';
 
 const MAX_ATTEMPTS = 5; // tentatives max avant invalidation du code
 
 export async function POST(request) {
   try {
-    const { code } = await request.json();
-
-    // Validation format : le code doit être exactement 6 chiffres
-    if (!code || !/^\d{6}$/.test(String(code).trim())) {
-      return NextResponse.json({ error: 'Code invalide (6 chiffres attendus).' }, { status: 400 });
-    }
+    const { data, error: validationError } = await parseBody(request, verifyPhoneConfirmSchema);
+    if (validationError) return validationError;
+    const { code } = data;
 
     const cookieStore = await cookies();
 
