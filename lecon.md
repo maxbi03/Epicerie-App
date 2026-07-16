@@ -33,6 +33,9 @@ Vue d'ensemble du travail réalisé (détails techniques dans les sections dédi
 - Numéro de téléphone "compte illimité" pour les tests/démos (exception assumée, y compris en production).
 - Images produits téléchargées et stockées en local (comme les avatars), avec upload direct en plus du collage d'URL, cache navigateur optimisé, et config Nginx préparée pour le déploiement.
 
+**Validation zod (lot 06, terminé)**
+- Toutes les routes API acceptant un body (~26) validées via zod, centralisées dans `app/lib/schemas.js`. Seule exception volontaire : `checkout/webhook` (payload tiers Mollie/Payrexx, déjà re-vérifié via leur API, pas via le body).
+
 ---
 
 ## Préférences UI / Style
@@ -267,6 +270,16 @@ Vue d'ensemble du travail réalisé (détails techniques dans les sections dédi
 - **Pourquoi pas `public/`** : les uploads (avatars, produits) restent volontairement **hors** de `public/` (arbre de build). En Docker (laptop/VPS), `uploads/` doit être un volume séparé qui survit aux redéploiements — le mélanger avec `public/` risquerait qu'un futur build/déploiement écrase les données utilisateur. La bonne façon d'accélérer le service de ces fichiers sans ce risque : Nginx en frontal qui sert `/uploads/` en statique, sans passer par Next.js/Node.
 - **Cache HTTP différencié par bucket** (`app/api/uploads/[bucket]/[filename]/route.js`) — piège à ne pas reproduire : les **avatars** ont un nom de fichier **stable** (`userId.ext`, réécrit à chaque changement de photo) → cache court (`max-age=3600`), jamais `immutable` sinon une photo périmée resterait affichée indéfiniment après un changement. Les **images produits** ont un nom de fichier = **UUID aléatoire par upload, jamais réécrit** → cache long + `immutable` (`max-age=31536000`) sans risque. Vérifié en conditions réelles (curl sur les deux buckets, en-têtes différents confirmés).
 - `deploy/nginx.conf` : config prête à l'emploi pour le déploiement (laptop/VPS) — sert `/uploads/avatars/` et `/uploads/products/` en statique (mêmes politiques de cache que ci-dessus), proxifie le reste vers Next.js, gère TLS. Placeholders à remplir au moment du déploiement réel (domaine, chemins de certificats, chemin absolu du projet).
+
+## Validation zod (lot 06)
+
+- **Fondation** : `app/lib/validation.js` (`parseBody(request, schema)` — parse le JSON, valide, retourne `{ data }` ou `{ error }` — un `NextResponse` 400 prêt à `return`) + `app/lib/schemas.js` (tous les schémas, organisés par domaine : auth, checkout/porte, utilisateur, listes/signalements, admin produits/producteurs/news/commandes/signalements/utilisateurs, producteur).
+- **Réutilise les règles métier existantes** au lieu de les dupliquer : `validatePassword`/`validatePhone` via `.superRefine()`, `COUNTRY_CODES` via `z.enum([...COUNTRY_CODES], 'message')`. Zod valide la **forme** (présence, type) ; la logique métier (unicité en DB, recalculs, filtrage fin par ligne dans les tableaux d'articles) reste dans les routes, inchangée.
+- ⚠️ **Piège central, à connaître pour tout futur schéma** : `.min(1, 'message')` (ou `.min(2)`, `.regex()`, etc.) ne couvre QUE le cas "champ présent mais invalide/vide". Si le champ est **complètement absent** du body, zod lève une erreur de type générique en anglais ("Invalid input: expected string, received undefined") **avant même** d'atteindre le `.min()`, ignorant le message custom. Pareil pour les tableaux (`z.array(...).min(1, msg)`) et les nombres (`z.coerce.number()`). Solution : passer le message aussi sur le **type de base** — `z.string({ error: message }).min(1, message)`. Les helpers `requiredString(message)`, `requiredArray(schema, message)` et `uuid(label)` dans `schemas.js` encapsulent ce pattern ; toujours les utiliser plutôt que `z.string().min(1, ...)` nu pour un champ obligatoire.
+- ⚠️ **Piège coercion silencieuse** : `z.coerce.number()` transforme `null` en `0` (`Number(null) === 0`), pas une erreur. Pour un champ où `null` doit être explicitement rejeté (ex. `lat`/`lng` de la porte, où le code d'origine faisait `if (lat == null) return 'requis'`), utiliser `z.number()` **sans coerce** plutôt que `z.coerce.number()`.
+- **Testé sans serveur** : Next (webpack) résout les imports sans extension (`from './storage'`), mais Node standalone (scripts de test rapides, migrations) ne le fait pas — nécessite `.js` explicite ou de tester les schémas isolément (dupliqués dans un script `_test.mjs` temporaire) plutôt que d'importer `app/lib/schemas.js` directement hors du build Next.
+- **Couverture** : ~26 routes converties (auth, checkout, porte, utilisateur, listes/signalements, tout `admin/*`, tout `producer/*`). Seule exception volontaire : `checkout/webhook` — payload tiers (Mollie/Payrexx), déjà re-vérifié via l'API de la passerelle plutôt que via le contenu du body (voir lot 02), un schéma zod n'y ajouterait rien.
+- Vérifié en conditions réelles (curl) sur les routes publiques/auth (register, login, reports...) : champ absent vs invalide donnent chacun le bon message français. Routes protégées (admin/producteur) vérifiées pour le blocage 401 sans session ; la validation zod elle-même y est couverte par build + tests de schémas isolés (pas d'identifiants admin disponibles pour un test HTTP complet).
 
 ## Divers
 

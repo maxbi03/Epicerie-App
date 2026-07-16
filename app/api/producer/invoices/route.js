@@ -3,6 +3,8 @@ import { requireProducer } from '../../../lib/producerAuth';
 import { db } from '../../../lib/db';
 import { producer_invoices } from '../../../lib/db/schema';
 import { and, eq, desc, sql } from 'drizzle-orm';
+import { producerInvoiceCreateSchema, producerInvoiceUpdateSchema } from '../../../lib/schemas';
+import { parseBody } from '../../../lib/validation';
 
 export async function GET() {
   const { authorized, session } = await requireProducer();
@@ -24,10 +26,9 @@ export async function POST(request) {
   const { authorized, session } = await requireProducer();
   if (!authorized) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
-  const { delivery_id, items, notes } = await request.json();
-  if (!Array.isArray(items) || items.length === 0) {
-    return NextResponse.json({ error: 'Articles requis' }, { status: 400 });
-  }
+  const { data, error: validationError } = await parseBody(request, producerInvoiceCreateSchema);
+  if (validationError) return validationError;
+  const { delivery_id, items, notes } = data;
 
   const amount_chf = items.reduce((sum, i) => sum + (Number(i.quantity) * Number(i.price_unit)), 0);
   if (amount_chf <= 0) {
@@ -66,11 +67,9 @@ export async function PATCH(request) {
   const { authorized, session } = await requireProducer();
   if (!authorized) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
-  const { id, status } = await request.json();
-  if (!id || !status) return NextResponse.json({ error: 'id et status requis' }, { status: 400 });
-
-  const allowed = ['draft', 'sent'];
-  if (!allowed.includes(status)) return NextResponse.json({ error: 'Statut invalide' }, { status: 400 });
+  const { data, error: validationError } = await parseBody(request, producerInvoiceUpdateSchema);
+  if (validationError) return validationError;
+  const { id, status } = data;
 
   const updates = { status };
   if (status === 'sent') updates.sent_at = new Date().toISOString();

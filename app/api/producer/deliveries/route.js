@@ -3,6 +3,8 @@ import { requireProducer } from '../../../lib/producerAuth';
 import { db } from '../../../lib/db';
 import { producer_deliveries, product_list } from '../../../lib/db/schema';
 import { eq, desc, inArray } from 'drizzle-orm';
+import { producerDeliveryCreateSchema } from '../../../lib/schemas';
+import { parseBody } from '../../../lib/validation';
 
 export async function GET() {
   const { authorized, session } = await requireProducer();
@@ -24,10 +26,9 @@ export async function POST(request) {
   const { authorized, session } = await requireProducer();
   if (!authorized) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
-  const { items, notes } = await request.json();
-  if (!Array.isArray(items) || items.length === 0) {
-    return NextResponse.json({ error: 'Articles requis' }, { status: 400 });
-  }
+  const { data, error: validationError } = await parseBody(request, producerDeliveryCreateSchema);
+  if (validationError) return validationError;
+  const { items, notes } = data;
 
   const validItems = items.filter(i => i.product_id && Number(i.quantity) > 0);
   if (validItems.length === 0) {

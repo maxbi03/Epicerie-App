@@ -3,6 +3,8 @@ import { requireProducer } from '../../../lib/producerAuth';
 import { db } from '../../../lib/db';
 import { producer_proposals } from '../../../lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
+import { producerProposalCreateSchema } from '../../../lib/schemas';
+import { parseBody } from '../../../lib/validation';
 
 export async function GET() {
   const { authorized, session } = await requireProducer();
@@ -24,14 +26,9 @@ export async function POST(request) {
   const { authorized, session } = await requireProducer();
   if (!authorized) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
-  const { type, product_id, data: proposalData } = await request.json();
-
-  if (!type || !['new_product', 'price_change'].includes(type)) {
-    return NextResponse.json({ error: 'Type invalide (new_product ou price_change)' }, { status: 400 });
-  }
-  if (!proposalData || Object.keys(proposalData).length === 0) {
-    return NextResponse.json({ error: 'Données requises' }, { status: 400 });
-  }
+  const { data: parsed, error: validationError } = await parseBody(request, producerProposalCreateSchema);
+  if (validationError) return validationError;
+  const { type, product_id, data: proposalData } = parsed;
 
   try {
     const [data] = await db
