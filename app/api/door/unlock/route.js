@@ -4,6 +4,8 @@ import { users, traffic } from '../../../lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { getSession } from '../../../lib/auth';
 import { STORE_LAT, STORE_LNG, DOOR_UNLOCK_RADIUS_M } from '../../../lib/config';
+import { doorUnlockSchema } from '../../../lib/schemas';
+import { parseBody } from '../../../lib/validation';
 import mqtt from 'mqtt';
 
 const MQTT_BROKER = process.env.MQTT_BROKER || 'mqtt://broker.hivemq.com:1883';
@@ -131,10 +133,9 @@ export async function POST(request) {
     }
 
     // 3. Vérifier la position GPS
-    const { lat, lng } = await request.json();
-    if (lat == null || lng == null) {
-      return NextResponse.json({ error: 'Position GPS requise' }, { status: 400 });
-    }
+    const { data, error: validationError } = await parseBody(request, doorUnlockSchema);
+    if (validationError) return validationError;
+    const { lat, lng } = data;
 
     const distance = haversineDistance(lat, lng, STORE_LAT, STORE_LNG);
     if (distance > DOOR_UNLOCK_RADIUS_M) {

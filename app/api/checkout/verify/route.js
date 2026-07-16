@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import { PAYMENT_GATEWAY } from '../../../lib/config';
 import { finalizePaidOrder } from '../../../lib/checkout';
+import { checkoutVerifySchema } from '../../../lib/schemas';
+import { parseBody } from '../../../lib/validation';
 
 export async function POST(request) {
   try {
-    const { paymentId } = await request.json();
-    if (!paymentId) {
-      return NextResponse.json({ error: 'Missing payment ID' }, { status: 400 });
-    }
+    const { data, error: validationError } = await parseBody(request, checkoutVerifySchema);
+    if (validationError) return validationError;
+    const { paymentId } = data;
 
     if (PAYMENT_GATEWAY === 'payrexx') {
       const { getPayrexxGateway } = await import('../../../lib/payrexx.js');

@@ -6,6 +6,8 @@ import { db } from '../../lib/db';
 import { users } from '../../lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { loadCartPricing } from '../../lib/checkout';
+import { checkoutSchema } from '../../lib/schemas';
+import { parseBody } from '../../lib/validation';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://localhost:3000';
 
@@ -16,13 +18,14 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
     }
 
-    const { items: requestedItems } = await request.json();
+    const { data, error: validationError } = await parseBody(request, checkoutSchema);
+    if (validationError) return validationError;
 
     // Recalcul serveur : le client n'envoie que { id, quantity }. Prix et total
     // sont recalculés depuis la DB, jamais lus depuis la requête.
     let items, totalCents;
     try {
-      ({ items, totalCents } = await loadCartPricing(requestedItems));
+      ({ items, totalCents } = await loadCartPricing(data.items));
     } catch (e) {
       return NextResponse.json({ error: e.message }, { status: 400 });
     }
