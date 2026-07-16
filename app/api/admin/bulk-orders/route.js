@@ -3,6 +3,8 @@ import { bulk_orders } from '../../../lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { requireAdmin as requireAdminUser } from '../../../lib/adminUtils';
 import { NextResponse } from 'next/server';
+import { adminBulkOrderCreateSchema, adminBulkOrderUpdateSchema, adminBulkOrderDeleteSchema } from '../../../lib/schemas';
+import { parseBody } from '../../../lib/validation';
 
 async function requireAdmin() {
   const { authorized, user } = await requireAdminUser();
@@ -34,19 +36,14 @@ export async function POST(request) {
   const { error } = await requireAdmin();
   if (error) return error;
 
-  const body = await request.json();
+  const { data: body, error: validationError } = await parseBody(request, adminBulkOrderCreateSchema);
+  if (validationError) return validationError;
   const {
     contact_name, contact_email, contact_phone,
     event_description, event_date,
     items, subtotal, discount_rate, total,
   } = body;
 
-  if (!contact_name?.trim()) {
-    return NextResponse.json({ error: 'Le nom du contact est requis.' }, { status: 400 });
-  }
-  if (!items || items.length === 0) {
-    return NextResponse.json({ error: 'Au moins un produit est requis.' }, { status: 400 });
-  }
   if (subtotal < 20000) { // 200 CHF en centimes
     return NextResponse.json({ error: 'Minimum 200 CHF pour une grosse commande.' }, { status: 400 });
   }
@@ -78,10 +75,9 @@ export async function PATCH(request) {
   const { error } = await requireAdmin();
   if (error) return error;
 
-  const body = await request.json();
+  const { data: body, error: validationError } = await parseBody(request, adminBulkOrderUpdateSchema);
+  if (validationError) return validationError;
   const { id, ...updates } = body;
-
-  if (!id) return NextResponse.json({ error: 'ID requis.' }, { status: 400 });
 
   const ALLOWED = ['status', 'stripe_payment_link', 'admin_notes'];
   const filtered = Object.fromEntries(
@@ -106,11 +102,11 @@ export async function DELETE(request) {
   const { error } = await requireAdmin();
   if (error) return error;
 
-  const { id } = await request.json();
-  if (!id) return NextResponse.json({ error: 'ID requis.' }, { status: 400 });
+  const { data, error: validationError } = await parseBody(request, adminBulkOrderDeleteSchema);
+  if (validationError) return validationError;
 
   try {
-    await db.delete(bulk_orders).where(eq(bulk_orders.id, id));
+    await db.delete(bulk_orders).where(eq(bulk_orders.id, data.id));
     return NextResponse.json({ success: true });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });

@@ -3,6 +3,8 @@ import { news } from '../../../lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { requireAdmin } from '../../../lib/adminUtils';
 import { NextResponse } from 'next/server';
+import { adminNewsCreateSchema, adminNewsUpdateSchema, adminNewsDeleteSchema } from '../../../lib/schemas';
+import { parseBody } from '../../../lib/validation';
 
 export async function GET(request) {
   const { authorized } = await requireAdmin(request);
@@ -24,12 +26,10 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
   }
 
-  const body = await request.json();
+  const { data: body, error: validationError } = await parseBody(request, adminNewsCreateSchema);
+  if (validationError) return validationError;
   const { category, type, title, subtitle, content, image1, image2, link } = body;
 
-  if (!title || !title.trim()) {
-    return NextResponse.json({ error: 'Le titre est requis' }, { status: 400 });
-  }
   const newsRow = {
     created_at: new Date().toISOString(),
     category: category || 'com',
@@ -61,12 +61,9 @@ export async function PATCH(request) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
   }
 
-  const body = await request.json();
+  const { data: body, error: validationError } = await parseBody(request, adminNewsUpdateSchema);
+  if (validationError) return validationError;
   const { id, ...fields } = body;
-
-  if (!id) {
-    return NextResponse.json({ error: 'ID requis' }, { status: 400 });
-  }
 
   const ALLOWED = ['category', 'type', 'title', 'subtitle', 'content', 'image1', 'image2', 'link', 'link_name', 'is_published'];
   const update = {};
@@ -97,14 +94,11 @@ export async function DELETE(request) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
   }
 
-  const { id } = await request.json();
-
-  if (!id) {
-    return NextResponse.json({ error: 'ID requis' }, { status: 400 });
-  }
+  const { data, error: validationError } = await parseBody(request, adminNewsDeleteSchema);
+  if (validationError) return validationError;
 
   try {
-    await db.delete(news).where(eq(news.id, id));
+    await db.delete(news).where(eq(news.id, data.id));
     return NextResponse.json({ success: true });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });

@@ -3,6 +3,8 @@ import { db } from '../../../lib/db';
 import { producers } from '../../../lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
 import { requireAdmin } from '../../../lib/adminUtils';
+import { adminProducerCreateSchema, adminProducerUpdateSchema, adminProducerDeleteSchema } from '../../../lib/schemas';
+import { parseBody } from '../../../lib/validation';
 
 const LIST_COLUMNS = {
   id: producers.id, name: producers.name, contact_name: producers.contact_name,
@@ -31,11 +33,9 @@ export async function POST(request) {
   const { authorized } = await requireAdmin();
   if (!authorized) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
 
-  const { name, contact_name, email, phone, address, description, password } = await request.json();
-
-  if (!name || !email || !password) {
-    return NextResponse.json({ error: 'Nom, email et mot de passe requis' }, { status: 400 });
-  }
+  const { data, error: validationError } = await parseBody(request, adminProducerCreateSchema);
+  if (validationError) return validationError;
+  const { name, contact_name, email, phone, address, description, password } = data;
 
   const argon2 = (await import('argon2')).default ?? (await import('argon2'));
   const password_hash = await argon2.hash(password);
@@ -56,8 +56,9 @@ export async function PATCH(request) {
   const { authorized } = await requireAdmin();
   if (!authorized) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
 
-  const { id, password, ...fields } = await request.json();
-  if (!id) return NextResponse.json({ error: 'id requis' }, { status: 400 });
+  const { data, error: validationError } = await parseBody(request, adminProducerUpdateSchema);
+  if (validationError) return validationError;
+  const { id, password, ...fields } = data;
 
   const updates = { ...fields };
   if (password) {
@@ -77,11 +78,11 @@ export async function DELETE(request) {
   const { authorized } = await requireAdmin();
   if (!authorized) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
 
-  const { id } = await request.json();
-  if (!id) return NextResponse.json({ error: 'id requis' }, { status: 400 });
+  const { data, error: validationError } = await parseBody(request, adminProducerDeleteSchema);
+  if (validationError) return validationError;
 
   try {
-    await db.delete(producers).where(eq(producers.id, id));
+    await db.delete(producers).where(eq(producers.id, data.id));
     return NextResponse.json({ success: true });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
